@@ -1,0 +1,33 @@
+﻿# Vivado / Xilinx generated directories & caches
+.Xil/
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+xsim.dir/
+
+# Temporary run logs and journals in root
+*.log
+*.jou
+*.pb
+*.backup.log
+*.backup.jou
+*.dcp
+dfx_runtime.txt
+
+# Waveform databases
+*.wdb
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Local scratch directory
+scratch/
+
+# IDE / OS specific files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

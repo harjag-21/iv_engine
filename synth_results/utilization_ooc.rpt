@@ -1,0 +1,44 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
+| Date         : Fri Aug 21 13:26:54 2026
+| Host         : LAPTOP-EPHGQB72 running 64-bit major release  (build 9200)
+| Command      : report_utilization -file synth_results/utilization_ooc.rpt -hierarchical -hierarchical_depth 3
+| Design       : iv_top
+| Device       : xc7a12ticsg325-1L
+| Speed File   : -1L
+| Design State : Synthesized
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++---------------------+-----------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+|       Instance      |            Module           | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | DSP Blocks |
++---------------------+-----------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+| iv_top              |                       (top) |      63816 |      62221 |     226 | 1369 | 18660 |      0 |      0 |         40 |
+|   (iv_top)          |                       (top) |        679 |         97 |     226 |  356 |   508 |      0 |      0 |          0 |
+|   cordic_inst       | pipelined_hyperbolic_cordic |       1755 |       1754 |       0 |    1 |  1634 |      0 |      0 |          0 |
+|   u_arb_fsm         |          iv_arbitration_fsm |        121 |        121 |       0 |    0 |    78 |      0 |      0 |          0 |
+|   u_bs_datapath     |              iv_bs_datapath |      57551 |      56571 |       0 |  980 | 13717 |      0 |      0 |         40 |
+|     (u_bs_datapath) |              iv_bs_datapath |      11443 |      10787 |       0 |  656 |   784 |      0 |      0 |          6 |
+|     u_d1_divider    |           iv_divider_q824_0 |       7260 |       7228 |       0 |   32 |  2609 |      0 |      0 |          0 |
+|     u_ln_divider    |           iv_divider_q824_1 |       3255 |       3223 |       0 |   32 |  2608 |      0 |      0 |          0 |
+|     u_norm_d1       |                 iv_norm_cdf |      18635 |      18504 |       0 |  131 |  3199 |      0 |      0 |         17 |
+|       (u_norm_d1)   |                 iv_norm_cdf |      15423 |      15324 |       0 |   99 |   619 |      0 |      0 |         17 |
+|       u_t_divider   |           iv_divider_q824_4 |       3212 |       3180 |       0 |   32 |  2580 |      0 |      0 |          0 |
+|     u_norm_d2       |               iv_norm_cdf_2 |      15692 |      15563 |       0 |  129 |  3165 |      0 |      0 |         17 |
+|       (u_norm_d2)   |               iv_norm_cdf_2 |      12482 |      12384 |       0 |   98 |   585 |      0 |      0 |         17 |
+|       u_t_divider   |           iv_divider_q824_3 |       3210 |       3179 |       0 |   31 |  2580 |      0 |      0 |          0 |
+|     u_sqrt_T        |                iv_sqrt_q824 |       1266 |       1266 |       0 |    0 |  1352 |      0 |      0 |          0 |
+|   u_gain_comp       |           iv_kn_compensator |        563 |        563 |       0 |    0 |   113 |      0 |      0 |          0 |
+|   u_nr_divider      |             iv_divider_q824 |       3149 |       3117 |       0 |   32 |  2610 |      0 |      0 |          0 |
++---------------------+-----------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+
+
