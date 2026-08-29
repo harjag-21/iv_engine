@@ -88,7 +88,7 @@ module iv_axis_wrapper (
     assign m_axis_tvalid = (fifo_count > 0);
     assign m_axis_tdata  = fifo_mem[rd_ptr];
 
-    // Almost-full threshold at 100 entries to leave safe margin for 139-cycle pipeline to drain
+    // Almost-full threshold at 100 entries to leave safe margin for 144-cycle pipeline to drain
     wire fifo_almost_full = (fifo_count >= 9'd100);
     assign s_axis_tready = ~iv_fifo_full & ~fifo_almost_full;
     

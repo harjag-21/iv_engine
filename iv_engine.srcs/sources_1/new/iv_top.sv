@@ -14,7 +14,7 @@
 //   8. Max 8 iterations with convergence threshold $0.01
 //   9. Dual-Mode output:
 //      - CORDIC Verification Mode (T_in == 0)
-//      - Full IV Engine Mode (r_in[31:1] != 0)
+//      - Full IV Engine Mode (T_in != 0)
 //
 // Pipeline Latency:
 //   CORDIC mode: 20 cycles (18 CORDIC + 2 gain comp)
@@ -249,12 +249,14 @@ module iv_top (
     assign bs_T_in     = ctx_T_rd;
     assign bs_sigma_in = is_loopback ? fsm_pipe_sigma : INITIAL_SIGMA_Q24;
 
+    // synthesis translate_off
     always @(posedge clk) begin
         if (fsm_pipe_valid) begin
             $display("[DEBUG INGRESS] TID=%0d bs_sigma_in=0x%08h fsm_pipe_sigma=0x%08h is_loopback=%0b",
                      fsm_pipe_tid, bs_sigma_in, fsm_pipe_sigma, is_loopback);
         end
     end
+    // synthesis translate_on
 
     // ---------------------------------------------------------
     // 8. Black-Scholes Pricing & Vega Datapath (110 cycles)
@@ -395,6 +397,7 @@ module iv_top (
                 if (sig_calc_var < MIN_SIGMA_Q24)      sig_calc_var = MIN_SIGMA_Q24;
                 else if (sig_calc_var > MAX_SIGMA_Q24)  sig_calc_var = MAX_SIGMA_Q24;
 
+                // synthesis translate_off
                 $display("[DEBUG TOP] TID=%0d Iter=%0d Sigma=0x%08h Error=0x%08h Delta=0x%08h ClampedStep=0x%08h NewSigma=0x%08h",
                          tid_div_pipe[DIV_LATENCY],
                          ctx_iter[tid_div_pipe[DIV_LATENCY]],
@@ -403,6 +406,7 @@ module iv_top (
                          delta_sigma,
                          clamped_step,
                          sig_calc_var);
+                // synthesis translate_on
 
                 loopback_sigma <= sig_calc_var;
 

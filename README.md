@@ -1,4 +1,4 @@
-﻿# FPGA-Accelerated Real-Time Option Implied Volatility Calculation Engine
+# FPGA-Accelerated Real-Time Option Implied Volatility Calculation Engine
 
 [![Vivado](https://img.shields.io/badge/Vivado-2025.2-blue.svg)](https://www.xilinx.com/products/design-tools/vivado.html)
 [![Language](https://img.shields.io/badge/Language-SystemVerilog%20%7C%20C%2B%2B%20%7C%20Python-orange.svg)](#)
@@ -34,11 +34,14 @@ Implied volatility $\sigma^*$ is solved iteratively via Newton-Raphson:
 
 ### Hardware-Friendly Computations (Q8.24 Fixed-Point)
 
-1. **Natural Logarithm $\ln(S/K)$**: 33-cycle Padé rational approximation:
-   \ln(S/K) \approx 2 \cdot \frac{S - K}{S + K}
-2. **Square Root $\sqrt{T}$**: 28-stage digit-by-digit pipelined shift-subtract engine (29 cycles + 4 alignment delay = 33 cycles total, 0 DSPs).
-3. **Normal CDF (x)$ and PDF $\phi(x)$**: 41-stage Abramowitz & Stegun Horner scheme with an embedded 33-cycle non-restoring divider  = 1 / (1 + p|x|)$ and a 7-stage pipelined polynomial evaluation (stages 3a–4b, 1 multiply per stage for 250 MHz timing closure).
-4. **Discount Factor ^{-rT}$**: 2nd-order Taylor expansion ^{-rT} \approx 1 - rT + \frac{(rT)^2}{2}$.
+1. **Natural Logarithm `ln(S/K)`**: 33-cycle Padé rational approximation:
+   ```
+   ln(S/K) ≈ 2 * (S - K) / (S + K)
+   ```
+   Valid for liquid moneyness 0.85 ≤ S/K ≤ 1.15 (< 1.0% error).
+2. **Square Root `sqrt(T)`**: 28-stage digit-by-digit pipelined shift-subtract engine (29 cycles + 4 alignment delay = 33 cycles total, 0 DSPs).
+3. **Normal CDF `N(x)` and PDF `phi(x)`**: 41-stage Abramowitz & Stegun Horner scheme with an embedded 33-cycle non-restoring divider `t = 1 / (1 + p|x|)` and a 7-stage pipelined polynomial evaluation (stages 3a–4b, 1 multiply per stage for 250 MHz timing closure).
+4. **Discount Factor `e^(-rT)`**: 2nd-order Taylor expansion `e^(-rT) ≈ 1 - rT + (rT)^2/2`.
 
 ---
 
@@ -141,9 +144,9 @@ Synthesized using **AMD Vivado 2025.2** (synth_design -mode out_of_context):
 
 | Platform | Implementation | Throughput (Ops/sec) | Power (W) | Energy Efficiency (kOps/W) | Single-Tick Latency |
 |---|---|---|---|---|---|
-| **Host CPU** (Intel i9-14900K) | 32-Thread OpenMP C++ |  \times 10^6$ | 125 W | 960 kOps/W | 12.50 µs |
-| **Enterprise GPU** (NVIDIA RTX 4090) | CUDA 12.0 Kernel Batch | ,200 \times 10^6$ | 450 W | 9,333 kOps/W | 45.00 µs (Batch DMA) |
-| **Proposed FPGA Core (Ours)** | **Custom Q8.24 RTL** | $\mathbf{250 \times 10^6}$ | **3.5 W** | $\mathbf{71,428\text{ kOps/W}}$ | $\mathbf{576\text{ ns}}$ |
+| **Host CPU** (Intel i9-14900K) | 32-Thread OpenMP C++ | 120 × 10⁶ | 125 W | 960 kOps/W | 12.50 µs |
+| **Enterprise GPU** (NVIDIA RTX 4090) | CUDA 12.0 Kernel Batch | 4,200 × 10⁶ | 450 W | 9,333 kOps/W | 45.00 µs (Batch DMA) |
+| **Proposed FPGA Core (Ours)** | **Custom Q8.24 RTL** | **250 × 10⁶** | **3.5 W** | **71,428 kOps/W** | **576 ns** |
 
 ---
 
