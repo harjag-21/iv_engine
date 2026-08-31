@@ -41,6 +41,9 @@ module iv_top (
     output wire [5:0]         iv_done_tid
 );
 
+    // Mode Detection: T_in == 0 is CORDIC test mode; T_in != 0 is IV Engine Mode
+    wire is_cordic_mode = (T_in == 32'sd0);
+
     // In-flight transaction counter: tracks how many TIDs are currently being computed.
     // Asserts fifo_full when 63 of 64 context memory slots are in use, preventing
     // new transactions from overwriting in-progress computations.
@@ -57,10 +60,6 @@ module iv_top (
         end
     end
     assign fifo_full = (in_flight_count >= 7'd63);
-
-
-    // Mode Detection: T_in == 0 is CORDIC test mode; T_in != 0 is IV Engine Mode
-    wire is_cordic_mode = (T_in == 32'sd0);
 
     // ---------------------------------------------------------
     // 1. CORDIC Pipeline Instance (18 stages)
@@ -98,16 +97,9 @@ module iv_top (
     );
 
     // ---------------------------------------------------------
-    // 3. TID Generation
+    // 3. TID Assignment
     // ---------------------------------------------------------
-    reg [5:0] tid_counter;
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n)
-            tid_counter <= 6'd0;
-        else if (valid_in)
-            tid_counter <= tid_counter + 6'd1;
-    end
-    wire [5:0] active_tid = (tid_in != 6'd0) ? tid_in : tid_counter;
+    wire [5:0] active_tid = tid_in;
 
     // ---------------------------------------------------------
     // 4. CORDIC TID Pipeline (20 stages: 18 CORDIC + 2 gain comp)
@@ -284,7 +276,16 @@ module iv_top (
     // C_market must travel alongside BS datapath for price error
     // sigma_in must travel to compute sigma_updated at output
     // TID must travel for FSM loopback identification
-    localparam int BS_LATENCY = 110;
+    // BS_LATENCY = total cycles from bs_valid_in to bs_valid_out:
+    //   Stage 0 (ln/sqrt)    : 1 cycle
+    //   Stage 1 (ln divider) : 33 cycles
+    //   Stage 2 (d1 num/den) : 4 cycles   [4 pipelined sub-stages: 2a, 2b, 2c, 2d]
+    //   Stage 3 (d1 divider) : 33 cycles
+    //   Stage 4 (d1/d2 reg)  : 1 cycle    [Stage 4a register]
+    //   Stage 4b (CDF)       : 49 cycles  [3 + 33 + 13 Horner stages: 1a–4d]
+    //   Stage 5 (BS output)  : 5 cycles   [5 pipelined sub-stages: 5a–5e]
+    //   Total                : 126 cycles
+    localparam int BS_LATENCY = 126;
 
     logic signed [31:0] C_market_pipe [0:BS_LATENCY];
     logic signed [31:0] sigma_pipe    [0:BS_LATENCY];
