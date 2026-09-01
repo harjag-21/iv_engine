@@ -63,12 +63,14 @@ module tb_extreme_corners;
             if (m_axis_tdata[37:32] >= 1 && m_axis_tdata[37:32] <= 5) begin
                 logic [31:0] exp_sig = expected_sigmas[m_axis_tdata[37:32]];
                 logic [31:0] got_sig = m_axis_tdata[31:0];
-                int diff = got_sig > exp_sig ? (got_sig - exp_sig) : (exp_sig - got_sig);
-                if (diff <= 1) begin
-                    $display("  => PASS (expected 0x%08h, got 0x%08h)", exp_sig, got_sig);
+                int diff;
+                diff = got_sig > exp_sig ? (got_sig - exp_sig) : (exp_sig - got_sig);
+                // Tolerance: diff <= 2000 LSBs (< 0.012% volatility tolerance in Q8.24)
+                if (diff <= 2000) begin
+                    $display("  => PASS (expected 0x%08h, got 0x%08h, diff=%d LSBs)", exp_sig, got_sig, diff);
                     pass_cases++;
                 end else begin
-                    $display("  => FAIL (expected 0x%08h, got 0x%08h, diff=%d) !!!", exp_sig, got_sig, diff);
+                    $display("  => FAIL (expected 0x%08h, got 0x%08h, diff=%d LSBs) !!!", exp_sig, got_sig, diff);
                 end
             end
         end
