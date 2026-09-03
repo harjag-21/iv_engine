@@ -2,52 +2,53 @@
 
 [![Vivado](https://img.shields.io/badge/Vivado-2025.2-blue.svg)](https://www.xilinx.com/products/design-tools/vivado.html)
 [![Language](https://img.shields.io/badge/Language-SystemVerilog%20%7C%20C%2B%2B%20%7C%20Python-orange.svg)](#)
-[![Target](https://img.shields.io/badge/Target-Xilinx%207--Series%20%2F%20UltraScale-red.svg)](#)
-[![Accuracy](https://img.shields.io/badge/MAE-0.1824%25%20%280.0018%20vol%29-green.svg)](#)
-[![BRAM](https://img.shields.io/badge/BRAM%20Usage-0%20Blocks-brightgreen.svg)](#)
+[![Target](https://img.shields.io/badge/Target-AMD%20Artix--7%20200T-red.svg)](#)
+[![Accuracy](https://img.shields.io/badge/MAE-0.0129%25%20(DPI--C)%20%7C%200.1824%25%20(10k)-green.svg)](#)
+[![BRAM](https://img.shields.io/badge/BRAM%20Usage-0%20Blocks%20(Zero--BRAM)-brightgreen.svg)](#)
+[![Timing](https://img.shields.io/badge/Timing%20Closure-100%25%20PASS-brightgreen.svg)](#)
 
-A fully pipelined, zero-BRAM hardware acceleration engine for calculating European call option **Implied Volatility ($\sigma$)** using the Black-Scholes model and Newton-Raphson iterative root-finding. Built in SystemVerilog using **Q8.24 fixed-point arithmetic**, the engine operates up to **125 MHz**, achieving deterministic **126-cycle single-pass pipeline latency** and delivering up to **400 Million options/second** aggregate streaming throughput on a 4-core array.
+A fully pipelined, zero-BRAM hardware acceleration engine for calculating European call option **Implied Volatility ($\\sigma$)** using the Black-Scholes model and Newton-Raphson iterative root-finding. Built in SystemVerilog using **Q8.24 fixed-point arithmetic**, the engine operates at **100 MHz / 125 MHz**, achieving a deterministic **126-cycle single-pass pipeline latency** and delivering up to **400 Million options/second** aggregate streaming throughput on a 4-core array.
 
 ---
 
-## 🚀 Key Highlights
+## :rocket: Key Highlights
 
 - **Deterministic Low Latency**: **126 clock cycles (1.008 µs @ 125 MHz / 1.260 µs @ 100 MHz)** single-pass pipeline latency, avoiding CPU OS thread scheduling jitter and GPU PCIe DMA batching delays.
-- **Ultra-High Energy Efficiency**: **86,188 kOps/Watt (4.64 W for 4-core array)** — over an **89× advantage over high-end CPUs** (Intel i9-14900K) and **9.2× advantage over enterprise GPUs** (NVIDIA RTX 4090).
+- **Ultra-High Energy Efficiency**: **86,188 kOps/Watt (4.64 W for 4-core array)** - over an **89.8x advantage over high-end CPUs** (Intel i9-14900K) and **9.2x advantage over enterprise GPUs** (NVIDIA RTX 4090).
 - **Institutional-Grade Numerical Accuracy**: Hardware-to-software co-simulation against analytical models demonstrates a **Mean Absolute Error (MAE) of 0.000129 (0.0129% vol)** in 64-tick DPI-C co-sim, with **100.0% of contracts within < 1.0% volatility error**. Over a 10,000-option parameter sweep, statistical MAE is **0.1824% (0.001824 vol)**.
-- **Robust Hardware Flow Control & Active Scoreboard**: Features an active 64-bit TID scoreboard (`tid_busy_mask`) preventing context collision and loopback-priority flow control guaranteeing **zero packet drops** under continuous line-rate streaming.
-- **Mathematical Scale Invariance**: Employs Black-Scholes linear price homogeneity ($\tilde{S}=S/K, \tilde{K}=1.0, \tilde{C}=C/K$), ensuring zero fixed-point overflow for real-world asset prices from $1 to $10,000+.
+- **Robust Hardware Flow Control & Active Scoreboard**: Features an active 64-bit TID scoreboard (	id_busy_mask) preventing context collisions and loopback-priority flow control guaranteeing **zero packet drops** under continuous line-rate streaming.
+- **Mathematical Scale Invariance**: Employs Black-Scholes linear price homogeneity ($\\tilde{S}=S/K, \\tilde{K}=1.0, \\tilde{C}=C/K$), ensuring zero fixed-point overflow for real-world asset prices from  to ,000+.
 - **Zero Block RAM (Zero-BRAM)**: Uses distributed LUTRAM primitives for context storage, leaving 100% of FPGA on-chip BRAM available for order books and market data caches.
-- **100% Timing Closure Across Silicon Grades**: Verified post-route timing closure on Artix-7 (`xc7a200tffg1156-2` at 100 MHz, `xc7a200tffg1156-3` at 125 MHz, and 4-core parallel array at 100 MHz).
+- **100% Timing Closure Across Silicon Grades**: Verified post-route timing closure on Artix-7 (xc7a200tffg1156-2 at 100 MHz, xc7a200tffg1156-3 at 125 MHz, and 4-core parallel array at 100 MHz).
 
 ---
 
-## 📐 Mathematical Formulation & Hardware Approximations
+## :triangular_ruler: Mathematical Formulation & Hardware Approximations
 
-The Black-Scholes call option price {BS}$ and Vega $\mathcal{V}$ are defined as:
+The Black-Scholes call option price {BS}$ and Vega $\\mathcal{V}$ are defined as:
 
-C_{BS}(S, K, r, T, \sigma) = S \cdot N(d_1) - K e^{-rT} N(d_2)
+C_{BS}(S, K, r, T, \\sigma) = S \\cdot N(d_1) - K e^{-rT} N(d_2)
 
-d_1 = \frac{\ln(S/K) + \left(r + \frac{\sigma^2}{2}\right)T}{\sigma \sqrt{T}}, \quad d_2 = d_1 - \sigma \sqrt{T}, \quad \mathcal{V} = S \sqrt{T} \phi(d_1)
+d_1 = \\frac{\\ln(S/K) + \\left(r + \\frac{\\sigma^2}{2}\\right)T}{\\sigma \\sqrt{T}}, \\quad d_2 = d_1 - \\sigma \\sqrt{T}, \\quad \\mathcal{V} = S \\sqrt{T} \\phi(d_1)
 
-Implied volatility $\sigma^*$ is solved iteratively via Newton-Raphson:
+Implied volatility $\\sigma^*$ is solved iteratively via Newton-Raphson:
 
-\sigma_{k+1} = \sigma_k - \frac{C_{BS}(\sigma_k) - C_{market}}{\mathcal{V}(\sigma_k)}
+\\sigma_{k+1} = \\sigma_k - \\frac{C_{BS}(\\sigma_k) - C_{market}}{\\mathcal{V}(\\sigma_k)}
 
 ### Hardware-Friendly Computations (Q8.24 Fixed-Point)
 
-1. **Natural Logarithm `ln(S/K)`**: 33-cycle Padé rational approximation:
-   ```
+1. **Natural Logarithm ln(S/K)**: 33-cycle Padé rational approximation:
+   `
    ln(S/K) ≈ 2 * (S - K) / (S + K)
-   ```
-   Valid for liquid moneyness 0.85 ≤ S/K ≤ 1.15 (< 1.0% error).
-2. **Square Root `sqrt(T)`**: 28-stage digit-by-digit pipelined shift-subtract engine (29 cycles + 4 alignment delay = 33 cycles total, 0 DSPs).
-3. **Normal CDF `N(x)` and PDF `phi(x)`**: 41-stage Abramowitz & Stegun Horner scheme with an embedded 33-cycle non-restoring divider `t = 1 / (1 + p|x|)` and a 7-stage pipelined polynomial evaluation (stages 3a–4b, 1 multiply per stage for 250 MHz timing closure).
-4. **Discount Factor `e^(-rT)`**: 2nd-order Taylor expansion `e^(-rT) ≈ 1 - rT + (rT)^2/2`.
+   `
+   Valid for liquid moneyness .85 \\le S/K \\le 1.15$ ($< 0.22\\%$ error).
+2. **Square Root sqrt(T)**: 28-stage digit-by-digit pipelined shift-subtract engine (29 cycles + 4 alignment delay = 33 cycles total, 0 DSPs).
+3. **Normal CDF N(x) and PDF phi(x)**: 49-stage Abramowitz & Stegun Horner scheme with an embedded 33-cycle non-restoring divider  = 1 / (1 + p|x|)$ and a 15-stage decomposed polynomial pipeline with symmetry identity logic.
+4. **Discount Factor e^(-rT)**: 2nd-order Taylor expansion ^{-rT} \\approx 1 - rT + (rT)^2/2$.
 
 ---
 
-## 🏗️ Architecture & Pipeline Budget
+## :classical_building: Architecture & Pipeline Budget
 
 `
    ┌───────────────────────────────────────────────────────────┐
@@ -56,12 +57,12 @@ Implied volatility $\sigma^*$ is solved iteratively via Newton-Raphson:
                                  │
                                  ▼
    ┌───────────────────────────────────────────────────────────┐
-   │ Arbitration FSM & Distributed LUTRAM Context Memory       │
+   │ Ingress Arbiter, Context RAM (RAM64M) & 64-bit TID Scoreboard
    └─────────────────────────────┬─────────────────────────────┘
                                  │
                                  ▼
    ┌───────────────────────────────────────────────────────────┐
-   │ Stage 0: Input Latch & Padé Numerator/Denom (1 cycle)     │
+   │ Stage 0: Input Latch & Padé Formulator (1 cycle)          │
    └──────────────┬─────────────────────────────┬──────────────┘
                   │                             │
                   ▼                             ▼
@@ -74,7 +75,7 @@ Implied volatility $\sigma^*$ is solved iteratively via Newton-Raphson:
                                  │
                                  ▼
    ┌───────────────────────────────────────────────────────────┐
-   │ Stage 2: d1 Numerator & Denominator Formulator (1 cycle)  │
+   │ Stage 2: d1 Num/Den Decomposed Formulator (4 cycles)      │
    └─────────────────────────────┬─────────────────────────────┘
                                  │
                                  ▼
@@ -84,14 +85,19 @@ Implied volatility $\sigma^*$ is solved iteratively via Newton-Raphson:
                                  │
                                  ▼
    ┌───────────────────────────────────────────────────────────┐
-   │ Stage 4: Pipelined Horner CDF u_norm_cdf (41 cycles)      │
+   │ Stage 4a: Latch d1 and d2 = d1 - sigma * sqrt(T) (1 cycle)│
    └─────────────────────────────┬─────────────────────────────┘
                                  │
                                  ▼
    ┌───────────────────────────────────────────────────────────┐
-   │ Stage 5: Black-Scholes C_BS & Vega Evaluator (1 cycle)    │
+   │ Stage 4b: Dual 49-Stage Horner CDF Engines (49 cycles)    │
    └─────────────────────────────┬─────────────────────────────┘
                                  │
+                                 ▼
+   ┌───────────────────────────────────────────────────────────┐
+   │ Stage 5: Black-Scholes Call Price & Vega Evaluator (5 cyc)│
+   └─────────────────────────────┬─────────────────────────────┘
+                                 │  (Total BS Datapath: 126 cycles)
                                  ▼
    ┌───────────────────────────────────────────────────────────┐
    │ Stage 6: Newton-Raphson Step Divider u_nr_divider (33 cyc)│
@@ -104,13 +110,13 @@ Implied volatility $\sigma^*$ is solved iteratively via Newton-Raphson:
                                  │
                ┌─────────────────┴─────────────────┐
                │                                   │
-               ▼ (|error| > .01 & iter < 8)      ▼ (|error| <= .01 or iter == 8)
+               ▼ (|error| > .01 & iter < 8)        ▼ (|error| <= .01 or iter == 8)
    ┌───────────────────────┐           ┌───────────────────────┐
    │ FSM Loopback Entrance │           │ AXI4-Stream Egress    │
    └───────────────────────┘           └───────────────────────┘
 `
 
-### Latency Budget Summary (`BS_LATENCY = 126 cycles`)
+### Latency Budget Summary (BS_LATENCY = 126 cycles)
 
 | Pipeline Stage | Latency (Cycles) | Duration @ 125 MHz | Duration @ 100 MHz |
 |---|---|---|---|
@@ -129,14 +135,14 @@ Implied volatility $\sigma^*$ is solved iteratively via Newton-Raphson:
 
 ---
 
-## 📊 Physical Place-and-Route Implementation Results
+## :bar_chart: Physical Place-and-Route Implementation Results
 
 Synthesized and fully implemented (routed) using **AMD Vivado 2025.2**:
 
 | Metric | Single-Core Baseline | Single-Core Speed -3 | 4-Core Parallel Array |
 |---|:---:|:---:|:---:|
-| **Target Device** | Artix-7 `xc7a200tffg1156-2` | Artix-7 `xc7a200tffg1156-3` | Artix-7 `xc7a200tffg1156-2` |
-| **Top Module** | `iv_axis_wrapper` | `iv_axis_wrapper` | `iv_multi_engine_top` |
+| **Target Device** | Artix-7 xc7a200tffg1156-2 | Artix-7 xc7a200tffg1156-3 | Artix-7 xc7a200tffg1156-2 |
+| **Top Module** | iv_axis_wrapper | iv_axis_wrapper | iv_multi_engine_top |
 | **Clock Frequency** | **100.000 MHz** (10.0 ns) | **125.000 MHz** (8.0 ns) | **100.000 MHz** (10.0 ns) |
 | **Setup Slack (WNS)** | **+0.658 ns (PASS)** | **+0.144 ns (PASS)** | **+0.016 ns (PASS)** |
 | **Total Negative Slack (TNS)** | **0.000 ns** | **0.000 ns** | **0.000 ns** |
@@ -153,7 +159,7 @@ Synthesized and fully implemented (routed) using **AMD Vivado 2025.2**:
 
 ---
 
-## ⚡ Heterogeneous Benchmark Comparison
+## :zap: Heterogeneous Benchmark Comparison
 
 | Platform | Implementation | Throughput (Ops/sec) | Power (W) | Energy Efficiency (kOps/W) | Single-Tick Latency |
 |---|---|---|---|---|---|
@@ -163,44 +169,48 @@ Synthesized and fully implemented (routed) using **AMD Vivado 2025.2**:
 
 ---
 
-## 📁 Repository Structure
+## :file_folder: Repository Structure
 
 `
 .
 ├── iv_engine.srcs/
 │   ├── sources_1/new/             # SystemVerilog RTL Source Files
-│   │   ├── iv_top.sv              # Top-level engine with context memory & dual-mode
-│   │   ├── iv_bs_datapath.sv      # 110-cycle Black-Scholes pricing & Vega datapath
-│   │   ├── iv_norm_cdf.sv         # 41-cycle Abramowitz & Stegun Horner CDF core
+│   │   ├── iv_top.sv              # Top-level engine with 64-entry context memory & 64-bit TID scoreboard
+│   │   ├── iv_bs_datapath.sv      # 126-cycle Black-Scholes pricing & Vega datapath
+│   │   ├── iv_norm_cdf.sv         # 49-stage Abramowitz & Stegun Horner CDF core
 │   │   ├── iv_divider_q824.sv     # 33-cycle non-restoring Q8.24 fixed-point divider
 │   │   ├── iv_sqrt_q824.sv        # 28-stage digit-by-digit square root engine
 │   │   ├── iv_arbitration_fsm.sv  # Iterative Newton-Raphson loopback arbitration FSM
 │   │   ├── iv_multi_engine_top.sv # 4-core parallel array with work-conserving arbiter
 │   │   ├── iv_axis_wrapper.sv     # 256-bit AXI4-Stream slave/master interface wrapper
-│   │   ├── iv_cordic_pipeline.sv  # 18-stage hyperbolic CORDIC pipeline (test mode)
+│   │   ├── iv_cordic_pipeline.sv  # 18-stage hyperbolic CORDIC pipeline (auxiliary mode)
 │   │   └── iv_kn_compensator.sv   # CORDIC 1/Kn gain compensation unit
 │   ├── sim_1/new/                 # Testbenches & Verification Suites
-│   │   ├── tb_bs_golden.sv        # Golden reference accuracy testbench
-│   │   ├── tb_extreme_corners.sv  # Extreme market corner-case verification
-│   │   ├── tb_axis_top.sv         # AXI4-Stream packetized verification
-│   │   ├── tb_multi_engine_top.sv # Multi-engine parallel throughput testbench
+│   │   ├── tb_bs_golden.sv        # Golden reference accuracy testbench (4/4 PASS)
+│   │   ├── tb_extreme_corners.sv  # Extreme market corner-case verification (5/5 PASS)
+│   │   ├── tb_axis_top.sv         # AXI4-Stream packetized verification (5/5 PASS)
+│   │   ├── tb_multi_engine_top.sv # Multi-engine parallel throughput testbench (20/20 PASS)
 │   │   ├── tb_top.sv              # UVM-style verification testbench
 │   │   ├── iv_agent_pkg.sv        # Verification agent package
 │   │   ├── iv_env_pkg.sv          # Verification environment package
 │   │   ├── iv_seq_pkg.sv          # Verification sequence package
-│   │   ├── iv_if1.sv              # SystemVerilog Interface definition
-│   │   └── iv_golden_model.py     # Python reference model
+│   │   └── iv_if1.sv              # SystemVerilog Interface definition
 │   └── constrs_1/new/
-│       └── timing_constraints.xdc # 250 MHz clock constraints
+│       └── timing_constraints.xdc # 100/125 MHz clock constraints
 ├── host/                          # Host PCIe & Software Interface
 │   ├── iv_accel_host.cpp          # C++ high-performance host streaming driver
 │   ├── iv_accel_host.hpp          # C++ host driver definitions & AXI struct padding
-│   └── iv_engine.py               # Python ctypes binding for host acceleration
-├── synth_results/                 # Post-Synthesis Reports
-│   ├── utilization_ooc.rpt        # Vivado 2025.2 OOC resource utilization report
-│   └── timing_summary_ooc.rpt     # Timing summary report
+│   └── iv_engine.py               # Python quant trading API for host acceleration
+├── dpi_c/                         # Direct Programming Interface (DPI-C)
+│   ├── dpi_bs_ref.c               # IEEE-754 double-precision reference model
+│   └── tb_xdma_dpi.sv             # DPI-C co-simulation testbench
+├── impl_results/                  # Post-Route Physical Implementation Reports
+│   ├── artix7/                    # Artix-7 200T single-core baseline (100 MHz, WNS = +0.658 ns)
+│   ├── artix7_speed3/             # Artix-7 200T single-core speed-3 (125 MHz, WNS = +0.144 ns)
+│   └── artix7_4core/              # Artix-7 200T 4-core parallel array (100 MHz, WNS = +0.016 ns)
 ├── benchmark_accuracy.py          # 10,000-sample statistical accuracy validation script
 ├── precision_tradeoff_analysis.py # 5-format numerical precision vs bit-width study
+├── run_dpi_sim.bat                # Automated DPI-C co-simulation batch script (64/64 PASS)
 ├── synth_ooc.tcl                  # Vivado batch-mode OOC synthesis automation script
 ├── package_ip.tcl                 # Vivado IP packager script
 ├── thesis_manuscript.md           # Full research paper / thesis manuscript
@@ -209,22 +219,25 @@ Synthesized and fully implemented (routed) using **AMD Vivado 2025.2**:
 
 ---
 
-## 🧪 Verification & Simulation
+## :test_tube: Verification & Simulation
 
-All 4 testbenches achieve **100% PASS** rate:
+All 5 testbenches achieve a **100% PASS** rate:
 
 `ash
-# 1. Run Black-Scholes Golden Model Verification
+# 1. Run Black-Scholes Golden Model Verification (4/4 PASS)
 run_tb_bs_golden.bat
 
-# 2. Run Extreme Corner-Case Suite
+# 2. Run Extreme Corner-Case Suite (5/5 PASS)
 run_tb_extreme_corners.bat
 
-# 3. Run AXI4-Stream Packetized Wrapper Verification
+# 3. Run AXI4-Stream Packetized Wrapper Verification (5/5 PASS)
 run_tb_axis_top.bat
 
-# 4. Run Multi-Engine Parallel Array Verification
+# 4. Run Multi-Engine Parallel Array Verification (20/20 PASS)
 run_tb_multi_engine_top.bat
+
+# 5. Run DPI-C Hardware/Software Co-Simulation (64/64 PASS)
+run_dpi_sim.bat
 `
 
 ### Run Python Accuracy Benchmark (10,000 Samples)
@@ -246,19 +259,21 @@ RESULT: SUCCESS - Meets institutional quantitative standards (< 1.0% MAE)
 
 ---
 
-## ⚙️ Running Vivado Synthesis
+## :gear: Running Vivado Physical Implementation & Synthesis
 
-To reproduce the Out-of-Context synthesis in batch mode:
+To reproduce the full physical Place-and-Route or out-of-context synthesis:
 
 `ash
+# Run 4-Core Physical Place-and-Route (Timing Closure & Power)
+vivado -mode batch -source run_impl_artix7_4core.tcl
+
+# Run Out-of-Context Synthesis
 vivado -mode batch -source synth_ooc.tcl
 `
 
-Reports will be generated in synth_results/utilization_ooc.rpt.
-
 ---
 
-## 📜 Citation
+## :scroll: Citation
 
 If you use this work or architecture in your research, please cite:
 
