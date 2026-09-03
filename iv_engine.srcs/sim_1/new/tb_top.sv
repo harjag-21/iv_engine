@@ -25,6 +25,7 @@ module tb_top;
         .C_in           (vif.C_in),
         .r_in           (vif.r_in),
         .T_in           (vif.T_in),
+        .tid_in         (vif.tid_in),
         .fifo_full      (vif.fifo_full),
         .iv_done_valid  (vif.iv_done_valid),
         .iv_done_sigma  (vif.iv_done_sigma),

@@ -21,6 +21,7 @@ package iv_agent_pkg;
         rand int C_q16;    // CORDIC z_in  (Q8.24)
         rand int r_q8;     // mode: 1=Rotation, 0=Vectoring
         rand int T_q8;     // unused in Phase 1
+        rand bit [5:0] tid_in;
 
         // Output fields (captured by monitor)
         int sigma_out_q16;
@@ -90,6 +91,7 @@ package iv_agent_pkg;
             vif.C_in     <= 32'd0;
             vif.r_in     <= 32'd0;
             vif.T_in     <= 32'd0;
+            vif.tid_in   <= 6'd0;
 
             // Wait for reset to deassert before driving transactions
             wait(vif.rst_n === 1'b1);
@@ -105,6 +107,7 @@ package iv_agent_pkg;
                 vif.C_in     <= tx.C_q16;
                 vif.r_in     <= tx.r_q8;
                 vif.T_in     <= tx.T_q8;
+                vif.tid_in   <= tx.tid_in;
 
                 @(posedge vif.clk);
                 vif.valid_in <= 1'b0;

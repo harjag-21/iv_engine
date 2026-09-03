@@ -180,8 +180,6 @@ module iv_top (
     wire [5:0]         fsm_pipe_tid;
     wire signed [31:0] fsm_pipe_sigma;
     wire               fsm_fifo_pop;
-    wire               fsm_done_valid;
-    wire [5:0]         fsm_done_tid;
     wire signed [31:0] fsm_done_sigma;
 
     // Loopback signals from pipeline end (will be connected later)
@@ -284,7 +282,7 @@ module iv_top (
     // synthesis translate_on
 
     // ---------------------------------------------------------
-    // 8. Black-Scholes Pricing & Vega Datapath (110 cycles)
+    // 8. Black-Scholes Pricing & Vega Datapath (126 cycles)
     // ---------------------------------------------------------
     wire signed [31:0] c_bs_out, vega_out_w;
     wire               bs_valid_out;
@@ -304,7 +302,7 @@ module iv_top (
     );
 
     // ---------------------------------------------------------
-    // 9. Delay Pipelines for Market Price & Sigma & TID (110 cycles)
+    // 9. Delay Pipelines for Market Price & Sigma & TID (126 cycles)
     // ---------------------------------------------------------
     // C_market must travel alongside BS datapath for price error
     // sigma_in must travel to compute sigma_updated at output

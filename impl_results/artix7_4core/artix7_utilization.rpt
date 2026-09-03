@@ -1,0 +1,90 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
+| Date         : Thu Sep  3 10:57:52 2026
+| Host         : LAPTOP-EPHGQB72 running 64-bit major release  (build 9200)
+| Command      : report_utilization -file impl_results/artix7_4core/artix7_utilization.rpt -hierarchical -hierarchical_depth 4
+| Design       : iv_multi_engine_top
+| Device       : xc7a200tffg1156-2
+| Speed File   : -2
+| Design State : Routed
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++--------------------------------------+--------------------------------+------------+------------+---------+------+--------+--------+--------+------------+
+|               Instance               |             Module             | Total LUTs | Logic LUTs | LUTRAMs | SRLs |   FFs  | RAMB36 | RAMB18 | DSP Blocks |
++--------------------------------------+--------------------------------+------------+------------+---------+------+--------+--------+--------+------------+
+| iv_multi_engine_top                  |                          (top) |     105441 |      98959 |     904 | 5578 | 137433 |      0 |      0 |        560 |
+|   (iv_multi_engine_top)              |                          (top) |          0 |          0 |       0 |    0 |    267 |      0 |      0 |          0 |
+|   core_inst_gen[0].u_engine_core     |                iv_axis_wrapper |      26341 |      24722 |     226 | 1393 |  34283 |      0 |      0 |        140 |
+|     (core_inst_gen[0].u_engine_core) |                iv_axis_wrapper |       3353 |       3353 |       0 |    0 |   9841 |      0 |      0 |          0 |
+|     u_iv_top                         |                      iv_top_34 |      23114 |      21495 |     226 | 1393 |  24442 |      0 |      0 |        140 |
+|       (u_iv_top)                     |                      iv_top_34 |        653 |         77 |     226 |  350 |    346 |      0 |      0 |          0 |
+|       cordic_inst                    | pipelined_hyperbolic_cordic_35 |       1224 |       1223 |       0 |    1 |   1614 |      0 |      0 |          0 |
+|       u_arb_fsm                      |          iv_arbitration_fsm_36 |        439 |        439 |       0 |    0 |     78 |      0 |      0 |          0 |
+|       u_bs_datapath                  |              iv_bs_datapath_37 |      17626 |      16617 |       0 | 1009 |  19742 |      0 |      0 |        136 |
+|         (u_bs_datapath)              |              iv_bs_datapath_37 |       1822 |       1038 |       0 |  784 |   1527 |      0 |      0 |         40 |
+|         u_d1_divider                 |             iv_divider_q824_40 |       3238 |       3206 |       0 |   32 |   2608 |      0 |      0 |          0 |
+|         u_ln_divider                 |             iv_divider_q824_41 |       3208 |       3176 |       0 |   32 |   2576 |      0 |      0 |          0 |
+|         u_norm_d1                    |                 iv_norm_cdf_42 |       4069 |       3972 |       0 |   97 |   5850 |      0 |      0 |         48 |
+|         u_norm_d2                    |                 iv_norm_cdf_43 |       4023 |       3959 |       0 |   64 |   5829 |      0 |      0 |         48 |
+|         u_sqrt_T                     |                iv_sqrt_q824_44 |       1266 |       1266 |       0 |    0 |   1352 |      0 |      0 |          0 |
+|       u_gain_comp                    |           iv_kn_compensator_38 |         40 |         40 |       0 |    0 |     52 |      0 |      0 |          4 |
+|       u_nr_divider                   |             iv_divider_q824_39 |       3132 |       3099 |       0 |   33 |   2610 |      0 |      0 |          0 |
+|   core_inst_gen[1].u_engine_core     |              iv_axis_wrapper_0 |      26355 |      24736 |     226 | 1393 |  34276 |      0 |      0 |        140 |
+|     (core_inst_gen[1].u_engine_core) |              iv_axis_wrapper_0 |       3355 |       3355 |       0 |    0 |   9844 |      0 |      0 |          0 |
+|     u_iv_top                         |                      iv_top_21 |      23126 |      21507 |     226 | 1393 |  24432 |      0 |      0 |        140 |
+|       (u_iv_top)                     |                      iv_top_21 |        653 |         77 |     226 |  350 |    346 |      0 |      0 |          0 |
+|       cordic_inst                    | pipelined_hyperbolic_cordic_22 |       1230 |       1229 |       0 |    1 |   1614 |      0 |      0 |          0 |
+|       u_arb_fsm                      |          iv_arbitration_fsm_23 |        440 |        440 |       0 |    0 |     78 |      0 |      0 |          0 |
+|       u_bs_datapath                  |              iv_bs_datapath_24 |      17632 |      16623 |       0 | 1009 |  19732 |      0 |      0 |        136 |
+|         (u_bs_datapath)              |              iv_bs_datapath_24 |       1825 |       1041 |       0 |  784 |   1528 |      0 |      0 |         40 |
+|         u_d1_divider                 |             iv_divider_q824_27 |       3241 |       3209 |       0 |   32 |   2608 |      0 |      0 |          0 |
+|         u_ln_divider                 |             iv_divider_q824_28 |       3207 |       3175 |       0 |   32 |   2576 |      0 |      0 |          0 |
+|         u_norm_d1                    |                 iv_norm_cdf_29 |       4070 |       3973 |       0 |   97 |   5850 |      0 |      0 |         48 |
+|         u_norm_d2                    |                 iv_norm_cdf_30 |       4025 |       3961 |       0 |   64 |   5818 |      0 |      0 |         48 |
+|         u_sqrt_T                     |                iv_sqrt_q824_31 |       1265 |       1265 |       0 |    0 |   1352 |      0 |      0 |          0 |
+|       u_gain_comp                    |           iv_kn_compensator_25 |         40 |         40 |       0 |    0 |     52 |      0 |      0 |          4 |
+|       u_nr_divider                   |             iv_divider_q824_26 |       3132 |       3099 |       0 |   33 |   2610 |      0 |      0 |          0 |
+|   core_inst_gen[2].u_engine_core     |              iv_axis_wrapper_1 |      26351 |      24726 |     226 | 1399 |  34337 |      0 |      0 |        140 |
+|     (core_inst_gen[2].u_engine_core) |              iv_axis_wrapper_1 |       3346 |       3346 |       0 |    0 |   9839 |      0 |      0 |          0 |
+|     u_iv_top                         |                       iv_top_8 |      23131 |      21506 |     226 | 1399 |  24498 |      0 |      0 |        140 |
+|       (u_iv_top)                     |                       iv_top_8 |        663 |         81 |     226 |  356 |    358 |      0 |      0 |          0 |
+|       cordic_inst                    |  pipelined_hyperbolic_cordic_9 |       1233 |       1232 |       0 |    1 |   1669 |      0 |      0 |          0 |
+|       u_arb_fsm                      |          iv_arbitration_fsm_10 |        440 |        440 |       0 |    0 |     78 |      0 |      0 |          0 |
+|       u_bs_datapath                  |              iv_bs_datapath_11 |      17626 |      16617 |       0 | 1009 |  19731 |      0 |      0 |        136 |
+|         (u_bs_datapath)              |              iv_bs_datapath_11 |       1822 |       1038 |       0 |  784 |   1527 |      0 |      0 |         40 |
+|         u_d1_divider                 |             iv_divider_q824_14 |       3240 |       3208 |       0 |   32 |   2608 |      0 |      0 |          0 |
+|         u_ln_divider                 |             iv_divider_q824_15 |       3209 |       3177 |       0 |   32 |   2576 |      0 |      0 |          0 |
+|         u_norm_d1                    |                 iv_norm_cdf_16 |       4071 |       3974 |       0 |   97 |   5850 |      0 |      0 |         48 |
+|         u_norm_d2                    |                 iv_norm_cdf_17 |       4019 |       3955 |       0 |   64 |   5818 |      0 |      0 |         48 |
+|         u_sqrt_T                     |                iv_sqrt_q824_18 |       1266 |       1266 |       0 |    0 |   1352 |      0 |      0 |          0 |
+|       u_gain_comp                    |           iv_kn_compensator_12 |         40 |         40 |       0 |    0 |     52 |      0 |      0 |          4 |
+|       u_nr_divider                   |             iv_divider_q824_13 |       3131 |       3098 |       0 |   33 |   2610 |      0 |      0 |          0 |
+|   core_inst_gen[3].u_engine_core     |              iv_axis_wrapper_2 |      26401 |      24782 |     226 | 1393 |  34270 |      0 |      0 |        140 |
+|     (core_inst_gen[3].u_engine_core) |              iv_axis_wrapper_2 |       3395 |       3395 |       0 |    0 |   9839 |      0 |      0 |          0 |
+|     u_iv_top                         |                         iv_top |      23132 |      21513 |     226 | 1393 |  24431 |      0 |      0 |        140 |
+|       (u_iv_top)                     |                         iv_top |        657 |         81 |     226 |  350 |    346 |      0 |      0 |          0 |
+|       cordic_inst                    |    pipelined_hyperbolic_cordic |       1230 |       1229 |       0 |    1 |   1614 |      0 |      0 |          0 |
+|       u_arb_fsm                      |             iv_arbitration_fsm |        449 |        449 |       0 |    0 |     78 |      0 |      0 |          0 |
+|       u_bs_datapath                  |                 iv_bs_datapath |      17625 |      16616 |       0 | 1009 |  19731 |      0 |      0 |        136 |
+|         (u_bs_datapath)              |                 iv_bs_datapath |       1822 |       1038 |       0 |  784 |   1527 |      0 |      0 |         40 |
+|         u_d1_divider                 |              iv_divider_q824_3 |       3240 |       3208 |       0 |   32 |   2608 |      0 |      0 |          0 |
+|         u_ln_divider                 |              iv_divider_q824_4 |       3206 |       3174 |       0 |   32 |   2576 |      0 |      0 |          0 |
+|         u_norm_d1                    |                    iv_norm_cdf |       4073 |       3976 |       0 |   97 |   5850 |      0 |      0 |         48 |
+|         u_norm_d2                    |                  iv_norm_cdf_5 |       4022 |       3958 |       0 |   64 |   5818 |      0 |      0 |         48 |
+|         u_sqrt_T                     |                   iv_sqrt_q824 |       1262 |       1262 |       0 |    0 |   1352 |      0 |      0 |          0 |
+|       u_gain_comp                    |              iv_kn_compensator |         40 |         40 |       0 |    0 |     52 |      0 |      0 |          4 |
+|       u_nr_divider                   |                iv_divider_q824 |       3132 |       3099 |       0 |   33 |   2610 |      0 |      0 |          0 |
++--------------------------------------+--------------------------------+------------+------------+---------+------+--------+--------+--------+------------+
+* Note: The sum of lower-level cells may be larger than their parent cells total, due to cross-hierarchy LUT combining
+
+

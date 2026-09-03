@@ -99,7 +99,7 @@ module iv_multi_engine_top #(
         any_valid = 1'b0;
         for (int j = 0; j < NUM_ENGINES; j++) begin
             automatic logic [$clog2(NUM_ENGINES)-1:0] idx;
-            idx = (rd_ptr + j[$clog2(NUM_ENGINES)-1:0]) % NUM_ENGINES;
+            idx = (int'(rd_ptr) + j) % NUM_ENGINES;
             if (!any_valid && engine_m_valid[idx]) begin
                 active_rd = idx;
                 any_valid = 1'b1;

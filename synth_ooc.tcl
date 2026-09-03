@@ -1,11 +1,11 @@
 # =========================================================
 # Out-of-Context Synthesis Script for iv_top (single IV engine core)
-# Targets: Artix-7 xc7a12ticsg325-1L @ 250 MHz
+# Targets: Artix-7 xc7a200tffg1156-2 @ 100 MHz (10.0 ns)
 # Run via: vivado -mode batch -source synth_ooc.tcl
 # =========================================================
 
-# Create in-memory project targeting the Artix-7 part
-create_project -in_memory -part xc7a12ticsg325-1L
+# Create in-memory project targeting the Artix-7 200T part
+create_project -in_memory -part xc7a200tffg1156-2
 
 # Read all RTL SystemVerilog source files (order = bottom-up dependency)
 read_verilog -sv [list \
@@ -27,12 +27,12 @@ set_property top iv_top [current_fileset]
 #   -flatten_hierarchy rebuilt : accurate hierarchical resource breakdown
 synth_design \
     -top iv_top \
-    -part xc7a12ticsg325-1L \
+    -part xc7a200tffg1156-2 \
     -mode out_of_context \
     -flatten_hierarchy rebuilt
 
-# Create a 250 MHz constraint AFTER synthesis for timing analysis
-create_clock -period 4.000 -name clk [get_ports clk]
+# Create a 100 MHz constraint (10.0 ns period) for Artix-7 speed-2
+create_clock -period 10.000 -name clk [get_ports clk]
 
 # Generate detailed utilization report (hierarchical breakdown)
 report_utilization \

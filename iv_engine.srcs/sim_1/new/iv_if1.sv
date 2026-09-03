@@ -11,6 +11,7 @@ interface iv_if1;
     logic signed [31:0] C_in;
     logic signed [31:0] r_in;
     logic signed [31:0] T_in;
+    logic [5:0]         tid_in;
     logic               fifo_full;
 
     // Egress completion

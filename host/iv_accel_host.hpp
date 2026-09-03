@@ -22,13 +22,14 @@
 #include <cstdint>
 #include <cmath>
 #include <chrono>
+#include <cstring>
+#include <algorithm>
 
 #ifdef XDMA_HARDWARE
 #   include <fcntl.h>
 #   include <unistd.h>
 #   include <sys/ioctl.h>
 #   include <cerrno>
-#   include <cstring>
 #endif
 
 #pragma pack(push, 1)

@@ -108,75 +108,87 @@ std::vector<double> IvAcceleratorHost::process_batch(
     auto start_time = std::chrono::high_resolution_clock::now();
 
     // -------------------------------------------------------
-    // Pack Q8.24 payloads (both hardware and simulation paths)
+    // Stream option contracts in chunks <= 64 (matches hardware context depth)
     // -------------------------------------------------------
-    std::vector<IvMarketTick> tx_buffer(n);
-    for (size_t i = 0; i < n; ++i) {
-        // Black-Scholes scale-invariance normalization (prevents Q8.24 overflow for asset prices > $127.99)
-        double S_val = spot_prices[i];
-        double K_val = strike_prices[i];
-        double C_val = market_prices[i];
-        if (S_val > 100.0 || K_val > 100.0) {
-            double scale = (K_val > 0.0) ? K_val : 1.0;
-            S_val /= scale;
-            K_val = 1.0;
-            C_val /= scale;
+    constexpr size_t MAX_IN_FLIGHT_CHUNK = 64;
+
+    for (size_t offset = 0; offset < n; offset += MAX_IN_FLIGHT_CHUNK) {
+        size_t cur_chunk = std::min(MAX_IN_FLIGHT_CHUNK, n - offset);
+
+        // Pack Q8.24 payloads
+        std::vector<IvMarketTick> tx_buffer(cur_chunk);
+        for (size_t i = 0; i < cur_chunk; ++i) {
+            size_t idx = offset + i;
+            // Black-Scholes scale-invariance normalization (prevents Q8.24 overflow for asset prices > $127.99)
+            double S_val = spot_prices[idx];
+            double K_val = strike_prices[idx];
+            double C_val = market_prices[idx];
+            if (S_val > 100.0 || K_val > 100.0) {
+                double scale = (K_val > 0.0) ? K_val : 1.0;
+                S_val /= scale;
+                K_val = 1.0;
+                C_val /= scale;
+            }
+
+            tx_buffer[i].S_fixed        = float_to_q824(S_val);
+            tx_buffer[i].K_fixed        = float_to_q824(K_val);
+            tx_buffer[i].C_market_fixed = float_to_q824(C_val);
+            tx_buffer[i].r_fixed        = float_to_q824(rates[idx]);
+            tx_buffer[i].T_fixed        = float_to_q824(maturities[idx]);
+            tx_buffer[i].transaction_id = static_cast<uint8_t>(i & 0x3F);
+            memset(tx_buffer[i].reserved, 0, sizeof(tx_buffer[i].reserved));
         }
 
-        tx_buffer[i].S_fixed        = float_to_q824(S_val);
-        tx_buffer[i].K_fixed        = float_to_q824(K_val);
-        tx_buffer[i].C_market_fixed = float_to_q824(C_val);
-        tx_buffer[i].r_fixed        = float_to_q824(rates[i]);
-        tx_buffer[i].T_fixed        = float_to_q824(maturities[i]);
-        tx_buffer[i].transaction_id = static_cast<uint8_t>(i & 0x3F);
-        memset(tx_buffer[i].reserved, 0, sizeof(tx_buffer[i].reserved));
-    }
-
 #ifdef XDMA_HARDWARE
-    // -------------------------------------------------------
-    // XDMA Hardware Path: real PCIe DMA streaming
-    // -------------------------------------------------------
-    if (!is_hardware_mode()) {
-        throw std::runtime_error(
-            "[XDMA] open_xdma_device() must be called before process_batch() "
-            "in hardware mode.");
-    }
+        // -------------------------------------------------------
+        // XDMA Hardware Path: real PCIe DMA streaming
+        // -------------------------------------------------------
+        if (!is_hardware_mode()) {
+            throw std::runtime_error(
+                "[XDMA] open_xdma_device() must be called before process_batch() "
+                "in hardware mode.");
+        }
 
-    const size_t tx_bytes = n * sizeof(IvMarketTick);
-    const size_t rx_bytes = n * sizeof(IvResultPayload);
+        const size_t tx_bytes = cur_chunk * sizeof(IvMarketTick);
+        const size_t rx_bytes = cur_chunk * sizeof(IvResultPayload);
 
-    // Stream all ticks to FPGA over H2C channel
-    ssize_t written = write(m_h2c_fd, tx_buffer.data(), tx_bytes);
-    if (written != static_cast<ssize_t>(tx_bytes)) {
-        throw std::runtime_error(
-            "[XDMA] H2C write underflow: expected " + std::to_string(tx_bytes) +
-            " bytes, wrote " + std::to_string(written) + " bytes. "
-            "Error: " + strerror(errno));
-    }
+        // Stream all ticks to FPGA over H2C channel
+        ssize_t written = write(m_h2c_fd, tx_buffer.data(), tx_bytes);
+        if (written != static_cast<ssize_t>(tx_bytes)) {
+            throw std::runtime_error(
+                "[XDMA] H2C write underflow: expected " + std::to_string(tx_bytes) +
+                " bytes, wrote " + std::to_string(written) + " bytes. "
+                "Error: " + strerror(errno));
+        }
 
-    // Read IV results back over C2H channel (blocking read)
-    std::vector<IvResultPayload> rx_buffer(n);
-    ssize_t bytes_read = read(m_c2h_fd, rx_buffer.data(), rx_bytes);
-    if (bytes_read != static_cast<ssize_t>(rx_bytes)) {
-        throw std::runtime_error(
-            "[XDMA] C2H read underflow: expected " + std::to_string(rx_bytes) +
-            " bytes, read " + std::to_string(bytes_read) + " bytes. "
-            "Error: " + strerror(errno));
-    }
+        // Read IV results back over C2H channel (blocking read)
+        std::vector<IvResultPayload> rx_buffer(cur_chunk);
+        ssize_t bytes_read = read(m_c2h_fd, rx_buffer.data(), rx_bytes);
+        if (bytes_read != static_cast<ssize_t>(rx_bytes)) {
+            throw std::runtime_error(
+                "[XDMA] C2H read underflow: expected " + std::to_string(rx_bytes) +
+                " bytes, read " + std::to_string(bytes_read) + " bytes. "
+                "Error: " + strerror(errno));
+        }
 
-    // Unpack Q8.24 implied volatility results
-    for (size_t i = 0; i < n; ++i) {
-        results[i] = q824_to_float(rx_buffer[i].sigma_fixed);
-    }
-
+        // Unpack Q8.24 implied volatility results with TID-based reordering
+        for (size_t i = 0; i < cur_chunk; ++i) {
+            uint8_t tid = rx_buffer[i].transaction_id & 0x3F;
+            if (tid < cur_chunk) {
+                results[offset + tid] = q824_to_float(rx_buffer[i].sigma_fixed);
+            } else {
+                results[offset + i]   = q824_to_float(rx_buffer[i].sigma_fixed);
+            }
+        }
 #else
-    // -------------------------------------------------------
-    // Simulation Stub: returns 20% IV for benchmark timing only
-    // -------------------------------------------------------
-    for (size_t i = 0; i < n; ++i) {
-        results[i] = 0.20;   // 20.00% — placeholder; not RTL-accurate
-    }
+        // -------------------------------------------------------
+        // Simulation Stub: returns 20% IV for benchmark timing only
+        // -------------------------------------------------------
+        for (size_t i = 0; i < cur_chunk; ++i) {
+            results[offset + i] = 0.20;   // 20.00% — placeholder; not RTL-accurate
+        }
 #endif
+    }
 
     auto end_time   = std::chrono::high_resolution_clock::now();
     double elapsed_ms = std::chrono::duration<double, std::milli>(
@@ -212,6 +224,9 @@ int main(int argc, char* argv[]) {
     std::string h2c = (argc > 1) ? argv[1] : "/dev/xdma0_h2c_0";
     std::string c2h = (argc > 2) ? argv[2] : "/dev/xdma0_c2h_0";
     host.open_xdma_device(h2c, c2h);
+#else
+    (void)argc;
+    (void)argv;
 #endif
 
     constexpr size_t TEST_SIZE = 1'000'000;   // 1 Million option contracts

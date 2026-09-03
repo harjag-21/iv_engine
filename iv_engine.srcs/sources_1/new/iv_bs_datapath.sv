@@ -15,9 +15,9 @@
 //   1. iv_divider_q824: Padé ln(S/K) (33 cycles)
 //   2. iv_sqrt_q824: sqrt(T) engine (28 stages + 1 output reg = 29 cycles; +4 align regs = 33 total)
 //   3. iv_divider_q824: d1 divider (33 cycles)
-//   4. iv_norm_cdf: 5-coefficient A&S Horner CDF, 7-stage pipeline (41 cycles: 1+33+7=41)
+//   4. iv_norm_cdf: 5-coefficient A&S Horner CDF (49 cycles: 1 input + 33 div + 15 Horner stages)
 //
-// Total Latency: 1 + 33 + 1 + 33 + 41 + 1 = 110 clock cycles
+// Total Latency: 1 + 33 + 4 + 33 + 1 + 49 + 5 = 126 clock cycles
 // =========================================================
 module iv_bs_datapath (
     input  wire               clk,

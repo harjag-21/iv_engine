@@ -1,0 +1,47 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
+| Date         : Mon Aug 31 14:22:12 2026
+| Host         : LAPTOP-EPHGQB72 running 64-bit major release  (build 9200)
+| Command      : report_utilization -file impl_results/artix7/artix7_utilization.rpt -hierarchical -hierarchical_depth 4
+| Design       : iv_axis_wrapper
+| Device       : xc7a200tffg1156-2
+| Speed File   : -2
+| Design State : Routed
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++-----------------------+-----------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+|        Instance       |            Module           | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | DSP Blocks |
++-----------------------+-----------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+| iv_axis_wrapper       |                       (top) |      26284 |      24707 |     226 | 1351 | 34465 |      0 |      0 |        140 |
+|   (iv_axis_wrapper)   |                       (top) |       2651 |       2651 |       0 |    0 |  9843 |      0 |      0 |          0 |
+|   u_iv_top            |                      iv_top |      23633 |      22056 |     226 | 1351 | 24622 |      0 |      0 |        140 |
+|     (u_iv_top)        |                      iv_top |        667 |         85 |     226 |  356 |   358 |      0 |      0 |          0 |
+|     cordic_inst       | pipelined_hyperbolic_cordic |       1659 |       1658 |       0 |    1 |  1634 |      0 |      0 |          0 |
+|     u_arb_fsm         |          iv_arbitration_fsm |        512 |        512 |       0 |    0 |    79 |      0 |      0 |          0 |
+|     u_bs_datapath     |              iv_bs_datapath |      17607 |      16646 |       0 |  961 | 19857 |      0 |      0 |        136 |
+|       (u_bs_datapath) |              iv_bs_datapath |       1822 |       1070 |       0 |  752 |  1538 |      0 |      0 |         40 |
+|       u_d1_divider    |           iv_divider_q824_0 |       3238 |       3206 |       0 |   32 |  2641 |      0 |      0 |          0 |
+|       u_ln_divider    |           iv_divider_q824_1 |       3207 |       3175 |       0 |   32 |  2609 |      0 |      0 |          0 |
+|       u_norm_d1       |                 iv_norm_cdf |       4055 |       3974 |       0 |   81 |  5899 |      0 |      0 |         48 |
+|         (u_norm_d1)   |                 iv_norm_cdf |        851 |        802 |       0 |   49 |  3286 |      0 |      0 |         48 |
+|         u_t_divider   |           iv_divider_q824_4 |       3204 |       3172 |       0 |   32 |  2613 |      0 |      0 |          0 |
+|       u_norm_d2       |               iv_norm_cdf_2 |       4021 |       3957 |       0 |   64 |  5818 |      0 |      0 |         48 |
+|         (u_norm_d2)   |               iv_norm_cdf_2 |        819 |        786 |       0 |   33 |  3238 |      0 |      0 |         48 |
+|         u_t_divider   |           iv_divider_q824_3 |       3203 |       3172 |       0 |   31 |  2580 |      0 |      0 |          0 |
+|       u_sqrt_T        |                iv_sqrt_q824 |       1264 |       1264 |       0 |    0 |  1352 |      0 |      0 |          0 |
+|     u_gain_comp       |           iv_kn_compensator |         40 |         40 |       0 |    0 |    52 |      0 |      0 |          4 |
+|     u_nr_divider      |             iv_divider_q824 |       3149 |       3116 |       0 |   33 |  2642 |      0 |      0 |          0 |
++-----------------------+-----------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+* Note: The sum of lower-level cells may be larger than their parent cells total, due to cross-hierarchy LUT combining
+
+
