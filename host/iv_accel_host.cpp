@@ -112,9 +112,20 @@ std::vector<double> IvAcceleratorHost::process_batch(
     // -------------------------------------------------------
     std::vector<IvMarketTick> tx_buffer(n);
     for (size_t i = 0; i < n; ++i) {
-        tx_buffer[i].S_fixed        = float_to_q824(spot_prices[i]);
-        tx_buffer[i].K_fixed        = float_to_q824(strike_prices[i]);
-        tx_buffer[i].C_market_fixed = float_to_q824(market_prices[i]);
+        // Black-Scholes scale-invariance normalization (prevents Q8.24 overflow for asset prices > $127.99)
+        double S_val = spot_prices[i];
+        double K_val = strike_prices[i];
+        double C_val = market_prices[i];
+        if (S_val > 100.0 || K_val > 100.0) {
+            double scale = (K_val > 0.0) ? K_val : 1.0;
+            S_val /= scale;
+            K_val = 1.0;
+            C_val /= scale;
+        }
+
+        tx_buffer[i].S_fixed        = float_to_q824(S_val);
+        tx_buffer[i].K_fixed        = float_to_q824(K_val);
+        tx_buffer[i].C_market_fixed = float_to_q824(C_val);
         tx_buffer[i].r_fixed        = float_to_q824(rates[i]);
         tx_buffer[i].T_fixed        = float_to_q824(maturities[i]);
         tx_buffer[i].transaction_id = static_cast<uint8_t>(i & 0x3F);

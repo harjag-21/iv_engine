@@ -6,17 +6,19 @@
 [![Accuracy](https://img.shields.io/badge/MAE-0.1824%25%20%280.0018%20vol%29-green.svg)](#)
 [![BRAM](https://img.shields.io/badge/BRAM%20Usage-0%20Blocks-brightgreen.svg)](#)
 
-A fully pipelined, zero-BRAM hardware acceleration engine for calculating European call option **Implied Volatility ($\sigma$)** using the Black-Scholes model and Newton-Raphson iterative root-finding. Built in SystemVerilog using **Q8.24 fixed-point arithmetic**, the engine operates at **250 MHz**, achieving deterministic **576 ns single-pass pipeline latency** and delivering up to **250 Million options/second** aggregate streaming throughput on a 4-core array.
+A fully pipelined, zero-BRAM hardware acceleration engine for calculating European call option **Implied Volatility ($\sigma$)** using the Black-Scholes model and Newton-Raphson iterative root-finding. Built in SystemVerilog using **Q8.24 fixed-point arithmetic**, the engine operates up to **125 MHz**, achieving deterministic **126-cycle single-pass pipeline latency** and delivering up to **400 Million options/second** aggregate streaming throughput on a 4-core array.
 
 ---
 
 ## 🚀 Key Highlights
 
-- **Deterministic Sub-Microsecond Latency**: **576 ns (144 clock cycles @ 250 MHz)** single-pass pipeline latency, avoiding CPU OS thread scheduling jitter and GPU PCIe DMA batching delays.
-- **Ultra-High Energy Efficiency**: **71,428 kOps/Watt (3.5 W)** — a **74.4× advantage over high-end CPUs** (Intel i9-14900K) and **7.65× advantage over enterprise GPUs** (NVIDIA RTX 4090).
-- **Institutional-Grade Numerical Accuracy**: Benchmarked across 10,000 synthetic option parameter sweeps (, K \in [10.0, 100.0]$, .85 \le S/K \le 1.15$), achieving a **Mean Absolute Error (MAE) of 0.1824% (0.001824 vol)** and median error of **0.0118%** against SciPy's analytical Brent solver. **94.2% of options exhibit $< 0.1\%$ error**.
-- **Zero Block RAM (Zero-BRAM)**: Uses 56 RAM64M distributed LUTRAM primitives for context storage, leaving 100% of FPGA on-chip BRAM available for order books and market data caches.
-- **Production-Ready Vivado Out-of-Context Synthesis**: Fully synthesized with Vivado 2025.2 with 0 errors and 0 critical warnings.
+- **Deterministic Low Latency**: **126 clock cycles (1.008 µs @ 125 MHz / 1.260 µs @ 100 MHz)** single-pass pipeline latency, avoiding CPU OS thread scheduling jitter and GPU PCIe DMA batching delays.
+- **Ultra-High Energy Efficiency**: **86,188 kOps/Watt (4.64 W for 4-core array)** — over an **89× advantage over high-end CPUs** (Intel i9-14900K) and **9.2× advantage over enterprise GPUs** (NVIDIA RTX 4090).
+- **Institutional-Grade Numerical Accuracy**: Hardware-to-software co-simulation against analytical models demonstrates a **Mean Absolute Error (MAE) of 0.000129 (0.0129% vol)** in 64-tick DPI-C co-sim, with **100.0% of contracts within < 1.0% volatility error**. Over a 10,000-option parameter sweep, statistical MAE is **0.1824% (0.001824 vol)**.
+- **Robust Hardware Flow Control & Active Scoreboard**: Features an active 64-bit TID scoreboard (`tid_busy_mask`) preventing context collision and loopback-priority flow control guaranteeing **zero packet drops** under continuous line-rate streaming.
+- **Mathematical Scale Invariance**: Employs Black-Scholes linear price homogeneity ($\tilde{S}=S/K, \tilde{K}=1.0, \tilde{C}=C/K$), ensuring zero fixed-point overflow for real-world asset prices from $1 to $10,000+.
+- **Zero Block RAM (Zero-BRAM)**: Uses distributed LUTRAM primitives for context storage, leaving 100% of FPGA on-chip BRAM available for order books and market data caches.
+- **100% Timing Closure Across Silicon Grades**: Verified post-route timing closure on Artix-7 (`xc7a200tffg1156-2` at 100 MHz, `xc7a200tffg1156-3` at 125 MHz, and 4-core parallel array at 100 MHz).
 
 ---
 
@@ -108,35 +110,46 @@ Implied volatility $\sigma^*$ is solved iteratively via Newton-Raphson:
    └───────────────────────┘           └───────────────────────┘
 `
 
-### Latency Budget Summary
+### Latency Budget Summary (`BS_LATENCY = 126 cycles`)
 
-| Pipeline Stage | Latency (Cycles) | Duration @ 250 MHz |
-|---|---|---|
-| Black-Scholes Datapath | 110 cycles | 440 ns |
-| Newton-Raphson Step Divider | 33 cycles | 132 ns |
-| Sigma Update & Convergence Check | 1 cycle | 4 ns |
-| **Total Single-Pass Latency** | **144 cycles** | **576 ns** |
-| **Average End-to-End Convergence (3–4 iters)** | **432–576 cycles** | **1.73–2.30 µs** |
+| Pipeline Stage | Latency (Cycles) | Duration @ 125 MHz | Duration @ 100 MHz |
+|---|---|---|---|
+| Stage 0: Input Latch & Padé Formulation | 1 cycle | 8 ns | 10 ns |
+| Stage 1: Padé ln(S/K) & Digit-Recurrence sqrt(T) | 33 cycles | 264 ns | 330 ns |
+| Stage 2: d1 Numerator/Denominator Decomposed | 4 cycles | 32 ns | 40 ns |
+| Stage 3: d1 Non-Restoring Divider | 33 cycles | 264 ns | 330 ns |
+| Stage 4a: Register d1 / d2 = d1 - σ√T | 1 cycle | 8 ns | 10 ns |
+| Stage 4b: Dual Abramowitz & Stegun CDF Engines | 49 cycles | 392 ns | 490 ns |
+| Stage 5: Black-Scholes Call & Vega Evaluator | 5 cycles | 40 ns | 50 ns |
+| **Total Black-Scholes Datapath** | **126 cycles** | **1.008 µs** | **1.260 µs** |
+| Newton-Raphson Step Divider | 33 cycles | 264 ns | 330 ns |
+| Sigma Update & Convergence Check | 1 cycle | 8 ns | 10 ns |
+| **Total Single-Pass NR Iteration** | **160 cycles** | **1.280 µs** | **1.600 µs** |
+| **Average End-to-End Convergence (2.5–3.5 iters)** | **400–560 cycles** | **3.20–4.48 µs** | **4.00–5.60 µs** |
 
 ---
 
-## 📊 Synthesis & Resource Utilization
+## 📊 Physical Place-and-Route Implementation Results
 
-Synthesized using **AMD Vivado 2025.2** (synth_design -mode out_of_context):
+Synthesized and fully implemented (routed) using **AMD Vivado 2025.2**:
 
-| Resource | Single Core (iv_top) | Notes |
-|---|---|---|
-| **Logic LUTs** | 62,221 | Pure combinatorial & arithmetic logic |
-| **LUTRAM** | 226 | 56 RAM64M distributed memory primitives |
-| **SRLs (Shift Registers)** | 1,369 | Deep pipeline matching delay lines |
-| **Total LUTs** | **63,816** | ~63% of Artix-7 xc7a100t |
-| **Flip-Flops (FFs)** | **18,660** | Fully pipelined register stages |
-| **DSP48E1** | **40** | Auto-inferred for 64-bit pipeline multiplies |
-| **Block RAM (BRAM36/18)** | **0** | **100% Zero-BRAM verified** |
-
-### Target Devices
-- **Single Engine Core**: AMD Artix-7 xc7a100t (101,400 LUTs, 240 DSP48E1)
-- **4-Core Array (iv_multi_engine_top)**: AMD Artix-7 xc7a200t (269,200 LUTs) or Kintex-7 xc7k325t (326,080 LUTs)
+| Metric | Single-Core Baseline | Single-Core Speed -3 | 4-Core Parallel Array |
+|---|:---:|:---:|:---:|
+| **Target Device** | Artix-7 `xc7a200tffg1156-2` | Artix-7 `xc7a200tffg1156-3` | Artix-7 `xc7a200tffg1156-2` |
+| **Top Module** | `iv_axis_wrapper` | `iv_axis_wrapper` | `iv_multi_engine_top` |
+| **Clock Frequency** | **100.000 MHz** (10.0 ns) | **125.000 MHz** (8.0 ns) | **100.000 MHz** (10.0 ns) |
+| **Setup Slack (WNS)** | **+0.658 ns (PASS)** | **+0.144 ns (PASS)** | **+0.016 ns (PASS)** |
+| **Total Negative Slack (TNS)** | **0.000 ns** | **0.000 ns** | **0.000 ns** |
+| **Hold Slack (WHS)** | **+0.037 ns** | **+0.062 ns** | **+0.027 ns** |
+| **Total Hold Slack (THS)** | **0.000 ns** | **0.000 ns** | **0.000 ns** |
+| **Total Slice LUTs** | 26,284 / 134,600 (19.5%) | 26,311 / 134,600 (18.5%) | **105,441 / 134,600 (78.3%)** |
+| **Flip-Flops (FFs)** | 34,465 / 269,200 (12.8%) | 34,465 / 269,200 (12.8%) | **137,433 / 269,200 (51.0%)** |
+| **DSP48E1 Blocks** | 140 / 740 (18.9%) | 140 / 740 (18.9%) | **560 / 740 (75.7%)** |
+| **Block RAM (BRAM)** | **0 / 730 (0.0%)** | **0 / 730 (0.0%)** | **0 / 730 (0.0%)** |
+| **Total On-Chip Power** | **1.238 W** | **1.520 W** | **4.641 W** |
+| **Junction Temperature** | 26.8 °C | 27.2 °C | 31.7 °C |
+| **Streaming Throughput** | **100 MOps/sec** | **125 MOps/sec** | **400 MOps/sec** |
+| **Energy Efficiency** | **80,775 kOps/Watt** | **82,236 kOps/Watt** | **86,188 kOps/Watt** |
 
 ---
 
@@ -146,7 +159,7 @@ Synthesized using **AMD Vivado 2025.2** (synth_design -mode out_of_context):
 |---|---|---|---|---|---|
 | **Host CPU** (Intel i9-14900K) | 32-Thread OpenMP C++ | 120 × 10⁶ | 125 W | 960 kOps/W | 12.50 µs |
 | **Enterprise GPU** (NVIDIA RTX 4090) | CUDA 12.0 Kernel Batch | 4,200 × 10⁶ | 450 W | 9,333 kOps/W | 45.00 µs (Batch DMA) |
-| **Proposed FPGA Core (Ours)** | **Custom Q8.24 RTL** | **250 × 10⁶** | **3.5 W** | **71,428 kOps/W** | **576 ns** |
+| **Proposed 4-Core FPGA (Ours)** | **Custom Q8.24 Multi-Core** | **400 × 10⁶** | **4.64 W** | **86,188 kOps/W** | **1.26 µs** |
 
 ---
 

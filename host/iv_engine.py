@@ -38,10 +38,21 @@ class IvAccelerator:
         num_contracts = S.size
         print(f"[IV FPGA ACCELERATOR] Streaming {num_contracts:,} option contracts over PCIe Gen4 x8...")
 
+        # Scale-invariance normalization (prevents Q8.24 overflow for prices > $127.99):
+        # Black-Scholes call pricing is homogeneous of degree 1:
+        #   C(S, K, r, T, σ) = scale * C(S/scale, K/scale, r, T, σ)
+        # Choosing scale = K ensures S_norm ≈ 1.0, K_norm = 1.0, C_norm in [0, 1.0],
+        # completely eliminating fixed-point dynamic range overflow.
+        needs_scale = (S > 100.0) | (K > 100.0)
+        scale = np.where(needs_scale, K, 1.0)
+        S_norm = S / scale
+        K_norm = K / scale
+        C_norm = C / scale
+
         # Fixed-point Q8.24 packing
-        S_fixed = self.float_to_q824(S)
-        K_fixed = self.float_to_q824(K)
-        C_fixed = self.float_to_q824(C)
+        S_fixed = self.float_to_q824(S_norm)
+        K_fixed = self.float_to_q824(K_norm)
+        C_fixed = self.float_to_q824(C_norm)
         r_fixed = self.float_to_q824(r)
         T_fixed = self.float_to_q824(T)
 

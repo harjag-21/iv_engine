@@ -42,6 +42,9 @@ module tb_axis_top;
         .m_axis_tdata  (m_axis_tdata)
     );
 
+    // Monitor counter
+    int rx_cnt = 0;
+
     // Test sequence
     initial begin
         s_axis_tvalid = 1'b0;
@@ -92,7 +95,6 @@ module tb_axis_top;
     end
 
     // Monitor AXI outputs
-    int rx_cnt = 0;
     always @(posedge aclk) begin
         if (aresetn && m_axis_tvalid && m_axis_tready) begin
             rx_cnt++;

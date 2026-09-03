@@ -44,6 +44,10 @@ module iv_top (
     // Mode Detection: T_in == 0 is CORDIC test mode; T_in != 0 is IV Engine Mode
     wire is_cordic_mode = (T_in == 32'sd0);
 
+    // Forward declaration of FSM done signals
+    wire       fsm_done_valid;
+    wire [5:0] fsm_done_tid;
+
     // In-flight transaction counter: tracks how many TIDs are currently being computed.
     // Asserts fifo_full when 63 of 64 context memory slots are in use, preventing
     // new transactions from overwriting in-progress computations.
@@ -59,7 +63,6 @@ module iv_top (
             endcase
         end
     end
-    assign fifo_full = (in_flight_count >= 7'd63);
 
     // ---------------------------------------------------------
     // 1. CORDIC Pipeline Instance (18 stages)
@@ -186,6 +189,36 @@ module iv_top (
     logic [5:0]         loopback_tid;
     logic signed [31:0] loopback_sigma;
     logic signed [31:0] loopback_error;
+
+    // ---------------------------------------------------------
+    // Active In-Flight TID Scoreboard & Handshake Flow Control
+    // ---------------------------------------------------------
+    // Tracks currently active TIDs in the pipeline. Prevents
+    // context overwrite if an external feeder injects a duplicate
+    // TID before the previous one completes.
+    logic [63:0] tid_busy_mask;
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            tid_busy_mask <= 64'd0;
+        end else begin
+            if (fsm_done_valid) begin
+                tid_busy_mask[fsm_done_tid] <= 1'b0;
+            end
+            if (valid_in && !is_cordic_mode) begin
+                tid_busy_mask[active_tid] <= 1'b1;
+            end
+        end
+    end
+
+    // Detect when pipeline entry is occupied by an unconverged loopback iteration
+    wire signed [31:0] abs_lb_error = (loopback_error == 32'sh80000000) ? 32'sh7FFFFFFF :
+                                      ((loopback_error < 0) ? -loopback_error : loopback_error);
+    wire lb_unconverged = loopback_valid && (abs_lb_error > 32'd167772);
+    wire tid_busy       = tid_busy_mask[active_tid];
+
+    // Assert fifo_full if context memory is full (>=63), or if an unconverged
+    // loopback iteration claims the pipeline slot, or if the active TID is already in flight.
+    assign fifo_full = (in_flight_count >= 7'd63) || lb_unconverged || tid_busy;
 
     wire               fsm_pipe_is_loopback;
 
