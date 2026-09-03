@@ -10,7 +10,7 @@
 // In Q8.24 format:
 // 1.207497063 * 2^24 = 20,258,170 (32'sd20258170)
 //
-// Latency: 1 clock cycle (registered multiplier for 250 MHz)
+// Latency: 2 clock cycles (registered multiplier for 250 MHz)
 // =========================================================
 module iv_kn_compensator (
     input  wire               clk,
@@ -26,13 +26,17 @@ module iv_kn_compensator (
 
     logic signed [63:0] mult_result;
 
+    logic valid_d1;
+
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             mult_result <= 64'sd0;
             data_out    <= 32'sd0;
+            valid_d1    <= 1'b0;
             valid_out   <= 1'b0;
         end else begin
-            valid_out   <= valid_in;
+            valid_d1    <= valid_in;
+            valid_out   <= valid_d1;
             mult_result <= $signed(data_in) * $signed(INV_KN_Q24);
             data_out    <= signed'(mult_result >>> 24);
         end

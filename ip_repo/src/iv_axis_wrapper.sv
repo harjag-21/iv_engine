@@ -50,55 +50,47 @@ module iv_axis_wrapper (
     wire [63:0] packed_output = {26'b0, iv_done_tid, iv_done_sigma};
 
     // -----------------------------------------
-    // Output Skid Buffer (AXI4-Stream Compliance)
+    // Output FIFO (AXI4-Stream Compliance & Data Loss Prevention)
     // -----------------------------------------
-    // The AXI4-Stream spec requires the master to hold
-    // TDATA and TVALID stable until TREADY is asserted.
-    // Without a skid buffer, pipeline results are lost
-    // when the downstream consumer de-asserts TREADY.
-    // -----------------------------------------
-    logic        skid_valid;
-    logic [63:0] skid_data;
+    localparam int FIFO_DEPTH = 256;
+    // Force distributed LUTRAM inference (prevents BRAM18 inference that would
+    // violate the "zero-BRAM" claim). 256x64b = 16Kbits < 18Kb BRAM threshold.
+    (* ram_style = "distributed" *) logic [63:0] fifo_mem [0:FIFO_DEPTH-1];
+    logic [7:0]  wr_ptr;
+    logic [7:0]  rd_ptr;
+    logic [8:0]  fifo_count;
 
-    always_ff @(posedge aclk) begin
+    wire fifo_write = iv_done_valid && (fifo_count < FIFO_DEPTH);
+    wire fifo_read  = m_axis_tready && (fifo_count > 0);
+
+    always_ff @(posedge aclk or negedge aresetn) begin
         if (!aresetn) begin
-            skid_valid <= 1'b0;
-            skid_data  <= '0;
+            wr_ptr     <= 8'd0;
+            rd_ptr     <= 8'd0;
+            fifo_count <= 9'd0;
         end else begin
-            if (skid_valid) begin
-                // Skid buffer occupied — waiting for consumer
-                if (m_axis_tready) begin
-                    // Consumer accepted the skid data
-                    if (iv_done_valid) begin
-                        // Simultaneous new pipeline output — refill skid
-                        skid_data  <= packed_output;
-                        // skid_valid stays 1'b1
-                    end else begin
-                        skid_valid <= 1'b0;
-                    end
-                end
-                // else: consumer still not ready, hold skid data
-            end else begin
-                // Skid buffer empty — pass-through mode
-                if (iv_done_valid && !m_axis_tready) begin
-                    // Pipeline produced but consumer blocked — capture
-                    skid_valid <= 1'b1;
-                    skid_data  <= packed_output;
-                end
+            if (fifo_write) begin
+                fifo_mem[wr_ptr] <= packed_output;
+                wr_ptr           <= wr_ptr + 8'd1;
             end
+            if (fifo_read) begin
+                rd_ptr           <= rd_ptr + 8'd1;
+            end
+            
+            case ({fifo_write, fifo_read})
+                2'b10: fifo_count <= fifo_count + 9'd1;
+                2'b01: fifo_count <= fifo_count - 9'd1;
+                default: ;
+            endcase
         end
     end
 
-    // Output mux: skid buffer takes priority over direct path
-    assign m_axis_tvalid = skid_valid ? 1'b1 : iv_done_valid;
-    assign m_axis_tdata  = skid_valid ? skid_data : packed_output;
+    assign m_axis_tvalid = (fifo_count > 0);
+    assign m_axis_tdata  = fifo_mem[rd_ptr];
 
-    // -----------------------------------------
-    // Handshake Control Logic
-    // -----------------------------------------
-    // Accept new data if internal FIFO is not full AND
-    // skid buffer is not occupied (backpressure propagation)
-    assign s_axis_tready = ~iv_fifo_full & ~skid_valid;
+    // Almost-full threshold at 100 entries to leave safe margin for 144-cycle pipeline to drain
+    wire fifo_almost_full = (fifo_count >= 9'd100);
+    assign s_axis_tready = ~iv_fifo_full & ~fifo_almost_full;
     
     // Fire valid data into the core on valid AXI handshake
     assign iv_valid_in = s_axis_tvalid && s_axis_tready;
@@ -116,6 +108,7 @@ module iv_axis_wrapper (
         .C_in           (iv_C_in),
         .r_in           (iv_r_in),
         .T_in           (iv_T_in),
+        .tid_in         (iv_tid_in),
         
         .fifo_full      (iv_fifo_full),
         

@@ -5,11 +5,16 @@
 # Vivado Custom IP core for IP Integrator / Block Designs.
 # =========================================================
 
-# 1. Create target IP repository directory
+# 1. Open project if not already open
+if {[catch {current_project}]} {
+    open_project iv_engine.xpr
+}
+
+# 2. Create target IP repository directory
 set repo_dir "C:/Users/user/iv_engine/ip_repo"
 file mkdir $repo_dir
 
-# 2. Package current project into the IP repository
+# 3. Package current project into the IP repository
 ipx::package_project -root_dir $repo_dir -vendor iitkgp.ac.in -library hft_acceleration -taxonomy /Financial_Acceleration -import_files -force
 
 # 3. Set IP Core Identification Metadata

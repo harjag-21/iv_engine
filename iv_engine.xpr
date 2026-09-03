@@ -89,9 +89,6 @@
   <FileSets Version="1" Minor="32">
     <FileSet Name="sources_1" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
       <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/ip_repo/component.xml">
-        <FileInfo SFType="IPXACT"/>
-      </File>
       <File Path="$PSRCDIR/sources_1/new/iv_multi_engine_top.sv">
         <FileInfo>
           <Attr Name="AutoDisabled" Val="1"/>
@@ -155,6 +152,9 @@
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
+      </File>
+      <File Path="$PPRDIR/ip_repo/component.xml">
+        <FileInfo SFType="IPXACT"/>
       </File>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
