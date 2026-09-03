@@ -55,11 +55,13 @@ puts "============================================================"
 puts "  \[STEP 1/6\] Synthesis: $TOP on $PART (UltraScale+)"
 puts "============================================================"
 
+set NUM_CORES   16
 synth_design \
     -top            $TOP  \
     -part           $PART \
     -mode           out_of_context \
-    -flatten_hierarchy rebuilt
+    -flatten_hierarchy rebuilt \
+    -generic        NUM_ENGINES=$NUM_CORES
 
 # ----------------------------------------------------------
 # 3. Timing Constraint: 300 MHz virtual clock on 'aclk'

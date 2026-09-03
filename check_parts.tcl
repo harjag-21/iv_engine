@@ -6,5 +6,7 @@ foreach p [get_parts] {
     }
 }
 puts "Installed FPGA Families: $all_families"
-puts "Top Artix-7 -3 parts: [lrange [get_parts -filter {FAMILY == artix7 && SPEED == -3}] 0 10]"
+puts "200T parts: [get_parts *200t*]"
+puts "Kintex parts: [get_parts *7k*]"
+puts "UltraScale parts: [get_parts *ku*] [get_parts *vu*] [get_parts *u50*]"
 exit

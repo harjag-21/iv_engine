@@ -139,23 +139,23 @@ Implied volatility $\\sigma^*$ is solved iteratively via Newton-Raphson:
 
 Synthesized and fully implemented (routed) using **AMD Vivado 2025.2**:
 
-| Metric | Single-Core Baseline | Single-Core Speed -3 | 4-Core Parallel Array |
-|---|:---:|:---:|:---:|
-| **Target Device** | Artix-7 xc7a200tffg1156-2 | Artix-7 xc7a200tffg1156-3 | Artix-7 xc7a200tffg1156-2 |
-| **Top Module** | iv_axis_wrapper | iv_axis_wrapper | iv_multi_engine_top |
-| **Clock Frequency** | **100.000 MHz** (10.0 ns) | **125.000 MHz** (8.0 ns) | **100.000 MHz** (10.0 ns) |
-| **Setup Slack (WNS)** | **+0.658 ns (PASS)** | **+0.144 ns (PASS)** | **+0.016 ns (PASS)** |
-| **Total Negative Slack (TNS)** | **0.000 ns** | **0.000 ns** | **0.000 ns** |
-| **Hold Slack (WHS)** | **+0.037 ns** | **+0.062 ns** | **+0.027 ns** |
-| **Total Hold Slack (THS)** | **0.000 ns** | **0.000 ns** | **0.000 ns** |
-| **Total Slice LUTs** | 26,284 / 134,600 (19.5%) | 26,311 / 134,600 (18.5%) | **105,441 / 134,600 (78.3%)** |
-| **Flip-Flops (FFs)** | 34,465 / 269,200 (12.8%) | 34,465 / 269,200 (12.8%) | **137,433 / 269,200 (51.0%)** |
-| **DSP48E1 Blocks** | 140 / 740 (18.9%) | 140 / 740 (18.9%) | **560 / 740 (75.7%)** |
-| **Block RAM (BRAM)** | **0 / 730 (0.0%)** | **0 / 730 (0.0%)** | **0 / 730 (0.0%)** |
-| **Total On-Chip Power** | **1.238 W** | **1.520 W** | **4.641 W** |
-| **Junction Temperature** | 26.8 °C | 27.2 °C | 31.7 °C |
-| **Streaming Throughput** | **100 MOps/sec** | **125 MOps/sec** | **400 MOps/sec** |
-| **Energy Efficiency** | **80,775 kOps/Watt** | **82,236 kOps/Watt** | **86,188 kOps/Watt** |
+| Metric | Single-Core Baseline | Single-Core Speed -3 | 4-Core Baseline | 4-Core Speed -3 |
+|---|:---:|:---:|:---:|:---:|
+| **Target Device** | Artix-7 `xc7a200t-2` | Artix-7 `xc7a200t-3` | Artix-7 `xc7a200t-2` | Artix-7 `xc7a200t-3` |
+| **Top Module** | `iv_axis_wrapper` | `iv_axis_wrapper` | `iv_multi_engine_top` | `iv_multi_engine_top` |
+| **Clock Frequency** | **100.000 MHz** (10.0 ns) | **125.000 MHz** (8.0 ns) | **100.000 MHz** (10.0 ns) | **110.000 MHz** (9.09 ns) |
+| **Setup Slack (WNS)** | **+0.658 ns (PASS)** | **+0.144 ns (PASS)** | **+0.016 ns (PASS)** | **+0.089 ns (PASS)** |
+| **Total Negative Slack (TNS)** | **0.000 ns** | **0.000 ns** | **0.000 ns** | **0.000 ns** |
+| **Hold Slack (WHS)** | **+0.037 ns** | **+0.062 ns** | **+0.027 ns** | **+0.044 ns** |
+| **Total Hold Slack (THS)** | **0.000 ns** | **0.000 ns** | **0.000 ns** | **0.000 ns** |
+| **Total Slice LUTs** | 26,284 / 134,600 (19.5%) | 26,311 / 134,600 (18.5%) | 105,441 / 134,600 (78.3%) | **106,456 / 134,600 (79.6%)** |
+| **Flip-Flops (FFs)** | 34,465 / 269,200 (12.8%) | 34,465 / 269,200 (12.8%) | 137,433 / 269,200 (51.0%) | **137,754 / 269,200 (51.5%)** |
+| **DSP48E1 Blocks** | 140 / 740 (18.9%) | 140 / 740 (18.9%) | 560 / 740 (75.7%) | **560 / 740 (75.7%)** |
+| **Block RAM (BRAM)** | **0 / 730 (0.0%)** | **0 / 730 (0.0%)** | **0 / 730 (0.0%)** | **0 / 730 (0.0%)** |
+| **Total On-Chip Power** | **1.238 W** | **1.520 W** | **4.641 W** | **5.142 W** |
+| **Junction Temperature** | 26.8 °C | 27.2 °C | 31.7 °C | 33.5 °C |
+| **Streaming Throughput** | **100 MOps/sec** | **125 MOps/sec** | **400 MOps/sec** | **440 MOps/sec** |
+| **Energy Efficiency** | **80,775 kOps/Watt** | **82,236 kOps/Watt** | **86,188 kOps/Watt** | **85,570 kOps/Watt** |
 
 ---
 
