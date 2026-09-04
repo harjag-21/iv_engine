@@ -6,7 +6,7 @@
 // Features:
 //   1. Hyperbolic CORDIC 18-stage pipeline (test/verification mode)
 //   2. Gain compensation unit (1/K_n scaling)
-//   3. Black-Scholes pricing & Vega datapath (110 cycles)
+//   3. Black-Scholes pricing & Vega datapath (126 cycles)
 //   4. Q8.24 Newton-Raphson divider for volatility update (33 cycles)
 //   5. Iterative NR loopback via iv_arbitration_fsm
 //   6. Context memory: stores {S,K,C,r,T} per TID during iteration
@@ -18,7 +18,7 @@
 //
 // Pipeline Latency:
 //   CORDIC mode: 20 cycles (18 CORDIC + 2 gain comp)
-//   IV mode:     144 cycles per iteration (110 BS + 33 div + 1 update)
+//   IV mode:     160 cycles per iteration (126 BS + 33 div + 1 update)
 //               × average 3-5 iterations
 // =========================================================
 module iv_top (
@@ -212,7 +212,8 @@ module iv_top (
     wire signed [31:0] abs_lb_error = (loopback_error == 32'sh80000000) ? 32'sh7FFFFFFF :
                                       ((loopback_error < 0) ? -loopback_error : loopback_error);
     wire lb_unconverged = loopback_valid && (abs_lb_error > 32'd167772);
-    wire tid_busy       = tid_busy_mask[active_tid];
+    wire tid_busy       = tid_busy_mask[active_tid] &&
+                          !(fsm_done_valid && (fsm_done_tid == active_tid));
 
     // Assert fifo_full if context memory is full (>=63), or if an unconverged
     // loopback iteration claims the pipeline slot, or if the active TID is already in flight.

@@ -123,10 +123,10 @@ std::vector<double> IvAcceleratorHost::process_batch(
             double S_val = spot_prices[idx];
             double K_val = strike_prices[idx];
             double C_val = market_prices[idx];
-            if (S_val > 100.0 || K_val > 100.0) {
-                double scale = (K_val > 0.0) ? K_val : 1.0;
+            {
+                double scale = (K_val > 1e-8) ? K_val : 1.0;
                 S_val /= scale;
-                K_val = 1.0;
+                K_val  = 1.0;
                 C_val /= scale;
             }
 

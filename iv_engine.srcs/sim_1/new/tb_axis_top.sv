@@ -18,11 +18,13 @@ module tb_axis_top;
     logic         s_axis_tvalid;
     logic         s_axis_tready;
     logic [255:0] s_axis_tdata;
+    logic         s_axis_tlast;
 
     // Master interface (Output)
     logic         m_axis_tvalid;
     logic         m_axis_tready;
     logic [63:0]  m_axis_tdata;
+    logic         m_axis_tlast;
 
     // Clock generation (250 MHz)
     initial begin
@@ -37,9 +39,11 @@ module tb_axis_top;
         .s_axis_tvalid (s_axis_tvalid),
         .s_axis_tready (s_axis_tready),
         .s_axis_tdata  (s_axis_tdata),
+        .s_axis_tlast  (s_axis_tlast),
         .m_axis_tvalid (m_axis_tvalid),
         .m_axis_tready (m_axis_tready),
-        .m_axis_tdata  (m_axis_tdata)
+        .m_axis_tdata  (m_axis_tdata),
+        .m_axis_tlast  (m_axis_tlast)
     );
 
     // Monitor counter
@@ -49,6 +53,7 @@ module tb_axis_top;
     initial begin
         s_axis_tvalid = 1'b0;
         s_axis_tdata  = 256'b0;
+        s_axis_tlast  = 1'b1;
         m_axis_tready = 1'b1;
         aresetn       = 1'b0;
 

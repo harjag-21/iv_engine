@@ -17,7 +17,7 @@ class IvAccelerator:
         return np.uint32(np.round(val * 16777216.0))
 
     def q824_to_float(self, fixed_val):
-        return np.float64(fixed_val) / 16777216.0
+        return np.float64(np.int32(fixed_val)) / 16777216.0
 
     def compute_implied_volatility(self, spot, strike, market_price, rate, maturity):
         """
@@ -41,12 +41,11 @@ class IvAccelerator:
         # Scale-invariance normalization (prevents Q8.24 overflow for prices > $127.99):
         # Black-Scholes call pricing is homogeneous of degree 1:
         #   C(S, K, r, T, σ) = scale * C(S/scale, K/scale, r, T, σ)
-        # Choosing scale = K ensures S_norm ≈ 1.0, K_norm = 1.0, C_norm in [0, 1.0],
+        # Always normalizing by strike K ensures S_norm ≈ 1.0, K_norm = 1.0, C_norm in [0, 1.0],
         # completely eliminating fixed-point dynamic range overflow.
-        needs_scale = (S > 100.0) | (K > 100.0)
-        scale = np.where(needs_scale, K, 1.0)
+        scale = np.where(K > 1e-8, K, 1.0)
         S_norm = S / scale
-        K_norm = K / scale
+        K_norm = np.ones_like(K)
         C_norm = C / scale
 
         # Fixed-point Q8.24 packing

@@ -23,23 +23,27 @@ module iv_multi_engine_top #(
     input  logic         s_axis_tvalid,
     output logic         s_axis_tready,
     input  logic [255:0] s_axis_tdata,
+    input  logic         s_axis_tlast,
 
     // -----------------------------------------
     // Top-Level AXI4-Stream Egress (Volatility Output)
     // -----------------------------------------
     output logic         m_axis_tvalid,
     input  logic         m_axis_tready,
-    output logic [63:0]  m_axis_tdata
+    output logic [63:0]  m_axis_tdata,
+    output logic         m_axis_tlast
 );
 
     // Internal bus signals for core array
     logic [NUM_ENGINES-1:0]        engine_s_valid;
     logic [NUM_ENGINES-1:0]        engine_s_ready;
     logic [NUM_ENGINES-1:0][255:0] engine_s_data;
+    logic [NUM_ENGINES-1:0]        engine_s_last;
 
     logic [NUM_ENGINES-1:0]        engine_m_valid;
     logic [NUM_ENGINES-1:0]        engine_m_ready;
     logic [NUM_ENGINES-1:0][63:0]  engine_m_data;
+    logic [NUM_ENGINES-1:0]        engine_m_last;
 
     // ---------------------------------------------------------
     // Ingress Round-Robin Distributor (Demux)
@@ -59,6 +63,7 @@ module iv_multi_engine_top #(
         for (i = 0; i < NUM_ENGINES; i = i + 1) begin : demux_gen
             assign engine_s_valid[i] = (s_axis_tvalid && (wr_ptr == i[$clog2(NUM_ENGINES)-1:0]));
             assign engine_s_data[i]  = s_axis_tdata;
+            assign engine_s_last[i]  = s_axis_tlast;
         end
     endgenerate
 
@@ -75,9 +80,11 @@ module iv_multi_engine_top #(
                 .s_axis_tvalid (engine_s_valid[i]),
                 .s_axis_tready (engine_s_ready[i]),
                 .s_axis_tdata  (engine_s_data[i]),
+                .s_axis_tlast  (engine_s_last[i]),
                 .m_axis_tvalid (engine_m_valid[i]),
                 .m_axis_tready (engine_m_ready[i]),
-                .m_axis_tdata  (engine_m_data[i])
+                .m_axis_tdata  (engine_m_data[i]),
+                .m_axis_tlast  (engine_m_last[i])
             );
         end
     endgenerate
@@ -124,5 +131,6 @@ module iv_multi_engine_top #(
 
     assign m_axis_tvalid = any_valid;
     assign m_axis_tdata  = engine_m_data[active_rd];
+    assign m_axis_tlast  = engine_m_last[active_rd];
 
 endmodule

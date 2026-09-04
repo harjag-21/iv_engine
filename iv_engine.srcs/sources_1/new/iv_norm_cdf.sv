@@ -22,7 +22,7 @@
 //   Stage 4a: poly = p1 * t                                  (1 multiply)
 //   Stage 4b: N(x) = 1 - phi * poly; symmetry output         (1 multiply)
 //
-// Latency: 1 (Stage 1) + 33 (Divider) + 7 (Pipelined Horner 3a–4b) = 41 cycles.
+// Latency: 3 (Stages 1a/1b/1c) + 33 (Divider) + 13 (Horner 3a–4d) = 49 cycles.
 // =========================================================
 module iv_norm_cdf (
     input  wire               clk,

@@ -10,13 +10,15 @@ module iv_axis_wrapper (
     input  logic         s_axis_tvalid,
     output logic         s_axis_tready,
     input  logic [255:0] s_axis_tdata,
+    input  logic         s_axis_tlast,
 
     // -----------------------------------------
     // AXI4-Stream Master (Output Volatility)
     // -----------------------------------------
     output logic         m_axis_tvalid,
     input  logic         m_axis_tready,
-    output logic [63:0]  m_axis_tdata
+    output logic [63:0]  m_axis_tdata,
+    output logic         m_axis_tlast
 );
 
     // Internal signals to connect to the IV Engine
@@ -60,14 +62,20 @@ module iv_axis_wrapper (
     logic [7:0]  rd_ptr;
     logic [8:0]  fifo_count;
 
+    logic [63:0] m_axis_tdata_reg;
+    logic        m_axis_tvalid_reg;
+
+    wire out_ready = !m_axis_tvalid_reg || (m_axis_tready && m_axis_tvalid_reg);
     wire fifo_write = iv_done_valid && (fifo_count < FIFO_DEPTH);
-    wire fifo_read  = m_axis_tready && (fifo_count > 0);
+    wire fifo_read  = out_ready && (fifo_count > 0);
 
     always_ff @(posedge aclk or negedge aresetn) begin
         if (!aresetn) begin
-            wr_ptr     <= 8'd0;
-            rd_ptr     <= 8'd0;
-            fifo_count <= 9'd0;
+            wr_ptr            <= 8'd0;
+            rd_ptr            <= 8'd0;
+            fifo_count        <= 9'd0;
+            m_axis_tvalid_reg <= 1'b0;
+            m_axis_tdata_reg  <= 64'd0;
         end else begin
             if (fifo_write) begin
                 fifo_mem[wr_ptr] <= packed_output;
@@ -82,11 +90,21 @@ module iv_axis_wrapper (
                 2'b01: fifo_count <= fifo_count - 9'd1;
                 default: ;
             endcase
+
+            if (out_ready) begin
+                if (fifo_count > 0) begin
+                    m_axis_tvalid_reg <= 1'b1;
+                    m_axis_tdata_reg  <= fifo_mem[rd_ptr];
+                end else begin
+                    m_axis_tvalid_reg <= 1'b0;
+                end
+            end
         end
     end
 
-    assign m_axis_tvalid = (fifo_count > 0);
-    assign m_axis_tdata  = fifo_mem[rd_ptr];
+    assign m_axis_tvalid = m_axis_tvalid_reg;
+    assign m_axis_tdata  = m_axis_tdata_reg;
+    assign m_axis_tlast  = m_axis_tvalid_reg;
 
     // Almost-full threshold at 100 entries to leave safe margin for 144-cycle pipeline to drain
     wire fifo_almost_full = (fifo_count >= 9'd100);

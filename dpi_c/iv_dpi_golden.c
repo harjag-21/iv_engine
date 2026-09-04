@@ -114,7 +114,8 @@ double solve_iv(double S, double K, double C_market, double r, double T) {
         if (sigma < 0.001) sigma = 0.001;
         if (sigma > 5.0)   sigma = 5.0;
 
-        if (fabs(delta) < 0.001) break;  /* converged */
+        double price_new = bs_call_price(S, K, r, T, sigma);
+        if (fabs(price_new - C_market) < 0.01) break;  /* converged: |price_error| < $0.01 matches RTL */
     }
     return sigma;
 }

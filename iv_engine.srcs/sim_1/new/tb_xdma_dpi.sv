@@ -51,11 +51,13 @@ module tb_xdma_dpi;
     logic         s_axis_tvalid;
     logic         s_axis_tready;
     logic [255:0] s_axis_tdata;
+    logic         s_axis_tlast;
 
     // C2H (Card-to-Host) — AXI4-Stream Slave Monitor
     logic         m_axis_tvalid;
     logic         m_axis_tready;
     logic [63:0]  m_axis_tdata;
+    logic         m_axis_tlast;
 
     // -------------------------------------------------------
     // DUT Instantiation
@@ -71,9 +73,11 @@ module tb_xdma_dpi;
         .s_axis_tvalid  (s_axis_tvalid),
         .s_axis_tready  (s_axis_tready),
         .s_axis_tdata   (s_axis_tdata),
+        .s_axis_tlast   (s_axis_tlast),
         .m_axis_tvalid  (m_axis_tvalid),
         .m_axis_tready  (m_axis_tready),
-        .m_axis_tdata   (m_axis_tdata)
+        .m_axis_tdata   (m_axis_tdata),
+        .m_axis_tlast   (m_axis_tlast)
     );
 `else
     iv_multi_engine_top #(.NUM_ENGINES(4)) dut (
@@ -82,9 +86,11 @@ module tb_xdma_dpi;
         .s_axis_tvalid  (s_axis_tvalid),
         .s_axis_tready  (s_axis_tready),
         .s_axis_tdata   (s_axis_tdata),
+        .s_axis_tlast   (s_axis_tlast),
         .m_axis_tvalid  (m_axis_tvalid),
         .m_axis_tready  (m_axis_tready),
-        .m_axis_tdata   (m_axis_tdata)
+        .m_axis_tdata   (m_axis_tdata),
+        .m_axis_tlast   (m_axis_tlast)
     );
 `endif
 
@@ -144,6 +150,7 @@ module tb_xdma_dpi;
         if (!aresetn) begin
             s_axis_tvalid <= 1'b0;
             s_axis_tdata  <= '0;
+            s_axis_tlast  <= 1'b0;
         end else if (!all_sent) begin
             // Handshake completed — or first cycle after reset
             if (!s_axis_tvalid || s_axis_tready) begin
@@ -151,6 +158,7 @@ module tb_xdma_dpi;
                 if (sv_get_next_tick(dpi_tdata)) begin
                     s_axis_tdata  <= dpi_tdata;
                     s_axis_tvalid <= 1'b1;
+                    s_axis_tlast  <= 1'b1;
                     ticks_sent    <= ticks_sent + 1;
                     if (ticks_sent + 1 >= NUM_TICKS) begin
                         all_sent <= 1'b1;
@@ -158,12 +166,16 @@ module tb_xdma_dpi;
                     end
                 end else begin
                     s_axis_tvalid <= 1'b0;   // C model queue empty
+                    s_axis_tlast  <= 1'b0;
                     all_sent      <= 1'b1;
                 end
             end
         end else begin
             // All ticks sent — de-assert valid after last handshake
-            if (s_axis_tready) s_axis_tvalid <= 1'b0;
+            if (s_axis_tready) begin
+                s_axis_tvalid <= 1'b0;
+                s_axis_tlast  <= 1'b0;
+            end
         end
     end
 
