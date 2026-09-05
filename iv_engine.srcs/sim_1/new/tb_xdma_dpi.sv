@@ -37,7 +37,7 @@ module tb_xdma_dpi;
     // -------------------------------------------------------
     // Parameters
     // -------------------------------------------------------
-    localparam int NUM_TICKS    = 64;
+    localparam int NUM_TICKS    = 10000;
     localparam int TIMEOUT_CYC  = 500_000;
     localparam int CLK_HALF_NS  = 2;   // 4 ns period = 250 MHz
 

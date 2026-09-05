@@ -51,7 +51,7 @@
  * Because each core/context executes transactions for a given TID in FIFO order,
  * a per-TID queue guarantees exact reference matching even when transactions
  * complete out-of-order across different TIDs. */
-#define TID_QUEUE_SIZE 256
+#define TID_QUEUE_SIZE 4096
 static int g_tid_queue[64][TID_QUEUE_SIZE];
 static int g_tid_head[64];
 static int g_tid_tail[64];
