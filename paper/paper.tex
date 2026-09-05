@@ -81,15 +81,19 @@ Note that $d_2$ is computed strictly as a subtraction $d_1 - \sigma\sqrt{T}$, re
 where $N'(x) = \frac{1}{\sqrt{2\pi}} e^{-x^2/2}$ is the standard normal probability density function.
 
 \subsection{Scale-Invariance Normalization}
-Direct fixed-point evaluation of $S$ and $K$ risks catastrophic dynamic range overflow for large asset prices (e.g., $S > \$128$ in Q8.24). We exploit the linear homogeneity of the Black-Scholes equation with respect to $S$ and $K$:
+Direct fixed-point evaluation of option pricing must accommodate wide asset price dynamics without catastrophic dynamic range overflow. In our architecture, the datapath operates in native Q8.24 fixed-point dollars, directly supporting individual equity contracts with underlying spot and strike up to $\$128$ ($S, K \le \$128.00$). 
+
+Crucially, all core transcendental driving quantities in the Black-Scholes formula are scale-invariant by construction. Specifically, the Pad\'{e} logarithm ratio:
+\begin{equation}
+\frac{S - K}{S + K} \equiv \frac{S/K - 1}{S/K + 1}
+\end{equation}
+is identical whether evaluated in native dollars or normalized units, completely eliminating the need for a serialized 32-cycle hardware divider at ingress. The normal deviates $d_1$ and $d_2$, the discount factor $e^{-rT}$, and cumulative probabilities $N(d_1), N(d_2)$ are likewise dimensionless. Consequently, call price $C_{\text{BS}}$ and Vega $\nu$ are evaluated directly in native dollar units, allowing the convergence criterion $|C_{\text{BS}} - C_{\text{mkt}}| \le \$0.0100$ to be tested immediately without any denormalization cycle latency penalty.
+
+For high-notional index contracts (e.g., S\&P 500 SPX trading at $\$5{,}000$), we exploit the linear homogeneity of the Black-Scholes equation:
 \begin{equation}
 C_{\text{BS}}(S, K, T, r, \sigma) = K \cdot C_{\text{BS}}\left(\frac{S}{K}, 1.0, T, r, \sigma\right)
 \end{equation}
-Defining normalized parameters:
-\begin{equation}
-\tilde{S} = \frac{S}{K}, \quad \tilde{K} = 1.0, \quad \tilde{C}_{\text{mkt}} = \frac{C_{\text{mkt}}}{K}
-\end{equation}
-All core arithmetic quantities driving Black-Scholes evaluation---the Pad\'{e} ratio $(S-K)/(S+K) \equiv (\tilde{S}-1)/(\tilde{S}+1)$, the normal deviates $d_1$ and $d_2$, the discount factor $e^{-rT}$, and normal probabilities $N(d_1), N(d_2)$---are purely dimensionless scale-invariant ratios. For equity contracts with $S \le \$128$, inputs enter the datapath directly without division; for high-notional index options ($S > \$128$), inputs are prescaled by a single-cycle binary power-of-two shift $m = \lfloor \log_2(K/64) \rfloor$. This guarantees all internal values remain strictly bounded within the $[0.5, 2.0]$ Q8.24 dynamic range without requiring a serialized hardware divider at ingress. Upon convergence, Vega and Gamma are denormalized using single-cycle fixed-point shifts.
+Under this formulation, market data feeds provide pre-normalized inputs $(\tilde{S} = S/K, \tilde{K} = 1.0, \tilde{C}_{\text{mkt}} = C_{\text{mkt}}/K)$ directly into the engine, with the termination threshold set to $\tilde{\epsilon} = \$0.01 / K$. This guarantees all internal variables remain strictly bounded within the optimal $[0.5, 2.0]$ Q8.24 range across all financial asset classes with zero datapath modification.
 
 \subsection{Analytical Guess Seeding (Brenner-Subrahmanyam)}
 Standard Newton-Raphson update steps follow:
@@ -105,7 +109,7 @@ This closed-form calculation is evaluated in dedicated hardware in 64 clock cycl
 \subsection{High-Speed Polynomial and Elementary Function Evaluation}
 To maintain 100~MHz timing without DSP cascades:
 \begin{itemize}
-    \item \textbf{Pad\'{e} Logarithm:} We evaluate the [1/1] Pad\'{e} approximant $\ln(x) \approx 2 \frac{x - 1}{x + 1} = 2\tanh(\frac{1}{2}\ln x)$ for $x = S/K$. The absolute approximation error is strictly bounded by $3.6 \times 10^{-4}$ ($<0.22\%$ relative error) across $0.85 \le S/K \le 1.15$, and $<0.05\%$ relative error across $0.925 \le S/K \le 1.08$. Over 95\% of active quote updates in liquid equity options concentrate within this near-the-money band; for deep wings ($|S-K|/K > 0.15$), the architecture automatically engages an exact 16-cycle vectoring CORDIC natural logarithm fallback path ($\ln x = 2\operatorname{atanh}((x-1)/(x+1))$). Because the 18-cycle CORDIC evaluation is latency-matched via a 15-cycle SRL15 shift register to exactly 33 clock cycles, the core datapath maintains an identical, deterministic 126-cycle latency across all strikes.
+    \item \textbf{Pad\'{e} Logarithm:} We evaluate the [1/1] Pad\'{e} approximant $\ln(x) \approx 2 \frac{x - 1}{x + 1} = 2\tanh(\frac{1}{2}\ln x)$ for $x = S/K$. The absolute approximation error is strictly bounded by $3.6 \times 10^{-4}$ ($<0.22\%$ relative error) across $0.85 \le S/K \le 1.15$, and $<0.05\%$ relative error across $0.925 \le S/K \le 1.08$. Over 95\% of active quote updates in liquid equity options concentrate within this near-the-money band; for deep wings ($|S-K|/K > 0.15$), the architecture automatically engages an exact 18-cycle vectoring CORDIC natural logarithm fallback path ($\ln x = 2\operatorname{atanh}((x-1)/(x+1))$). Because the 18-cycle CORDIC evaluation is latency-matched via a 15-cycle SRL15 shift register to exactly 33 clock cycles, the core datapath maintains an identical, deterministic 126-cycle latency across all strikes.
     \item \textbf{Horner Normal CDF:} While Gaussian evaluation on FPGAs has historically relied on Box-Muller transforms or piecewise polynomial tables~\cite{thomas2009gaussian}, $N(x)$ is computed here via a 5th-order rational polynomial evaluated using Horner's scheme, pipelined into single-DSP multiply-accumulate stages.
     \item \textbf{Hyperbolic CORDIC:} Exponentials $e^{-rT}$ and $e^{-d_1^2/2}$ are computed using a fully pipelined 16-stage hyperbolic CORDIC engine.
 \end{itemize}
@@ -273,7 +277,7 @@ To verify arithmetic integrity and boundary behavior, the placed-and-routed RTL 
     \item \textbf{Single-Iteration Convergence:} 97.6\% of contracts converge in exactly 1 pass; 99.9\% converge within 2 passes.
 \end{itemize}
 
-\textbf{Deep Out-of-the-Money / In-the-Money Wings ($S/K < 0.85$ or $S/K > 1.15$):} For extreme strikes where Pad\'{e} approximation error expands, the architecture automatically engages the 16-cycle vectoring CORDIC natural logarithm fallback path ($\ln x = 2\operatorname{atanh}((x-1)/(x+1))$):
+\textbf{Deep Out-of-the-Money / In-the-Money Wings ($S/K < 0.85$ or $S/K > 1.15$):} For extreme strikes where Pad\'{e} approximation error expands, the architecture automatically engages the 18-cycle vectoring CORDIC natural logarithm fallback path ($\ln x = 2\operatorname{atanh}((x-1)/(x+1))$):
 \begin{itemize}
     \item In our extended test suite across $S/K \in [0.70, 1.40]$ and maturities down to $T=0.05$ (18 days to expiration), deep wings represent 7.9\% of contracts.
     \item Because Vega diminishes in deep wings ($\nu < 0.05$), contracts in this regime require an average of 2.1 iterations (1 loopback pass).
@@ -294,7 +298,7 @@ Combining these independent error terms in root-mean-square yields:
 \Delta\sigma_{\text{RMS}} = \sqrt{(4.5\times 10^{-5})^2 + (2.8\times 10^{-5})^2 + (1.2\times 10^{-6})^2} \\
 \overline{+ (2.5\times 10^{-6})^2 + (1.45\times 10^{-4})^2} = \mathbf{1.54 \times 10^{-4}} \; (0.0154\%\text{ vol})
 \end{multline}
-in exact mathematical agreement with the observed DPI-C simulation MAE of $0.0157\%$, confirming that residual price tolerance and Vega sensitivity represent the principal numerical error source.
+in close agreement with the observed DPI-C simulation MAE of $0.0157\%$ (within 2\% relative deviation), confirming that residual price tolerance and Vega sensitivity represent the principal numerical error source.
 
 \subsection{Algorithmic Ablation: Seeding vs. Unseeded Newton-Raphson}
 To quantify the benefit of the Brenner-Subrahmanyam analytical seeder, we performed an ablation comparison against standard unseeded Newton-Raphson ($\sigma_0 = 0.20$):
@@ -325,6 +329,7 @@ The proposed 4-core FPGA engine achieves 400.00~MOps/sec peak throughput (390.62
 \caption{Comparison with Prior FPGA Financial Accelerators}
 \label{tab:prior_art}
 \centering
+\setlength{\tabcolsep}{4.2pt}
 \begin{tabular}{lcccccc}
 \toprule
 \textbf{Design} & \textbf{Target Device} & \textbf{Model / Task} & \textbf{Numerical Method} & \textbf{Throughput} & \textbf{Latency} & \textbf{BRAMs} \\
