@@ -21,7 +21,9 @@
 //   IV mode:     160 cycles per iteration (126 BS + 33 div + 1 update)
 //               × average 3-5 iterations
 // =========================================================
-module iv_top (
+module iv_top #(
+    parameter bit USE_BS_INITIAL_GUESS = 1'b1
+)(
     input  wire               clk,
     input  wire               rst_n,
 
@@ -38,15 +40,22 @@ module iv_top (
     // Egress (to trading system / UVM monitor / AXI wrapper)
     output wire               iv_done_valid,
     output wire signed [31:0] iv_done_sigma,
-    output wire [5:0]         iv_done_tid
+    output wire [5:0]         iv_done_tid,
+    output wire signed [31:0] iv_done_delta,
+    output wire signed [31:0] iv_done_vega,
+    output wire signed [31:0] iv_done_gamma
 );
 
     // Mode Detection: T_in == 0 is CORDIC test mode; T_in != 0 is IV Engine Mode
     wire is_cordic_mode = (T_in == 32'sd0);
 
     // Forward declaration of FSM done signals
-    wire       fsm_done_valid;
-    wire [5:0] fsm_done_tid;
+    wire               fsm_done_valid;
+    wire [5:0]         fsm_done_tid;
+    wire signed [31:0] fsm_done_sigma;
+    wire signed [31:0] fsm_done_delta;
+    wire signed [31:0] fsm_done_vega;
+    wire signed [31:0] fsm_done_gamma;
 
     // In-flight transaction counter: tracks how many TIDs are currently being computed.
     // Asserts fifo_full when 63 of 64 context memory slots are in use, preventing
@@ -173,27 +182,99 @@ module iv_top (
     end
 
     // ---------------------------------------------------------
-    // 6. Arbitration FSM — Controls pipeline input selection
+    // 6. Initial Guess Engine & Ingress Queue
+    // ---------------------------------------------------------
+    (* ram_style = "distributed" *) logic signed [31:0] ctx_bs_guess [0:63];
+    (* ram_style = "distributed" *) logic signed [31:0] ctx_sqrt_T   [0:63];
+
+    wire               init_guess_valid;
+    wire [5:0]         init_guess_tid;
+    wire signed [31:0] init_guess_sigma;
+    wire signed [31:0] init_guess_sqrt_T;
+
+    generate
+        if (USE_BS_INITIAL_GUESS) begin : gen_init_guess
+            iv_bs_initial_guess u_init_guess (
+                .clk         (clk),
+                .rst_n       (rst_n),
+                .valid_in    (valid_in && !is_cordic_mode),
+                .S_in        (S_in),
+                .K_in        (K_in),
+                .C_in        (C_in),
+                .T_in        (T_in),
+                .tid_in      (active_tid),
+                .valid_out   (init_guess_valid),
+                .tid_out     (init_guess_tid),
+                .sigma_0_out (init_guess_sigma),
+                .sqrt_T_out  (init_guess_sqrt_T)
+            );
+        end else begin : gen_no_init_guess
+            assign init_guess_valid  = valid_in && !is_cordic_mode;
+            assign init_guess_tid    = active_tid;
+            assign init_guess_sigma  = 32'sd3355443; // 0.20 static fallback
+            assign init_guess_sqrt_T = 32'sd16777216; // 1.0 default
+        end
+    endgenerate
+
+    // Store computed initial guess and sqrt(T) in distributed LUTRAM
+    always_ff @(posedge clk) begin
+        if (init_guess_valid) begin
+            ctx_bs_guess[init_guess_tid] <= init_guess_sigma;
+            ctx_sqrt_T[init_guess_tid]   <= init_guess_sqrt_T;
+        end
+    end
+
+    // Ingress Queue: holds transactions ready to be ingested into BS datapath
+    (* ram_style = "distributed" *) logic [5:0] ingress_q_tids [0:63];
+    logic [5:0] q_wr_ptr;
+    logic [5:0] q_rd_ptr;
+    logic [6:0] q_count;
+
+    wire fsm_fifo_pop;
+    wire q_push = init_guess_valid;
+    wire q_pop  = fsm_fifo_pop && (q_count != 7'd0);
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            q_wr_ptr <= 6'd0;
+            q_rd_ptr <= 6'd0;
+            q_count  <= 7'd0;
+        end else begin
+            if (q_push) begin
+                ingress_q_tids[q_wr_ptr] <= init_guess_tid;
+                q_wr_ptr                 <= q_wr_ptr + 6'd1;
+            end
+            if (q_pop) begin
+                q_rd_ptr <= q_rd_ptr + 6'd1;
+            end
+            case ({q_push, q_pop})
+                2'b10: q_count <= q_count + 7'd1;
+                2'b01: q_count <= q_count - 7'd1;
+                default: ;
+            endcase
+        end
+    end
+
+    // ---------------------------------------------------------
+    // 6B. Arbitration FSM — Controls pipeline input selection
     // ---------------------------------------------------------
     // Input MUX: selects between new transactions and NR loopback
     wire               fsm_pipe_valid;
     wire [5:0]         fsm_pipe_tid;
     wire signed [31:0] fsm_pipe_sigma;
-    wire               fsm_fifo_pop;
-    wire signed [31:0] fsm_done_sigma;
 
-    // Loopback signals from pipeline end (will be connected later)
+    // Loopback signals from pipeline end
     logic               loopback_valid;
     logic [5:0]         loopback_tid;
     logic signed [31:0] loopback_sigma;
     logic signed [31:0] loopback_error;
+    logic signed [31:0] loopback_delta;
+    logic signed [31:0] loopback_vega;
+    logic signed [31:0] loopback_gamma;
 
     // ---------------------------------------------------------
     // Active In-Flight TID Scoreboard & Handshake Flow Control
     // ---------------------------------------------------------
-    // Tracks currently active TIDs in the pipeline. Prevents
-    // context overwrite if an external feeder injects a duplicate
-    // TID before the previous one completes.
     logic [63:0] tid_busy_mask;
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -208,16 +289,11 @@ module iv_top (
         end
     end
 
-    // Detect when pipeline entry is occupied by an unconverged loopback iteration
-    wire signed [31:0] abs_lb_error = (loopback_error == 32'sh80000000) ? 32'sh7FFFFFFF :
-                                      ((loopback_error < 0) ? -loopback_error : loopback_error);
-    wire lb_unconverged = loopback_valid && (abs_lb_error > 32'd167772);
-    wire tid_busy       = tid_busy_mask[active_tid] &&
-                          !(fsm_done_valid && (fsm_done_tid == active_tid));
+    wire tid_busy = tid_busy_mask[active_tid] &&
+                    !(fsm_done_valid && (fsm_done_tid == active_tid));
 
-    // Assert fifo_full if context memory is full (>=63), or if an unconverged
-    // loopback iteration claims the pipeline slot, or if the active TID is already in flight.
-    assign fifo_full = (in_flight_count >= 7'd63) || lb_unconverged || tid_busy;
+    // Assert fifo_full if context memory or ingress queue is full, or active TID is busy
+    assign fifo_full = (in_flight_count >= 7'd60) || (q_count >= 7'd58) || tid_busy;
 
     wire               fsm_pipe_is_loopback;
 
@@ -228,8 +304,11 @@ module iv_top (
         .loopback_tid     (loopback_tid),
         .loopback_error   (loopback_error),
         .loopback_sigma   (loopback_sigma),
-        .fifo_empty       (~(valid_in && !is_cordic_mode)),  // New data available?
-        .fifo_tid         (active_tid),
+        .loopback_delta   (loopback_delta),
+        .loopback_vega    (loopback_vega),
+        .loopback_gamma   (loopback_gamma),
+        .fifo_empty       (q_count == 7'd0),
+        .fifo_tid         (ingress_q_tids[q_rd_ptr]),
         .fifo_pop         (fsm_fifo_pop),
         .pipe_valid       (fsm_pipe_valid),
         .pipe_tid         (fsm_pipe_tid),
@@ -237,7 +316,10 @@ module iv_top (
         .pipe_is_loopback (fsm_pipe_is_loopback),
         .iv_done_valid    (fsm_done_valid),
         .iv_done_tid      (fsm_done_tid),
-        .iv_done_sigma    (fsm_done_sigma)
+        .iv_done_sigma    (fsm_done_sigma),
+        .iv_done_delta    (fsm_done_delta),
+        .iv_done_vega     (fsm_done_vega),
+        .iv_done_gamma    (fsm_done_gamma)
     );
 
     // ---------------------------------------------------------
@@ -260,10 +342,11 @@ module iv_top (
     wire is_new_entry = fsm_pipe_valid && !fsm_pipe_is_loopback;
 
     // Read market data from context memory for loopback iterations
-    wire signed [31:0] ctx_S_rd = ctx_S[fsm_pipe_tid];
-    wire signed [31:0] ctx_K_rd = ctx_K[fsm_pipe_tid];
-    wire signed [31:0] ctx_r_rd = ctx_r[fsm_pipe_tid];
-    wire signed [31:0] ctx_T_rd = ctx_T[fsm_pipe_tid];
+    wire signed [31:0] ctx_S_rd      = ctx_S[fsm_pipe_tid];
+    wire signed [31:0] ctx_K_rd      = ctx_K[fsm_pipe_tid];
+    wire signed [31:0] ctx_r_rd      = ctx_r[fsm_pipe_tid];
+    wire signed [31:0] ctx_T_rd      = ctx_T[fsm_pipe_tid];
+    wire signed [31:0] ctx_sqrt_T_rd = ctx_sqrt_T[fsm_pipe_tid];
 
     // Pipeline input MUX
     assign bs_valid_in = fsm_pipe_valid;
@@ -271,7 +354,7 @@ module iv_top (
     assign bs_K_in     = ctx_K_rd;
     assign bs_r_in     = ctx_r_rd;
     assign bs_T_in     = ctx_T_rd;
-    assign bs_sigma_in = is_loopback ? fsm_pipe_sigma : INITIAL_SIGMA_Q24;
+    assign bs_sigma_in = is_loopback ? fsm_pipe_sigma : ctx_bs_guess[fsm_pipe_tid];
 
     // synthesis translate_off
     always @(posedge clk) begin
@@ -283,23 +366,34 @@ module iv_top (
     // synthesis translate_on
 
     // ---------------------------------------------------------
-    // 8. Black-Scholes Pricing & Vega Datapath (126 cycles)
+    // 8. Black-Scholes Pricing, Vega & Greeks Datapath (126 cycles)
     // ---------------------------------------------------------
     wire signed [31:0] c_bs_out, vega_out_w;
+    wire signed [31:0] delta_out_w;
+    wire signed [31:0] phi_d1_out_w;
+    wire signed [31:0] den_d1_out_w;
+    wire signed [31:0] gamma_den_out_w;
+    wire signed [31:0] S_out_w;
     wire               bs_valid_out;
 
     iv_bs_datapath u_bs_datapath (
-        .clk       (clk),
-        .rst_n     (rst_n),
-        .valid_in  (bs_valid_in),
-        .S_in      (bs_S_in),
-        .K_in      (bs_K_in),
-        .r_in      (bs_r_in),
-        .T_in      (bs_T_in),
-        .sigma_in  (bs_sigma_in),
-        .valid_out (bs_valid_out),
-        .C_bs_out  (c_bs_out),
-        .vega_out  (vega_out_w)
+        .clk           (clk),
+        .rst_n         (rst_n),
+        .valid_in      (bs_valid_in),
+        .S_in          (bs_S_in),
+        .K_in          (bs_K_in),
+        .r_in          (bs_r_in),
+        .T_in          (bs_T_in),
+        .sigma_in      (bs_sigma_in),
+        .sqrt_T_in     (ctx_sqrt_T_rd),
+        .valid_out     (bs_valid_out),
+        .C_bs_out      (c_bs_out),
+        .vega_out      (vega_out_w),
+        .delta_out     (delta_out_w),
+        .phi_d1_out    (phi_d1_out_w),
+        .den_d1_out    (den_d1_out_w),
+        .gamma_den_out (gamma_den_out_w),
+        .S_out         (S_out_w)
     );
 
     // ---------------------------------------------------------
@@ -308,15 +402,6 @@ module iv_top (
     // C_market must travel alongside BS datapath for price error
     // sigma_in must travel to compute sigma_updated at output
     // TID must travel for FSM loopback identification
-    // BS_LATENCY = total cycles from bs_valid_in to bs_valid_out:
-    //   Stage 0 (ln/sqrt)    : 1 cycle
-    //   Stage 1 (ln divider) : 33 cycles
-    //   Stage 2 (d1 num/den) : 4 cycles   [4 pipelined sub-stages: 2a, 2b, 2c, 2d]
-    //   Stage 3 (d1 divider) : 33 cycles
-    //   Stage 4 (d1/d2 reg)  : 1 cycle    [Stage 4a register]
-    //   Stage 4b (CDF)       : 49 cycles  [3 + 33 + 13 Horner stages: 1a–4d]
-    //   Stage 5 (BS output)  : 5 cycles   [5 pipelined sub-stages: 5a–5e]
-    //   Total                : 126 cycles
     localparam int BS_LATENCY = 126;
 
     logic signed [31:0] C_market_pipe [0:BS_LATENCY];
@@ -345,7 +430,10 @@ module iv_top (
     endgenerate
 
     // ---------------------------------------------------------
-    // 10. Price Error & Newton-Raphson Q8.24 Divider (33 cycles)
+    // 10. Price Error & Unified Newton-Raphson / Gamma Divider (33 cycles)
+    // ---------------------------------------------------------
+    // ---------------------------------------------------------
+    // 10. Price Error & Newton-Raphson & Gamma Q8.24 Dividers (33 cycles)
     // ---------------------------------------------------------
     wire signed [31:0] price_err = C_market_pipe[BS_LATENCY] - c_bs_out;
     wire signed [31:0] delta_sigma;
@@ -361,15 +449,34 @@ module iv_top (
         .quotient_out   (delta_sigma)
     );
 
-    // Delay sigma and TID through the 33-cycle NR divider
+    // Parallel Gamma divider: runs concurrently with NR divider (33 cycles)
+    // Gamma = phi(d1) / (S * sigma * sqrt(T))
+    wire signed [31:0] gamma_div_quotient;
+    wire               gamma_div_valid;
+
+    iv_divider_q824 u_gamma_divider (
+        .clk            (clk),
+        .rst_n          (rst_n),
+        .valid_in       (bs_valid_out),
+        .numerator_in   (phi_d1_out_w),
+        .denominator_in ((gamma_den_out_w > 32'sd0) ? gamma_den_out_w : 32'sd1),
+        .valid_out      (gamma_div_valid),
+        .quotient_out   (gamma_div_quotient)
+    );
+
+    // Delay sigma, TID, Delta, and Vega through the 33-cycle divider stage
     localparam int DIV_LATENCY = 33;
     logic signed [31:0] sigma_div_pipe  [0:DIV_LATENCY];
     logic [5:0]         tid_div_pipe    [0:DIV_LATENCY];
     logic signed [31:0] price_err_pipe  [0:DIV_LATENCY];
+    logic signed [31:0] delta_div_pipe  [0:DIV_LATENCY];
+    logic signed [31:0] vega_div_pipe   [0:DIV_LATENCY];
 
     assign sigma_div_pipe[0]  = sigma_pipe[BS_LATENCY];
     assign tid_div_pipe[0]    = tid_bs_pipe[BS_LATENCY];
     assign price_err_pipe[0]  = price_err;
+    assign delta_div_pipe[0]  = delta_out_w;
+    assign vega_div_pipe[0]   = vega_out_w;
 
     generate
         for (k = 0; k < DIV_LATENCY; k = k + 1) begin : div_delay_gen
@@ -378,17 +485,21 @@ module iv_top (
                     sigma_div_pipe[k+1]  <= 32'sd0;
                     tid_div_pipe[k+1]    <= 6'd0;
                     price_err_pipe[k+1]  <= 32'sd0;
+                    delta_div_pipe[k+1]  <= 32'sd0;
+                    vega_div_pipe[k+1]   <= 32'sd0;
                 end else begin
                     sigma_div_pipe[k+1]  <= sigma_div_pipe[k];
                     tid_div_pipe[k+1]    <= tid_div_pipe[k];
                     price_err_pipe[k+1]  <= price_err_pipe[k];
+                    delta_div_pipe[k+1]  <= delta_div_pipe[k];
+                    vega_div_pipe[k+1]   <= vega_div_pipe[k];
                 end
             end
         end
     endgenerate
 
     // ---------------------------------------------------------
-    // 11. Sigma Update & Loopback to FSM (1 cycle)
+    // 11. Sigma Update & Greeks Loopback to FSM (1 cycle)
     // ---------------------------------------------------------
     localparam signed [31:0] MIN_SIGMA_Q24 = 32'sd167772;    // 0.01
     localparam signed [31:0] MAX_SIGMA_Q24 = 32'sd83886080;  // 5.0
@@ -407,9 +518,15 @@ module iv_top (
             loopback_tid   <= 6'd0;
             loopback_sigma <= 32'sd0;
             loopback_error <= 32'sd0;
+            loopback_delta <= 32'sd0;
+            loopback_vega  <= 32'sd0;
+            loopback_gamma <= 32'sd0;
         end else begin
             loopback_valid <= div_valid_out;
             loopback_tid   <= tid_div_pipe[DIV_LATENCY];
+            loopback_delta <= delta_div_pipe[DIV_LATENCY];
+            loopback_vega  <= vega_div_pipe[DIV_LATENCY];
+            loopback_gamma <= (gamma_div_quotient > 32'sd0) ? gamma_div_quotient : 32'sd0;
 
             if (div_valid_out && max_iter_reached) begin
                 loopback_error <= 32'sd0; // Force FSM to output
@@ -442,9 +559,6 @@ module iv_top (
                 // synthesis translate_on
 
                 loopback_sigma <= sig_calc_var;
-
-                // ctx_iter increment is handled in Section 5's single-writer block
-                // via ctx_iter_inc_en / ctx_iter_inc_tid wires (below).
             end
         end
     end
@@ -457,7 +571,6 @@ module iv_top (
     // ---------------------------------------------------------
     // 13. IV TID Pipeline for total latency tracking
     // ---------------------------------------------------------
-    // Total IV latency = 110 (BS) + 33 (div) + 1 (update) = 144 cycles
     localparam int IV_TOTAL_LATENCY = BS_LATENCY + DIV_LATENCY + 1;
 
     // ---------------------------------------------------------
@@ -465,8 +578,11 @@ module iv_top (
     // ---------------------------------------------------------
     // CORDIC mode: uses gain-compensated output with aligned valid/data
     // IV mode: uses FSM done output (from iterative convergence)
-    assign iv_done_valid = is_cordic_mode ? scaled_valid_out  : fsm_done_valid;
-    assign iv_done_sigma = is_cordic_mode ? scaled_x_out      : fsm_done_sigma;
+    assign iv_done_valid = is_cordic_mode ? scaled_valid_out    : fsm_done_valid;
+    assign iv_done_sigma = is_cordic_mode ? scaled_x_out        : fsm_done_sigma;
     assign iv_done_tid   = is_cordic_mode ? tid_pipe_cordic[20] : fsm_done_tid;
+    assign iv_done_delta = is_cordic_mode ? 32'sd0              : fsm_done_delta;
+    assign iv_done_vega  = is_cordic_mode ? 32'sd0              : fsm_done_vega;
+    assign iv_done_gamma = is_cordic_mode ? 32'sd0              : fsm_done_gamma;
 
 endmodule

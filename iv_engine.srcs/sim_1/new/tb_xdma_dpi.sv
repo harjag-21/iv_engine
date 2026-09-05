@@ -56,7 +56,7 @@ module tb_xdma_dpi;
     // C2H (Card-to-Host) — AXI4-Stream Slave Monitor
     logic         m_axis_tvalid;
     logic         m_axis_tready;
-    logic [63:0]  m_axis_tdata;
+    logic [127:0] m_axis_tdata;
     logic         m_axis_tlast;
 
     // -------------------------------------------------------
@@ -187,7 +187,7 @@ module tb_xdma_dpi;
     always @(posedge aclk) begin
         if (aresetn && m_axis_tvalid && m_axis_tready) begin
             // Forward 64-bit result {26'b0, tid[5:0], sigma[31:0]} to C golden model
-            sv_push_result(m_axis_tdata);
+            sv_push_result({26'b0, m_axis_tdata[127:122], m_axis_tdata[31:0]});
             results_rcvd <= results_rcvd + 1;
 
             if ((results_rcvd + 1) % 100 == 0)

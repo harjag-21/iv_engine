@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
-<POWERDATA author="Vivado Power Analysis" dataVersion="2025.2" design="iv_multi_engine_top" designState="routed" date="Fri Sep  4 03:06:26 2026" pwrOpt="None" activityLevel="vectorless">
+<POWERDATA author="Vivado Power Analysis" dataVersion="2025.2" design="iv_multi_engine_top" designState="routed" date="Sat Sep  5 14:52:13 2026" pwrOpt="None" activityLevel="vectorless">
 	<ENVIRONMENT>
 		<DEVICE part="xc7a200t" grade="extended" package="ffg1156" speed="-3" process="typical" vid="No">
 		</DEVICE>
 		<VOLTAGESOURCES>
-			<SOURCE name="Vccbram" voltage="1.000000" icc="0.000000" iccq="0.001007" power="0.001007">
+			<SOURCE name="Vccbram" voltage="1.000000" icc="0.000000" iccq="0.000916" power="0.000916">
 			</SOURCE>
-			<SOURCE name="Vccint" voltage="1.000000" icc="5.703218" iccq="0.041953" power="5.745171">
+			<SOURCE name="Vccint" voltage="1.000000" icc="4.126607" iccq="0.038267" power="4.164874">
 			</SOURCE>
-			<SOURCE name="Vccaux" voltage="1.800000" icc="0.000000" iccq="0.031734" power="0.057122">
+			<SOURCE name="Vccaux" voltage="1.800000" icc="0.000000" iccq="0.031322" power="0.056379">
 			</SOURCE>
 			<SOURCE name="Vccadc" voltage="1.800000" icc="0.000000" iccq="0.020000" power="0.036000">
 			</SOURCE>
@@ -30,110 +30,142 @@
 			</TJB>
 			<BOARDTEMP value="25.0 (C)">
 			</BOARDTEMP>
-			<JUNCTION value="33.5 (C)">
+			<JUNCTION value="31.2 (C)">
 			</JUNCTION>
 		</THERMAL>
 	</ENVIRONMENT>
 	<BLOCKDETAILS>
 		<BYTYPE>
 			<BLOCKTYPE name="Clocks">
-				<CLOCK name="aclk" freq="125.000000" belFanout="144340" sliceFanout="38778" FoPerSite="3.722214" sliceEnableRate="0.680069" leafs="0.000000" hrows="0.000000" power="0.746569">
+				<CLOCK name="aclk" freq="100.000000" belFanout="139950" sliceFanout="37319" FoPerSite="3.750100" sliceEnableRate="0.674498" leafs="0.000000" hrows="0.000000" power="0.588680">
 				</CLOCK>
 			</BLOCKTYPE>
 			<BLOCKTYPE name="LOGIC">
-				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="96.471905" toggleRate2="41.971322" totalRate="3227450.365815" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" writeRate="0.000000" enableRate="0.000000" fanout="1.886631" ru="3.510290" fanout2="1.700322" totalFanout="25628.000000" fanoutRate="644378.462511" numNets="56047" extNets="13584" SMUX="1950" carry4s="4366" luts="24631" logicCap="15338933841" signalCap="3940049.000000" power="0.479927" sp="0.093927">
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="86.568182" toggleRate2="42.424325" totalRate="2794417.912771" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" writeRate="0.000000" enableRate="0.000000" fanout="1.821919" ru="3.799932" fanout2="1.785343" totalFanout="24687.000000" fanoutRate="536979.294078" numNets="50198" extNets="13550" SMUX="1593" carry4s="4267" luts="23970" logicCap="12983150990" signalCap="3377940.000000" power="0.313465" sp="0.074737">
 				</LOGIC>
-				<LOGIC clock="aclk" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="11.756418" toggleRate2="23.597537" totalRate="32753.381747" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" writeRate="0.000000" enableRate="1.000000" fanout="1.000000" ru="0.095613" fanout2="1.000000" totalFanout="7.000000" fanoutRate="35.441692" numNets="1393" extNets="7" SRL="1393" logicCap="882768013" signalCap="2246.000000" power="0.006510" sp="0.000014">
+				<LOGIC clock="aclk" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="14.155245" toggleRate2="28.796839" totalRate="61943.350355" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" writeRate="0.000000" enableRate="1.000000" fanout="1.000000" ru="2.609430" fanout2="1.000000" totalFanout="103.000000" fanoutRate="2222.954043" numNets="2195" extNets="103" SRL="2188" logicCap="1373759995" signalCap="26941.000000" power="0.009849" sp="0.000558">
 				</LOGIC>
-				<LOGIC clock="aclk" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="3.749229" toggleRate2="13.006918" totalRate="2146.141513" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" writeRate="0.031028" enableRate="0.000000" fanout="2.734848" ru="14.519495" fanout2="2.734848" totalFanout="361.000000" fanoutRate="3104.653839" numNets="226" extNets="132" RAM="226" logicCap="133484994" signalCap="84671.000000" power="0.000428" sp="0.000715">
+				<LOGIC clock="aclk" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="4.001226" toggleRate2="15.003109" totalRate="3212.104944" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" writeRate="0.024000" enableRate="0.000000" fanout="2.734848" ru="11.082738" fanout2="2.892562" totalFanout="361.000000" fanoutRate="2542.371709" numNets="314" extNets="132" RAM="314" logicCap="182024995" signalCap="65665.000000" power="0.000508" sp="0.000359">
 				</LOGIC>
-				<LOGIC clock="aclk" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="33.248505" toggleRate2="46.505380" totalRate="1136799.650744" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" writeRate="0.000000" enableRate="0.713372" fanout="3.127519" ru="10.648382" fanout2="3.971240" totalFanout="106933.000000" fanoutRate="2850109.529011" numNets="34191" extNets="34191" ffs="34191" logicCap="1099980005" signalCap="19570009.000000" power="0.031972" sp="0.413554">
+				<LOGIC clock="aclk" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="31.417428" toggleRate2="43.389345" totalRate="1013054.968792" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" writeRate="0.000000" enableRate="0.727377" fanout="2.814886" ru="10.434778" fanout2="3.441074" totalFanout="90766.000000" fanoutRate="1794275.952013" numNets="32245" extNets="32245" ffs="32245" logicCap="1287540015" signalCap="16724292.000000" power="0.022794" sp="0.300736">
 				</LOGIC>
-				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="125.000000" clockFreq2="16.591227" toggleRate="13.181485" toggleRate2="15.044365" totalRate="5615.916621" name="High_Fanout_Nets" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" writeRate="0.000000" enableRate="0.391480" fanout="57.854895" ru="21.733689" fanout2="66.766304" totalFanout="33093.000000" fanoutRate="195388.492808" numNets="577" extNets="572" carry4s="37" ffs="164" luts="354" logicCap="199580596" signalCap="5486671.000000" power="0.000806" sp="0.017750">
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="0.000000" toggleRate="0.000000" toggleRate2="0.000000" totalRate="0.000000" name="Unassigned_Clock" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" writeRate="0.000000" enableRate="0.000000" fanout="2.692308" ru="0.000000" fanout2="0.000000" totalFanout="35.000000" fanoutRate="0.000000" numNets="13" extNets="13" carry4s="13" logicCap="0" signalCap="5532.000000" power="0.000000" sp="0.000000">
 				</LOGIC>
-				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="95.938189" toggleRate2="41.828024" totalRate="3194663.845834" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" writeRate="0.000000" enableRate="0.000000" fanout="1.897315" ru="3.535686" fanout2="1.612809" totalFanout="25794.000000" fanoutRate="610838.072773" numNets="56071" extNets="13595" SMUX="1950" carry4s="4346" luts="24659" logicCap="15407869443" signalCap="3981566.000000" power="0.479068" sp="0.091079">
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="18.073310" toggleRate="17.769018" toggleRate2="17.210327" totalRate="6285.594017" name="High_Fanout_Nets" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" writeRate="0.000000" enableRate="0.682666" fanout="286.279545" ru="24.750585" fanout2="72.413223" totalFanout="125963.000000" fanoutRate="187266.535061" numNets="440" extNets="440" BUFG="1" carry4s="24" ffs="182" luts="208" logicCap="115873001" signalCap="5327305.000000" power="0.000534" sp="0.017775">
 				</LOGIC>
-				<LOGIC clock="aclk" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="11.927183" toggleRate2="23.939928" totalRate="33372.259366" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" writeRate="0.000000" enableRate="1.000000" fanout="1.000000" ru="0.122702" fanout2="1.000000" totalFanout="7.000000" fanoutRate="45.477236" numNets="1399" extNets="7" SRL="1399" logicCap="886584012" signalCap="2401.000000" power="0.006633" sp="0.000015">
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="86.561826" toggleRate2="42.486544" totalRate="2792592.143044" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" writeRate="0.000000" enableRate="0.000000" fanout="1.815558" ru="3.707749" fanout2="1.774164" totalFanout="24599.000000" fanoutRate="532898.791125" numNets="50135" extNets="13549" SMUX="1593" carry4s="4264" luts="23968" logicCap="12977639383" signalCap="3266103.000000" power="0.312891" sp="0.071093">
 				</LOGIC>
-				<LOGIC clock="aclk" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="3.782847" toggleRate2="13.083127" totalRate="2158.715935" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" writeRate="0.030561" enableRate="0.000000" fanout="2.734848" ru="14.428009" fanout2="2.734848" totalFanout="361.000000" fanoutRate="3159.298238" numNets="226" extNets="132" RAM="226" logicCap="133484997" signalCap="84940.000000" power="0.000432" sp="0.000693">
+				<LOGIC clock="aclk" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="14.272206" toggleRate2="29.043604" totalRate="61370.485607" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" writeRate="0.000000" enableRate="1.000000" fanout="1.000000" ru="2.771734" fanout2="1.000000" totalFanout="103.000000" fanoutRate="2215.629202" numNets="2157" extNets="103" SRL="2150" logicCap="1349591995" signalCap="30879.000000" power="0.009758" sp="0.000657">
 				</LOGIC>
-				<LOGIC clock="aclk" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="33.263004" toggleRate2="46.514692" totalRate="1138060.407877" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" writeRate="0.000000" enableRate="0.713647" fanout="3.129859" ru="10.510301" fanout2="3.973800" totalFanout="107085.000000" fanoutRate="2852521.461865" numNets="34214" extNets="34214" ffs="34214" logicCap="1101285004" signalCap="18448967.000000" power="0.032008" sp="0.416361">
+				<LOGIC clock="aclk" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="4.015161" toggleRate2="15.035939" totalRate="3219.130031" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" writeRate="0.023998" enableRate="0.000000" fanout="2.734848" ru="11.334188" fanout2="2.892562" totalFanout="361.000000" fanoutRate="2564.860392" numNets="314" extNets="132" RAM="314" logicCap="182024993" signalCap="73719.000000" power="0.000510" sp="0.000453">
 				</LOGIC>
-				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="125.000000" clockFreq2="18.892816" toggleRate="14.908486" toggleRate2="16.049397" totalRate="7611.755187" name="High_Fanout_Nets" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" writeRate="0.000000" enableRate="0.559059" fanout="210.043887" ru="23.887329" fanout2="66.085288" totalFanout="134008.000000" fanoutRate="267732.637787" numNets="643" extNets="638" BUFG="1" carry4s="57" ffs="231" luts="325" logicCap="187000696" signalCap="6710797.000000" power="0.000933" sp="0.022944">
+				<LOGIC clock="aclk" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="31.462533" toggleRate2="43.464484" totalRate="1013722.805672" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" writeRate="0.000000" enableRate="0.727165" fanout="2.809683" ru="10.332253" fanout2="3.436144" totalFanout="90528.000000" fanoutRate="1794588.527850" numNets="32220" extNets="32220" ffs="32220" logicCap="1286370013" signalCap="16026694.000000" power="0.022809" sp="0.283514">
 				</LOGIC>
-				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="95.938489" toggleRate2="41.955011" totalRate="3224455.263559" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" writeRate="0.000000" enableRate="0.000000" fanout="2.293809" ru="3.842304" fanout2="1.667868" totalFanout="31494.000000" fanoutRate="626314.928966" numNets="56211" extNets="13730" SMUX="1950" carry4s="4355" luts="24783" logicCap="15444573342" signalCap="4766901.000000" power="0.480164" sp="0.093212">
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="0.000000" toggleRate="0.000000" toggleRate2="0.000000" totalRate="0.000000" name="Unassigned_Clock" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" writeRate="0.000000" enableRate="0.000000" fanout="2.692308" ru="0.000000" fanout2="0.000000" totalFanout="35.000000" fanoutRate="0.000000" numNets="13" extNets="13" carry4s="13" logicCap="0" signalCap="6842.000000" power="0.000000" sp="0.000000">
 				</LOGIC>
-				<LOGIC clock="aclk" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="11.786673" toggleRate2="23.658264" totalRate="32837.669822" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" writeRate="0.000000" enableRate="1.000000" fanout="1.000000" ru="0.087492" fanout2="1.000000" totalFanout="7.000000" fanoutRate="36.545051" numNets="1393" extNets="7" SRL="1393" logicCap="882768012" signalCap="1994.000000" power="0.006526" sp="0.000011">
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="18.930341" toggleRate="22.515867" toggleRate2="18.580320" totalRate="5886.602671" name="High_Fanout_Nets" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" writeRate="0.000000" enableRate="0.558920" fanout="78.473146" ru="22.954527" fanout2="69.000000" totalFanout="30683.000000" fanoutRate="162859.865590" numNets="391" extNets="391" carry4s="27" ffs="127" luts="150" logicCap="93103601" signalCap="4190005.000000" power="0.000410" sp="0.016449">
 				</LOGIC>
-				<LOGIC clock="aclk" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="3.768193" toggleRate2="13.048772" totalRate="2153.047457" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" writeRate="0.030995" enableRate="0.000000" fanout="2.734848" ru="14.362696" fanout2="2.734848" totalFanout="361.000000" fanoutRate="3198.122253" numNets="226" extNets="132" RAM="226" logicCap="133484993" signalCap="77240.000000" power="0.000431" sp="0.000631">
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="86.988404" toggleRate2="42.552003" totalRate="2795981.786079" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" writeRate="0.000000" enableRate="0.000000" fanout="1.816284" ru="3.810195" fanout2="1.774938" totalFanout="24627.000000" fanoutRate="537237.224169" numNets="50020" extNets="13559" SMUX="1593" carry4s="4267" luts="23843" logicCap="12953305189" signalCap="3396087.000000" power="0.313845" sp="0.075289">
 				</LOGIC>
-				<LOGIC clock="aclk" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="33.246814" toggleRate2="46.510677" totalRate="1136276.360417" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" writeRate="0.000000" enableRate="0.713257" fanout="3.127513" ru="10.644786" fanout2="3.974785" totalFanout="106889.000000" fanoutRate="2851320.881884" numNets="34177" extNets="34177" ffs="34177" logicCap="1099350005" signalCap="19420008.000000" power="0.031958" sp="0.434291">
+				<LOGIC clock="aclk" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="14.272175" toggleRate2="29.043540" totalRate="61370.350602" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" writeRate="0.000000" enableRate="1.000000" fanout="1.000000" ru="2.739454" fanout2="1.000000" totalFanout="103.000000" fanoutRate="2215.629251" numNets="2157" extNets="103" SRL="2150" logicCap="1349591994" signalCap="29619.000000" power="0.009758" sp="0.000635">
 				</LOGIC>
-				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="125.000000" clockFreq2="23.335708" toggleRate="18.450796" toggleRate2="15.526244" totalRate="5995.077377" name="High_Fanout_Nets" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" writeRate="0.000000" enableRate="0.390816" fanout="70.707838" ru="23.299177" fanout2="72.013123" totalFanout="29768.000000" fanoutRate="212641.277193" numNets="426" extNets="421" carry4s="48" ffs="164" luts="192" logicCap="114114098" signalCap="4432487.000000" power="0.000773" sp="0.018626">
+				<LOGIC clock="aclk" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="4.015005" toggleRate2="15.035572" totalRate="3219.051390" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" writeRate="0.023998" enableRate="0.000000" fanout="2.734848" ru="11.157717" fanout2="2.892562" totalFanout="361.000000" fanoutRate="2564.478705" numNets="314" extNets="132" RAM="314" logicCap="182024994" signalCap="65268.000000" power="0.000510" sp="0.000389">
 				</LOGIC>
-				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="96.184321" toggleRate2="42.203728" totalRate="3242130.910749" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" writeRate="0.000000" enableRate="0.000000" fanout="2.254655" ru="3.833527" fanout2="1.577148" totalFanout="30997.000000" fanoutRate="592809.065513" numNets="56245" extNets="13748" SMUX="1950" carry4s="4329" luts="24862" logicCap="15486691738" signalCap="4718929.000000" power="0.483044" sp="0.096571">
+				<LOGIC clock="aclk" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="31.464849" toggleRate2="43.465501" totalRate="1013703.042937" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" writeRate="0.000000" enableRate="0.727139" fanout="2.807462" ru="10.379144" fanout2="3.434619" totalFanout="90448.000000" fanoutRate="1794525.039766" numNets="32217" extNets="32217" ffs="32217" logicCap="1286325013" signalCap="16222508.000000" power="0.022808" sp="0.293719">
 				</LOGIC>
-				<LOGIC clock="aclk" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="11.786711" toggleRate2="23.658341" totalRate="32837.776989" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" writeRate="0.000000" enableRate="1.000000" fanout="1.000000" ru="0.083185" fanout2="1.000000" totalFanout="7.000000" fanoutRate="36.556515" numNets="1393" extNets="7" SRL="1393" logicCap="882768012" signalCap="1968.000000" power="0.006527" sp="0.000012">
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="0.000000" toggleRate="0.000000" toggleRate2="0.000000" totalRate="0.000000" name="Unassigned_Clock" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" writeRate="0.000000" enableRate="0.000000" fanout="2.692308" ru="0.000000" fanout2="0.000000" totalFanout="35.000000" fanoutRate="0.000000" numNets="13" extNets="13" carry4s="13" logicCap="0" signalCap="7675.000000" power="0.000000" sp="0.000000">
 				</LOGIC>
-				<LOGIC clock="aclk" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="3.768256" toggleRate2="13.048910" totalRate="2153.070232" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" writeRate="0.030995" enableRate="0.000000" fanout="2.734848" ru="14.246190" fanout2="2.734848" totalFanout="361.000000" fanoutRate="3198.264325" numNets="226" extNets="132" RAM="226" logicCap="133484993" signalCap="73796.000000" power="0.000431" sp="0.000617">
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="15.988646" toggleRate="15.523788" toggleRate2="16.667995" totalRate="5218.085636" name="High_Fanout_Nets" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" writeRate="0.000000" enableRate="0.572496" fanout="80.185567" ru="23.400024" fanout2="71.546624" totalFanout="31112.000000" fanoutRate="158849.968282" numNets="388" extNets="388" carry4s="24" ffs="129" luts="213" logicCap="114474701" signalCap="4014046.000000" power="0.000377" sp="0.016136">
 				</LOGIC>
-				<LOGIC clock="aclk" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="33.246145" toggleRate2="46.492624" totalRate="1136486.223271" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" writeRate="0.000000" enableRate="0.713331" fanout="3.128657" ru="10.744003" fanout2="3.975577" totalFanout="106950.000000" fanoutRate="2853135.579079" numNets="34184" extNets="34184" ffs="34184" logicCap="1099980005" signalCap="20684556.000000" power="0.031964" sp="0.456566">
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="86.724135" toggleRate2="42.557833" totalRate="2779609.088759" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" writeRate="0.000000" enableRate="0.000000" fanout="1.810949" ru="3.826825" fanout2="1.771711" totalFanout="24513.000000" fanoutRate="536127.715194" numNets="49995" extNets="13536" SMUX="1593" carry4s="4264" luts="23848" logicCap="12965055385" signalCap="3459062.000000" power="0.312958" sp="0.076821">
 				</LOGIC>
-				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="125.000000" clockFreq2="29.242569" toggleRate="23.192187" toggleRate2="18.963109" totalRate="8025.595728" name="High_Fanout_Nets" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" writeRate="0.000000" enableRate="0.417227" fanout="64.346241" ru="23.236616" fanout2="63.901914" totalFanout="28248.000000" fanoutRate="265857.383433" numNets="444" extNets="439" carry4s="74" ffs="162" luts="176" logicCap="107193398" signalCap="4052573.000000" power="0.000867" sp="0.025799">
+				<LOGIC clock="aclk" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="14.205558" toggleRate2="28.903776" totalRate="61595.295744" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" writeRate="0.000000" enableRate="1.000000" fanout="1.220183" ru="3.240348" fanout2="1.222222" totalFanout="133.000000" fanoutRate="2403.129202" numNets="2175" extNets="109" SRL="2168" logicCap="1361039995" signalCap="43797.000000" power="0.009794" sp="0.000767">
 				</LOGIC>
-				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="250.859071" toggleRate2="49.472011" totalRate="7321.857572" name="aclk" hierName="iv_multi_engine_top" writeRate="0.000000" enableRate="0.000000" fanout="1.000000" ru="0.000000" fanout2="1.000000" totalFanout="36.000000" fanoutRate="1076.160982" numNets="148" extNets="36" carry4s="36" logicCap="2468000" signalCap="0.000000" power="0.000325" sp="0.000000">
+				<LOGIC clock="aclk" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="4.015001" toggleRate2="15.035562" totalRate="3219.049356" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" writeRate="0.023998" enableRate="0.000000" fanout="2.734848" ru="11.250787" fanout2="2.892562" totalFanout="361.000000" fanoutRate="2564.468819" numNets="314" extNets="132" RAM="314" logicCap="182024993" signalCap="66563.000000" power="0.000510" sp="0.000397">
 				</LOGIC>
-				<LOGIC clock="aclk" clockFreq="125.000000" clockFreq2="125.000000" toggleRate="0.095338" toggleRate2="4.600064" totalRate="18.400257" name="aclk" hierName="iv_multi_engine_top" writeRate="0.000000" enableRate="1.000000" fanout="15.233161" ru="14.743371" fanout2="6.250000" totalFanout="2940.000000" fanoutRate="70.056836" numNets="193" extNets="193" ffs="193" logicCap="180000" signalCap="185488.000000" power="0.000001" sp="0.000012">
+				<LOGIC clock="aclk" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="31.456014" toggleRate2="43.451241" totalRate="1013544.222056" name="aclk" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" writeRate="0.000000" enableRate="0.727173" fanout="2.803948" ru="10.405623" fanout2="3.431242" totalFanout="90346.000000" fanoutRate="1792736.039790" numNets="32221" extNets="32221" ffs="32221" logicCap="1286460013" signalCap="16404858.000000" power="0.022805" sp="0.297041">
 				</LOGIC>
-				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="125.000000" clockFreq2="0.000000" toggleRate="0.000000" toggleRate2="0.000000" totalRate="0.000000" name="High_Fanout_Nets" hierName="iv_multi_engine_top" writeRate="0.000000" enableRate="1.000000" fanout="67.310811" ru="22.646902" fanout2="0.000000" totalFanout="4981.000000" fanoutRate="0.000000" numNets="74" extNets="74" ffs="74" logicCap="0" signalCap="844761.000000" power="0.000000" sp="0.000000">
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="0.000000" toggleRate="0.000000" toggleRate2="0.000000" totalRate="0.000000" name="Unassigned_Clock" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" writeRate="0.000000" enableRate="0.000000" fanout="2.692308" ru="0.000000" fanout2="0.000000" totalFanout="35.000000" fanoutRate="0.000000" numNets="13" extNets="13" carry4s="13" logicCap="0" signalCap="8018.000000" power="0.000000" sp="0.000000">
+				</LOGIC>
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="18.425429" toggleRate="18.155534" toggleRate2="18.150948" totalRate="6478.161966" name="High_Fanout_Nets" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" writeRate="0.000000" enableRate="0.657466" fanout="80.251732" ru="22.825940" fanout2="72.729577" totalFanout="34749.000000" fanoutRate="183225.848600" numNets="433" extNets="433" carry4s="27" ffs="161" luts="210" logicCap="117491001" signalCap="4295316.000000" power="0.000412" sp="0.018338">
+				</LOGIC>
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="475.500058" toggleRate2="48.832325" totalRate="7324.848727" name="aclk" hierName="iv_multi_engine_top" writeRate="0.000000" enableRate="0.000000" fanout="1.000000" ru="0.000000" fanout2="1.000000" totalFanout="36.000000" fanoutRate="860.928786" numNets="150" extNets="36" carry4s="36" luts="1" logicCap="3075100" signalCap="0.000000" power="0.000261" sp="0.000000">
+				</LOGIC>
+				<LOGIC clock="aclk" clockFreq="100.000000" clockFreq2="100.000000" toggleRate="0.274028" toggleRate2="14.043924" totalRate="56.175694" name="aclk" hierName="iv_multi_engine_top" writeRate="0.000000" enableRate="0.985560" fanout="14.678049" ru="14.694987" fanout2="4.250000" totalFanout="3009.000000" fanoutRate="63.155057" numNets="205" extNets="205" ffs="205" logicCap="180000" signalCap="193566.000000" power="0.000001" sp="0.000007">
+				</LOGIC>
+				<LOGIC clock="Unclocked_or_HFN_instance" clockFreq="100.000000" clockFreq2="0.000000" toggleRate="0.000000" toggleRate2="0.000000" totalRate="0.000000" name="High_Fanout_Nets" hierName="iv_multi_engine_top" writeRate="0.000000" enableRate="1.000000" fanout="75.202532" ru="22.953861" fanout2="0.000000" totalFanout="5941.000000" fanoutRate="0.000000" numNets="79" extNets="79" ffs="79" logicCap="0" signalCap="934744.000000" power="0.000000" sp="0.000000">
 				</LOGIC>
 			</BLOCKTYPE>
 			<BLOCKTYPE name="DSP">
-				<MODULE name="aclk" count="26">
+				<MODULE name="aclk" count="54">
 					<GROUPSUMMARY>
-						<DSP48E1 name="aclk" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" clock="aclk" toggleRate="47.667358" clockFreq="125.000000" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.035142">
+						<DSP48E1 name="aclk" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" clock="aclk" toggleRate="42.838590" clockFreq="100.000000" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.052385">
 						</DSP48E1>
 					</GROUPSUMMARY>
 				</MODULE>
-				<MODULE name="asynchronous" count="114">
+				<MODULE name="aclk" count="2">
 					<GROUPSUMMARY>
-						<DSP48E1 name="asynchronous" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" clock="" toggleRate="100.0" clockFreq="41.240945" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.116806">
+						<DSP48E1 name="aclk" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" clock="aclk" toggleRate="45.865235" clockFreq="100.000000" multUsed="Yes" mregUsed="Yes" preAdderUsed="No" power="0.001928">
 						</DSP48E1>
 					</GROUPSUMMARY>
 				</MODULE>
-				<MODULE name="aclk" count="26">
+				<MODULE name="asynchronous" count="96">
 					<GROUPSUMMARY>
-						<DSP48E1 name="aclk" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" clock="aclk" toggleRate="47.668881" clockFreq="125.000000" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.035143">
+						<DSP48E1 name="asynchronous" hierName="iv_multi_engine_top/core_inst_gen[0].u_engine_core" clock="" toggleRate="100.0" clockFreq="33.166419" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.079105">
 						</DSP48E1>
 					</GROUPSUMMARY>
 				</MODULE>
-				<MODULE name="asynchronous" count="114">
+				<MODULE name="aclk" count="54">
 					<GROUPSUMMARY>
-						<DSP48E1 name="asynchronous" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" clock="" toggleRate="100.0" clockFreq="41.290035" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.116945">
+						<DSP48E1 name="aclk" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" clock="aclk" toggleRate="42.832520" clockFreq="100.000000" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.052318">
 						</DSP48E1>
 					</GROUPSUMMARY>
 				</MODULE>
-				<MODULE name="aclk" count="26">
+				<MODULE name="aclk" count="2">
 					<GROUPSUMMARY>
-						<DSP48E1 name="aclk" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" clock="aclk" toggleRate="47.667987" clockFreq="125.000000" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.035142">
+						<DSP48E1 name="aclk" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" clock="aclk" toggleRate="45.843468" clockFreq="100.000000" multUsed="Yes" mregUsed="Yes" preAdderUsed="No" power="0.001926">
 						</DSP48E1>
 					</GROUPSUMMARY>
 				</MODULE>
-				<MODULE name="asynchronous" count="114">
+				<MODULE name="asynchronous" count="96">
 					<GROUPSUMMARY>
-						<DSP48E1 name="asynchronous" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" clock="" toggleRate="100.0" clockFreq="41.250953" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.116834">
+						<DSP48E1 name="asynchronous" hierName="iv_multi_engine_top/core_inst_gen[1].u_engine_core" clock="" toggleRate="100.0" clockFreq="33.166419" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.079105">
 						</DSP48E1>
 					</GROUPSUMMARY>
 				</MODULE>
-				<MODULE name="aclk" count="26">
+				<MODULE name="aclk" count="54">
 					<GROUPSUMMARY>
-						<DSP48E1 name="aclk" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" clock="aclk" toggleRate="47.667988" clockFreq="125.000000" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.035142">
+						<DSP48E1 name="aclk" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" clock="aclk" toggleRate="42.832520" clockFreq="100.000000" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.052318">
 						</DSP48E1>
 					</GROUPSUMMARY>
 				</MODULE>
-				<MODULE name="asynchronous" count="114">
+				<MODULE name="aclk" count="2">
 					<GROUPSUMMARY>
-						<DSP48E1 name="asynchronous" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" clock="" toggleRate="100.0" clockFreq="41.250383" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.116833">
+						<DSP48E1 name="aclk" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" clock="aclk" toggleRate="45.843469" clockFreq="100.000000" multUsed="Yes" mregUsed="Yes" preAdderUsed="No" power="0.001926">
+						</DSP48E1>
+					</GROUPSUMMARY>
+				</MODULE>
+				<MODULE name="asynchronous" count="96">
+					<GROUPSUMMARY>
+						<DSP48E1 name="asynchronous" hierName="iv_multi_engine_top/core_inst_gen[2].u_engine_core" clock="" toggleRate="100.0" clockFreq="33.166419" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.079105">
+						</DSP48E1>
+					</GROUPSUMMARY>
+				</MODULE>
+				<MODULE name="aclk" count="54">
+					<GROUPSUMMARY>
+						<DSP48E1 name="aclk" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" clock="aclk" toggleRate="42.832520" clockFreq="100.000000" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.052318">
+						</DSP48E1>
+					</GROUPSUMMARY>
+				</MODULE>
+				<MODULE name="aclk" count="2">
+					<GROUPSUMMARY>
+						<DSP48E1 name="aclk" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" clock="aclk" toggleRate="45.843468" clockFreq="100.000000" multUsed="Yes" mregUsed="Yes" preAdderUsed="No" power="0.001926">
+						</DSP48E1>
+					</GROUPSUMMARY>
+				</MODULE>
+				<MODULE name="asynchronous" count="96">
+					<GROUPSUMMARY>
+						<DSP48E1 name="asynchronous" hierName="iv_multi_engine_top/core_inst_gen[3].u_engine_core" clock="" toggleRate="100.0" clockFreq="33.166419" multUsed="Yes" mregUsed="No" preAdderUsed="No" power="0.079105">
 						</DSP48E1>
 					</GROUPSUMMARY>
 				</MODULE>

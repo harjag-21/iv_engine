@@ -28,10 +28,16 @@ module iv_bs_datapath (
     input  wire signed [31:0] r_in,        // Risk-free rate (Q8.24)
     input  wire signed [31:0] T_in,        // Time to maturity (Q8.24)
     input  wire signed [31:0] sigma_in,    // Volatility estimate (Q8.24)
+    input  wire signed [31:0] sqrt_T_in,   // sqrt(T) pre-computed at ingress (Q8.24)
 
     output logic              valid_out,
     output logic signed [31:0] C_bs_out,    // Black-Scholes Call Price (Q8.24)
-    output logic signed [31:0] vega_out     // Option Vega (Q8.24)
+    output logic signed [31:0] vega_out,    // Option Vega (Q8.24)
+    output logic signed [31:0] delta_out,   // Option Delta N(d1) (Q8.24)
+    output logic signed [31:0] phi_d1_out,  // phi(d1) standard normal PDF (Q8.24)
+    output logic signed [31:0] den_d1_out,  // sigma*sqrt(T) (Q8.24)
+    output logic signed [31:0] gamma_den_out, // S * sigma * sqrt(T) denominator for Gamma (Q8.24)
+    output logic signed [31:0] S_out        // S spot price aligned to output (Q8.24)
 );
 
     localparam signed [31:0] Q24_ONE = 32'sd16777216; // 1.0 in Q8.24
@@ -41,7 +47,7 @@ module iv_bs_datapath (
     // =====================================================================
     logic               v_stg0;
     logic signed [31:0] ln_num_r0, ln_den_r0;
-    logic signed [31:0] S_r0, K_r0, r_r0, T_r0, sigma_r0;
+    logic signed [31:0] S_r0, K_r0, r_r0, T_r0, sigma_r0, sqrt_T_r0;
     logic signed [31:0] diff_sk_var;
 
     always_ff @(posedge clk or negedge rst_n) begin
@@ -50,14 +56,15 @@ module iv_bs_datapath (
             ln_num_r0 <= 32'sd0;
             ln_den_r0 <= 32'sd0;
             S_r0 <= 32'sd0; K_r0 <= 32'sd0; r_r0 <= 32'sd0;
-            T_r0 <= 32'sd0; sigma_r0 <= 32'sd0;
+            T_r0 <= 32'sd0; sigma_r0 <= 32'sd0; sqrt_T_r0 <= 32'sd0;
         end else begin
-            v_stg0   <= valid_in;
-            S_r0     <= S_in;
-            K_r0     <= K_in;
-            r_r0     <= r_in;
-            T_r0     <= T_in;
-            sigma_r0 <= sigma_in;
+            v_stg0    <= valid_in;
+            S_r0      <= S_in;
+            K_r0      <= K_in;
+            r_r0      <= r_in;
+            T_r0      <= T_in;
+            sigma_r0  <= sigma_in;
+            sqrt_T_r0 <= sqrt_T_in;
 
             // Saturation protection for S - K > 63.99 to prevent 32-bit signed overflow when doubled
             diff_sk_var = $signed(S_in) - $signed(K_in);
@@ -101,35 +108,21 @@ module iv_bs_datapath (
     );
 
     // =====================================================================
-    // Stage 1B: Pipelined sqrt(T) Engine (28 stages + 1 output reg = 29 cycles)
+    // Stage 1B: Delayed Pre-computed sqrt(T) Pipeline (33 cycles to match ln divider)
     // =====================================================================
-    wire               sqrt_valid_w;
-    wire signed [31:0] sqrt_T_w;
+    logic signed [31:0] sqrt_T_pipe [0:33];
+    assign sqrt_T_pipe[0] = sqrt_T_r0;
 
-    iv_sqrt_q824 u_sqrt_T (
-        .clk       (clk),
-        .rst_n     (rst_n),
-        .valid_in  (v_stg0),
-        .rad_in    (T_r0),
-        .valid_out (sqrt_valid_w),
-        .root_out  (sqrt_T_w)
-    );
-
-    // Delay sqrt_T through remaining 4 cycles to align with ln_sk_out (total 33 cycles)
-    logic signed [31:0] sqrt_T_delay [0:4];
-    assign sqrt_T_delay[0] = sqrt_T_w;
-
-    genvar g;
+    genvar g_sqrt;
     generate
-        for (g = 0; g < 4; g = g + 1) begin : sqrt_align_gen
-            always_ff @(posedge clk or negedge rst_n) begin
-                if (!rst_n) sqrt_T_delay[g+1] <= 32'sd0;
-                else        sqrt_T_delay[g+1] <= sqrt_T_delay[g];
+        for (g_sqrt = 0; g_sqrt < 33; g_sqrt = g_sqrt + 1) begin : sqrt_delay_gen
+            always_ff @(posedge clk) begin
+                sqrt_T_pipe[g_sqrt+1] <= sqrt_T_pipe[g_sqrt];
             end
         end
     endgenerate
 
-    wire signed [31:0] sqrt_T_aligned = sqrt_T_delay[4];
+    wire signed [31:0] sqrt_T_aligned = sqrt_T_pipe[33];
 
     // Delay lines for S, K, r, T, sigma through 33-cycle ln divider
     logic signed [31:0] S_ln_pipe    [0:33];
@@ -144,22 +137,15 @@ module iv_bs_datapath (
     assign T_ln_pipe[0]     = T_r0;
     assign sigma_ln_pipe[0] = sigma_r0;
 
+    genvar g;
     generate
         for (g = 0; g < 33; g = g + 1) begin : ln_delay_gen
-            always_ff @(posedge clk or negedge rst_n) begin
-                if (!rst_n) begin
-                    S_ln_pipe[g+1]     <= 32'sd0;
-                    K_ln_pipe[g+1]     <= 32'sd0;
-                    r_ln_pipe[g+1]     <= 32'sd0;
-                    T_ln_pipe[g+1]     <= 32'sd0;
-                    sigma_ln_pipe[g+1] <= 32'sd0;
-                end else begin
-                    S_ln_pipe[g+1]     <= S_ln_pipe[g];
-                    K_ln_pipe[g+1]     <= K_ln_pipe[g];
-                    r_ln_pipe[g+1]     <= r_ln_pipe[g];
-                    T_ln_pipe[g+1]     <= T_ln_pipe[g];
-                    sigma_ln_pipe[g+1] <= sigma_ln_pipe[g];
-                end
+            always_ff @(posedge clk) begin
+                S_ln_pipe[g+1]     <= S_ln_pipe[g];
+                K_ln_pipe[g+1]     <= K_ln_pipe[g];
+                r_ln_pipe[g+1]     <= r_ln_pipe[g];
+                T_ln_pipe[g+1]     <= T_ln_pipe[g];
+                sigma_ln_pipe[g+1] <= sigma_ln_pipe[g];
             end
         end
     endgenerate
@@ -340,22 +326,13 @@ module iv_bs_datapath (
 
     generate
         for (g = 0; g < 33; g = g + 1) begin : d1_delay_gen
-            always_ff @(posedge clk or negedge rst_n) begin
-                if (!rst_n) begin
-                    S_d1_pipe[g+1]      <= 32'sd0;
-                    K_d1_pipe[g+1]      <= 32'sd0;
-                    r_d1_pipe[g+1]      <= 32'sd0;
-                    T_d1_pipe[g+1]      <= 32'sd0;
-                    sqrt_T_d1_pipe[g+1] <= 32'sd0;
-                    den_d1_pipe[g+1]    <= 32'sd0;
-                end else begin
-                    S_d1_pipe[g+1]      <= S_d1_pipe[g];
-                    K_d1_pipe[g+1]      <= K_d1_pipe[g];
-                    r_d1_pipe[g+1]      <= r_d1_pipe[g];
-                    T_d1_pipe[g+1]      <= T_d1_pipe[g];
-                    sqrt_T_d1_pipe[g+1] <= sqrt_T_d1_pipe[g];
-                    den_d1_pipe[g+1]    <= den_d1_pipe[g];
-                end
+            always_ff @(posedge clk) begin
+                S_d1_pipe[g+1]      <= S_d1_pipe[g];
+                K_d1_pipe[g+1]      <= K_d1_pipe[g];
+                r_d1_pipe[g+1]      <= r_d1_pipe[g];
+                T_d1_pipe[g+1]      <= T_d1_pipe[g];
+                sqrt_T_d1_pipe[g+1] <= sqrt_T_d1_pipe[g];
+                den_d1_pipe[g+1]    <= den_d1_pipe[g];
             end
         end
     endgenerate
@@ -366,7 +343,7 @@ module iv_bs_datapath (
     // =====================================================================
     logic               d12_valid_reg;
     logic signed [31:0] d1_reg, d2_reg;
-    logic signed [31:0] S_d12_reg, K_d12_reg, r_d12_reg, T_d12_reg, sqrt_T_d12_reg;
+    logic signed [31:0] S_d12_reg, K_d12_reg, r_d12_reg, T_d12_reg, sqrt_T_d12_reg, den_d1_d12_reg;
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -378,6 +355,7 @@ module iv_bs_datapath (
             r_d12_reg      <= 32'sd0;
             T_d12_reg      <= 32'sd0;
             sqrt_T_d12_reg <= 32'sd0;
+            den_d1_d12_reg <= 32'sd0;
         end else begin
             d12_valid_reg  <= d1_div_valid;
             d1_reg         <= d1_div_out;
@@ -387,6 +365,7 @@ module iv_bs_datapath (
             r_d12_reg      <= r_d1_pipe[33];
             T_d12_reg      <= T_d1_pipe[33];
             sqrt_T_d12_reg <= sqrt_T_d1_pipe[33];
+            den_d1_d12_reg <= den_d1_pipe[33];
         end
     end
 
@@ -416,35 +395,30 @@ module iv_bs_datapath (
         .pdf_out   (phi_d2)
     );
 
-    // Delay lines for S, K, r, T, sqrt_T through the 49-cycle CDF module
+    // Delay lines for S, K, r, T, sqrt_T, den_d1 through the 49-cycle CDF module
     logic signed [31:0] S_cdf_pipe      [0:49];
     logic signed [31:0] K_cdf_pipe      [0:49];
     logic signed [31:0] r_cdf_pipe      [0:49];
     logic signed [31:0] T_cdf_pipe      [0:49];
     logic signed [31:0] sqrt_T_cdf_pipe [0:49];
+    logic signed [31:0] den_d1_cdf_pipe [0:49];
 
     assign S_cdf_pipe[0]      = S_d12_reg;
     assign K_cdf_pipe[0]      = K_d12_reg;
     assign r_cdf_pipe[0]      = r_d12_reg;
     assign T_cdf_pipe[0]      = T_d12_reg;
     assign sqrt_T_cdf_pipe[0] = sqrt_T_d12_reg;
+    assign den_d1_cdf_pipe[0] = den_d1_d12_reg;
 
     generate
         for (g = 0; g < 49; g = g + 1) begin : cdf_delay_gen
-            always_ff @(posedge clk or negedge rst_n) begin
-                if (!rst_n) begin
-                    S_cdf_pipe[g+1]      <= 32'sd0;
-                    K_cdf_pipe[g+1]      <= 32'sd0;
-                    r_cdf_pipe[g+1]      <= 32'sd0;
-                    T_cdf_pipe[g+1]      <= 32'sd0;
-                    sqrt_T_cdf_pipe[g+1] <= 32'sd0;
-                end else begin
-                    S_cdf_pipe[g+1]      <= S_cdf_pipe[g];
-                    K_cdf_pipe[g+1]      <= K_cdf_pipe[g];
-                    r_cdf_pipe[g+1]      <= r_cdf_pipe[g];
-                    T_cdf_pipe[g+1]      <= T_cdf_pipe[g];
-                    sqrt_T_cdf_pipe[g+1] <= sqrt_T_cdf_pipe[g];
-                end
+            always_ff @(posedge clk) begin
+                S_cdf_pipe[g+1]      <= S_cdf_pipe[g];
+                K_cdf_pipe[g+1]      <= K_cdf_pipe[g];
+                r_cdf_pipe[g+1]      <= r_cdf_pipe[g];
+                T_cdf_pipe[g+1]      <= T_cdf_pipe[g];
+                sqrt_T_cdf_pipe[g+1] <= sqrt_T_cdf_pipe[g];
+                den_d1_cdf_pipe[g+1] <= den_d1_cdf_pipe[g];
             end
         end
     endgenerate
@@ -490,6 +464,7 @@ module iv_bs_datapath (
     (* use_dsp = "yes" *) logic signed [31:0] knd2_5a;
     (* use_dsp = "yes" *) logic signed [31:0] vega1_5a;
     logic signed [31:0] phi_d1_5a;      // carry-through
+    logic signed [31:0] N_d1_5a, den_d1_5a, S_5a;
     logic               v5a;
 
     always_ff @(posedge clk or negedge rst_n) begin
@@ -497,9 +472,14 @@ module iv_bs_datapath (
             rt_5a    <= 32'sd0;  term1_5a <= 32'sd0;
             knd2_5a  <= 32'sd0;  vega1_5a <= 32'sd0;
             phi_d1_5a<= 32'sd0;  v5a      <= 1'b0;
+            N_d1_5a  <= 32'sd0;  den_d1_5a<= 32'sd0;
+            S_5a     <= 32'sd0;
         end else begin
             v5a       <= cdf1_v;
             phi_d1_5a <= phi_d1;
+            N_d1_5a   <= N_d1;
+            den_d1_5a <= den_d1_cdf_pipe[49];
+            S_5a      <= S_cdf_pipe[49];
             rt_5a     <= signed'((64'(signed'(r_cdf_pipe[49]))    * 64'(signed'(T_cdf_pipe[49])))      >>> 24);
             term1_5a  <= signed'((64'(signed'(S_cdf_pipe[49]))    * 64'(signed'(N_d1)))                >>> 24);
             knd2_5a   <= signed'((64'(signed'(K_cdf_pipe[49]))    * 64'(signed'(N_d2)))                >>> 24);
@@ -511,6 +491,7 @@ module iv_bs_datapath (
     (* use_dsp = "yes" *) logic signed [31:0] rt2_5b;
     (* use_dsp = "yes" *) logic signed [31:0] vega2_5b;
     logic signed [31:0] rt_5b, term1_5b, knd2_5b;
+    logic signed [31:0] N_d1_5b, den_d1_5b, S_5b, phi_d1_5b;
     logic               v5b;
 
     always_ff @(posedge clk or negedge rst_n) begin
@@ -518,11 +499,17 @@ module iv_bs_datapath (
             rt2_5b   <= 32'sd0;  vega2_5b <= 32'sd0;
             rt_5b    <= 32'sd0;  term1_5b <= 32'sd0;
             knd2_5b  <= 32'sd0;  v5b      <= 1'b0;
+            N_d1_5b  <= 32'sd0;  den_d1_5b<= 32'sd0;
+            S_5b     <= 32'sd0;  phi_d1_5b<= 32'sd0;
         end else begin
             v5b      <= v5a;
             rt_5b    <= rt_5a;        // carry rt through for 5c
             term1_5b <= term1_5a;     // carry term1 through
             knd2_5b  <= knd2_5a;      // carry knd2 through
+            N_d1_5b  <= N_d1_5a;
+            den_d1_5b<= den_d1_5a;
+            S_5b     <= S_5a;
+            phi_d1_5b<= phi_d1_5a;
             rt2_5b   <= signed'((64'(signed'(rt_5a))    * 64'(signed'(rt_5a)))    >>> 25); // (rT)^2/2
             vega2_5b <= signed'((64'(signed'(vega1_5a)) * 64'(signed'(phi_d1_5a))) >>> 24);
         end
@@ -531,18 +518,25 @@ module iv_bs_datapath (
     // --- Sub-stage 5c: ert = 1 - rT + (rT)^2/2  (pure adder, no multiply) ---
     logic signed [31:0] ert_5c;
     logic signed [31:0] term1_5c, knd2_5c, vega2_5c;
+    logic signed [31:0] N_d1_5c, den_d1_5c, S_5c, phi_d1_5c;
     logic               v5c;
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             ert_5c   <= 32'sd0;  term1_5c <= 32'sd0;
             knd2_5c  <= 32'sd0;  vega2_5c <= 32'sd0;
+            N_d1_5c  <= 32'sd0;  den_d1_5c<= 32'sd0;
+            S_5c     <= 32'sd0;  phi_d1_5c<= 32'sd0;
             v5c      <= 1'b0;
         end else begin
             v5c      <= v5b;
             term1_5c <= term1_5b;
             knd2_5c  <= knd2_5b;
             vega2_5c <= vega2_5b;
+            N_d1_5c  <= N_d1_5b;
+            den_d1_5c<= den_d1_5b;
+            S_5c     <= S_5b;
+            phi_d1_5c<= phi_d1_5b;
             begin
                 // Pure adder: 1 - rt + rt2/2.  No multiply.
                 logic signed [31:0] e;
@@ -554,33 +548,53 @@ module iv_bs_datapath (
         end
     end
 
-    // --- Sub-stage 5d: term2 = knd2 * ert  (1 DSP) ---
+    // --- Sub-stage 5d: term2 = knd2 * ert  (1 DSP) & gamma_den = S * den_d1 (1 DSP) ---
     (* use_dsp = "yes" *) logic signed [31:0] term2_5d;
+    (* use_dsp = "yes" *) logic signed [31:0] gamma_den_5d;
     logic signed [31:0] term1_5d, vega2_5d;
+    logic signed [31:0] N_d1_5d, den_d1_5d, S_5d, phi_d1_5d;
     logic               v5d;
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            term2_5d <= 32'sd0;  term1_5d <= 32'sd0;
-            vega2_5d <= 32'sd0;  v5d      <= 1'b0;
+            term2_5d     <= 32'sd0;  term1_5d <= 32'sd0;
+            gamma_den_5d <= 32'sd0;  vega2_5d <= 32'sd0;
+            phi_d1_5d    <= 32'sd0;  v5d      <= 1'b0;
+            N_d1_5d      <= 32'sd0;  den_d1_5d<= 32'sd0;
+            S_5d         <= 32'sd0;
         end else begin
-            v5d      <= v5c;
-            term1_5d <= term1_5c;
-            vega2_5d <= vega2_5c;
-            term2_5d <= signed'((64'(signed'(knd2_5c)) * 64'(signed'(ert_5c))) >>> 24);
+            v5d          <= v5c;
+            term1_5d     <= term1_5c;
+            vega2_5d     <= vega2_5c;
+            N_d1_5d      <= N_d1_5c;
+            den_d1_5d    <= den_d1_5c;
+            S_5d         <= S_5c;
+            phi_d1_5d    <= phi_d1_5c;
+            term2_5d     <= signed'((64'(signed'(knd2_5c)) * 64'(signed'(ert_5c))) >>> 24);
+            gamma_den_5d <= signed'((64'(signed'(S_5c))    * 64'(signed'(den_d1_5c))) >>> 24);
         end
     end
 
     // --- Sub-stage 5e: output — adders only ---
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            valid_out <= 1'b0;
-            C_bs_out  <= 32'sd0;
-            vega_out  <= 32'sd0;
+            valid_out     <= 1'b0;
+            C_bs_out      <= 32'sd0;
+            vega_out      <= 32'sd0;
+            delta_out     <= 32'sd0;
+            phi_d1_out    <= 32'sd0;
+            den_d1_out    <= 32'sd0;
+            gamma_den_out <= 32'sd0;
+            S_out         <= 32'sd0;
         end else begin
-            valid_out <= v5d;
-            C_bs_out  <= signed'(term1_5d - term2_5d);
-            vega_out  <= vega2_5d;
+            valid_out     <= v5d;
+            C_bs_out      <= signed'(term1_5d - term2_5d);
+            vega_out      <= vega2_5d;
+            delta_out     <= N_d1_5d;
+            phi_d1_out    <= phi_d1_5d;
+            den_d1_out    <= den_d1_5d;
+            gamma_den_out <= gamma_den_5d;
+            S_out         <= S_5d;
         end
     end
 

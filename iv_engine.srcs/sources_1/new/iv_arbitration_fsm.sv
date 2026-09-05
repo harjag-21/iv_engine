@@ -9,6 +9,9 @@ module iv_arbitration_fsm (
     input  wire [5:0]         loopback_tid,
     input  wire signed [31:0] loopback_sigma,
     input  wire signed [31:0] loopback_error, // |C_market - C_calculated|
+    input  wire signed [31:0] loopback_delta,
+    input  wire signed [31:0] loopback_vega,
+    input  wire signed [31:0] loopback_gamma,
     
     // Lane 2: Ingress FIFO (New NASDAQ Data)
     input  wire               fifo_empty,
@@ -24,7 +27,10 @@ module iv_arbitration_fsm (
     // Outputs to the Completion Bus (Sent back to trading algorithm)
     output logic              iv_done_valid,
     output logic [5:0]        iv_done_tid,
-    output logic signed [31:0] iv_done_sigma
+    output logic signed [31:0] iv_done_sigma,
+    output logic signed [31:0] iv_done_delta,
+    output logic signed [31:0] iv_done_vega,
+    output logic signed [31:0] iv_done_gamma
 );
 
     // Convergence Threshold: $0.01 tick size in Q8.24 format
@@ -34,19 +40,23 @@ module iv_arbitration_fsm (
     wire signed [31:0] abs_error = (loopback_error == 32'sh80000000) ? 32'sh7FFFFFFF :
                                    ((loopback_error < 0) ? -loopback_error : loopback_error);
 
+    wire can_pop_fifo = (!loopback_valid || (abs_error <= CONVERGENCE_THRESHOLD)) && !fifo_empty;
+    assign fifo_pop   = can_pop_fifo;
+
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             pipe_valid       <= 1'b0;
             pipe_tid         <= 6'd0;
             pipe_sigma       <= 32'd0;
             pipe_is_loopback <= 1'b0;
-            fifo_pop         <= 1'b0;
             iv_done_valid    <= 1'b0;
             iv_done_tid      <= 6'd0;
             iv_done_sigma    <= 32'd0;
+            iv_done_delta    <= 32'd0;
+            iv_done_vega     <= 32'd0;
+            iv_done_gamma    <= 32'd0;
         end else begin
             // Default assignments to prevent latch inference
-            fifo_pop         <= 1'b0;
             pipe_valid       <= 1'b0;
             pipe_sigma       <= 32'sd0;  // Clear to prevent stale data
             pipe_is_loopback <= 1'b0;
@@ -59,17 +69,20 @@ module iv_arbitration_fsm (
                 
                 if (abs_error <= CONVERGENCE_THRESHOLD) begin
                     // 1A: CONVERGED! 
-                    // Route to completion bus.
+                    // Route to completion bus with Greeks.
                     iv_done_valid <= 1'b1;
                     iv_done_tid   <= loopback_tid;
                     iv_done_sigma <= loopback_sigma;
+                    iv_done_delta <= loopback_delta;
+                    iv_done_vega  <= loopback_vega;
+                    iv_done_gamma <= loopback_gamma;
                     
-                    // Pipeline slot is free! Pop from FIFO if data exists.
+                    // Pipeline slot is free! Ingest from FIFO if data exists.
                     if (!fifo_empty) begin
-                        fifo_pop   <= 1'b1;
-                        pipe_valid <= 1'b1;
-                        pipe_tid   <= fifo_tid;
-                        pipe_sigma <= 32'sd0; // Initial guess handled by iv_top
+                        pipe_valid       <= 1'b1;
+                        pipe_tid         <= fifo_tid;
+                        pipe_sigma       <= 32'sd0; // Initial guess handled by iv_top
+                        pipe_is_loopback <= 1'b0;
                     end
                 end else begin
                     // 1B: NOT CONVERGED! 
@@ -85,10 +98,10 @@ module iv_arbitration_fsm (
             // -------------------------------------------------------------
             end else if (!fifo_empty) begin
                 // No loopback traffic. Safe to ingest new market tick.
-                fifo_pop   <= 1'b1;
-                pipe_valid <= 1'b1;
-                pipe_tid   <= fifo_tid;
-                pipe_sigma <= 32'sd0; // Initial guess handled by iv_top
+                pipe_valid       <= 1'b1;
+                pipe_tid         <= fifo_tid;
+                pipe_sigma       <= 32'sd0; // Initial guess handled by iv_top
+                pipe_is_loopback <= 1'b0;
             end
         end
     end

@@ -228,10 +228,9 @@ module iv_norm_cdf (
     // (* SHREG_EXTRACT = "no" *) prevents SRL32 inference:
     // Without this Vivado packs the whole chain into one SRL32, creating a
     // combinational path from phi_2f → SRL32_D of depth 27 which fails timing.
-    // -----------------------------------------------------------------------
-    (* SHREG_EXTRACT = "no" *) logic signed [31:0] phi_delay [0:28];
-    (* SHREG_EXTRACT = "no" *) logic               is_neg_delay [0:33];
-    (* SHREG_EXTRACT = "no" *) logic signed [31:0] abs_x_delay [0:33];
+    logic signed [31:0] phi_delay [0:28];
+    logic               is_neg_delay [0:33];
+    logic signed [31:0] abs_x_delay [0:33];
 
     assign phi_delay[0]    = phi_2f;
     assign is_neg_delay[0] = is_neg1;
@@ -240,20 +239,14 @@ module iv_norm_cdf (
     genvar g;
     generate
         for (g = 0; g < 28; g = g + 1) begin : phi_delay_gen
-            always_ff @(posedge clk or negedge rst_n) begin
-                if (!rst_n) phi_delay[g+1] <= 32'sd0;
-                else        phi_delay[g+1] <= phi_delay[g];
+            always_ff @(posedge clk) begin
+                phi_delay[g+1] <= phi_delay[g];
             end
         end
         for (g = 0; g < 33; g = g + 1) begin : meta_delay_gen
-            always_ff @(posedge clk or negedge rst_n) begin
-                if (!rst_n) begin
-                    is_neg_delay[g+1] <= 1'b0;
-                    abs_x_delay[g+1]  <= 32'sd0;
-                end else begin
-                    is_neg_delay[g+1] <= is_neg_delay[g];
-                    abs_x_delay[g+1]  <= abs_x_delay[g];
-                end
+            always_ff @(posedge clk) begin
+                is_neg_delay[g+1] <= is_neg_delay[g];
+                abs_x_delay[g+1]  <= abs_x_delay[g];
             end
         end
     endgenerate

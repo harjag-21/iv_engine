@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
-| Date             : Fri Sep  4 03:06:25 2026
+| Date             : Sat Sep  5 14:52:10 2026
 | Host             : LAPTOP-EPHGQB72 running 64-bit major release  (build 9200)
 | Command          : report_power -file impl_results/artix7_4core_speed3/artix7_power.rpt -xpe impl_results/artix7_4core_speed3/artix7_power.xpe
 | Design           : iv_multi_engine_top
@@ -30,14 +30,14 @@ Table of Contents
 ----------
 
 +--------------------------+--------------+
-| Total On-Chip Power (W)  | 5.839        |
+| Total On-Chip Power (W)  | 4.258        |
 | Design Power Budget (W)  | Unspecified* |
 | Power Budget Margin (W)  | NA           |
-| Dynamic (W)              | 5.703        |
-| Device Static (W)        | 0.136        |
+| Dynamic (W)              | 4.127        |
+| Device Static (W)        | 0.132        |
 | Effective TJA (C/W)      | 1.5          |
-| Max Ambient (C)          | 91.5         |
-| Junction Temperature (C) | 33.5         |
+| Max Ambient (C)          | 93.8         |
+| Junction Temperature (C) | 31.2         |
 | Confidence Level         | Medium       |
 | Setting File             | ---          |
 | Simulation Activity File | ---          |
@@ -52,20 +52,20 @@ Table of Contents
 +--------------------------+-----------+----------+-----------+-----------------+
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
-| Clocks                   |     0.747 |        3 |       --- |             --- |
-| Slice Logic              |     2.082 |   323993 |       --- |             --- |
-|   LUT as Logic           |     1.789 |    99974 |    133800 |           74.72 |
-|   CARRY4                 |     0.134 |    17648 |     33450 |           52.76 |
-|   Register               |     0.128 |   137754 |    267600 |           51.48 |
-|   LUT as Shift Register  |     0.026 |     5578 |     46200 |           12.07 |
-|   F7/F8 Muxes            |     0.002 |     7800 |    133800 |            5.83 |
-|   LUT as Distributed RAM |     0.002 |      904 |     46200 |            1.96 |
-|   Others                 |     0.000 |      506 |       --- |             --- |
+| Clocks                   |     0.589 |        3 |       --- |             --- |
+| Slice Logic              |     1.388 |   297244 |       --- |             --- |
+|   LUT as Logic           |     1.149 |    96386 |    133800 |           72.04 |
+|   CARRY4                 |     0.104 |    17252 |     33450 |           51.58 |
+|   Register               |     0.091 |   129786 |    267600 |           48.50 |
+|   LUT as Shift Register  |     0.039 |     8656 |     46200 |           18.74 |
+|   LUT as Distributed RAM |     0.002 |     1256 |     46200 |            2.72 |
+|   F7/F8 Muxes            |     0.001 |     6372 |    133800 |            4.76 |
+|   Others                 |     0.000 |     1863 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
-| Signals                  |     2.267 |   221628 |       --- |             --- |
-| DSPs                     |     0.608 |      560 |       740 |           75.68 |
-| Static Power             |     0.136 |          |           |                 |
-| Total                    |     5.839 |          |           |                 |
+| Signals                  |     1.617 |   215203 |       --- |             --- |
+| DSPs                     |     0.533 |      608 |       740 |           82.16 |
+| Static Power             |     0.132 |          |           |                 |
+| Total                    |     4.258 |          |           |                 |
 +--------------------------+-----------+----------+-----------+-----------------+
 
 
@@ -75,8 +75,8 @@ Table of Contents
 +-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
 | Source    | Voltage (V) | Total (A) | Dynamic (A) | Static (A) | Powerup (A) | Budget (A)  | Margin (A) |
 +-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
-| Vccint    |       1.000 |     5.745 |       5.703 |      0.042 |       NA    | Unspecified | NA         |
-| Vccaux    |       1.800 |     0.032 |       0.000 |      0.032 |       NA    | Unspecified | NA         |
+| Vccint    |       1.000 |     4.165 |       4.127 |      0.038 |       NA    | Unspecified | NA         |
+| Vccaux    |       1.800 |     0.031 |       0.000 |      0.031 |       NA    | Unspecified | NA         |
 | Vcco33    |       3.300 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
 | Vcco25    |       2.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
 | Vcco18    |       1.800 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
@@ -131,7 +131,7 @@ Table of Contents
 +-------+--------+-----------------+
 | Clock | Domain | Constraint (ns) |
 +-------+--------+-----------------+
-| aclk  | aclk   |             8.0 |
+| aclk  | aclk   |            10.0 |
 +-------+--------+-----------------+
 
 
@@ -141,38 +141,46 @@ Table of Contents
 3.1 By Hierarchy
 ----------------
 
-+----------------------------------+-----------+
-| Name                             | Power (W) |
-+----------------------------------+-----------+
-| iv_multi_engine_top              |     5.703 |
-|   core_inst_gen[0].u_engine_core |     1.405 |
-|     u_iv_top                     |     1.335 |
-|       cordic_inst                |     0.062 |
-|       u_arb_fsm                  |     0.003 |
-|       u_bs_datapath              |     1.073 |
-|       u_gain_comp                |     0.007 |
-|       u_nr_divider               |     0.179 |
-|   core_inst_gen[1].u_engine_core |     1.410 |
-|     u_iv_top                     |     1.342 |
-|       cordic_inst                |     0.066 |
-|       u_arb_fsm                  |     0.003 |
-|       u_bs_datapath              |     1.088 |
-|       u_gain_comp                |     0.007 |
-|       u_nr_divider               |     0.166 |
-|   core_inst_gen[2].u_engine_core |     1.426 |
-|     u_iv_top                     |     1.356 |
-|       cordic_inst                |     0.063 |
-|       u_arb_fsm                  |     0.003 |
-|       u_bs_datapath              |     1.099 |
-|       u_gain_comp                |     0.007 |
-|       u_nr_divider               |     0.173 |
-|   core_inst_gen[3].u_engine_core |     1.461 |
-|     u_iv_top                     |     1.385 |
-|       cordic_inst                |     0.062 |
-|       u_arb_fsm                  |     0.003 |
-|       u_bs_datapath              |     1.136 |
-|       u_gain_comp                |     0.007 |
-|       u_nr_divider               |     0.166 |
-+----------------------------------+-----------+
++-----------------------------------+-----------+
+| Name                              | Power (W) |
++-----------------------------------+-----------+
+| iv_multi_engine_top               |     4.127 |
+|   core_inst_gen[0].u_engine_core  |     1.040 |
+|     u_iv_top                      |     0.987 |
+|       cordic_inst                 |     0.053 |
+|       gen_init_guess.u_init_guess |     0.146 |
+|       u_arb_fsm                   |     0.005 |
+|       u_bs_datapath               |     0.598 |
+|       u_gain_comp                 |     0.005 |
+|       u_gamma_divider             |     0.080 |
+|       u_nr_divider                |     0.087 |
+|   core_inst_gen[1].u_engine_core  |     1.016 |
+|     u_iv_top                      |     0.962 |
+|       cordic_inst                 |     0.050 |
+|       gen_init_guess.u_init_guess |     0.145 |
+|       u_arb_fsm                   |     0.005 |
+|       u_bs_datapath               |     0.582 |
+|       u_gain_comp                 |     0.005 |
+|       u_gamma_divider             |     0.078 |
+|       u_nr_divider                |     0.083 |
+|   core_inst_gen[2].u_engine_core  |     1.031 |
+|     u_iv_top                      |     0.979 |
+|       cordic_inst                 |     0.048 |
+|       gen_init_guess.u_init_guess |     0.149 |
+|       u_arb_fsm                   |     0.005 |
+|       u_bs_datapath               |     0.591 |
+|       u_gain_comp                 |     0.005 |
+|       u_gamma_divider             |     0.082 |
+|       u_nr_divider                |     0.084 |
+|   core_inst_gen[3].u_engine_core  |     1.038 |
+|     u_iv_top                      |     0.986 |
+|       cordic_inst                 |     0.051 |
+|       gen_init_guess.u_init_guess |     0.153 |
+|       u_arb_fsm                   |     0.005 |
+|       u_bs_datapath               |     0.593 |
+|       u_gain_comp                 |     0.005 |
+|       u_gamma_divider             |     0.080 |
+|       u_nr_divider                |     0.085 |
++-----------------------------------+-----------+
 
 

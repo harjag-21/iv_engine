@@ -26,11 +26,11 @@ module iv_multi_engine_top #(
     input  logic         s_axis_tlast,
 
     // -----------------------------------------
-    // Top-Level AXI4-Stream Egress (Volatility Output)
+    // Top-Level AXI4-Stream Egress (Volatility & Greeks Output)
     // -----------------------------------------
     output logic         m_axis_tvalid,
     input  logic         m_axis_tready,
-    output logic [63:0]  m_axis_tdata,
+    output logic [127:0] m_axis_tdata,
     output logic         m_axis_tlast
 );
 
@@ -42,7 +42,7 @@ module iv_multi_engine_top #(
 
     logic [NUM_ENGINES-1:0]        engine_m_valid;
     logic [NUM_ENGINES-1:0]        engine_m_ready;
-    logic [NUM_ENGINES-1:0][63:0]  engine_m_data;
+    logic [NUM_ENGINES-1:0][127:0] engine_m_data;
     logic [NUM_ENGINES-1:0]        engine_m_last;
 
     // ---------------------------------------------------------

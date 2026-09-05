@@ -19,6 +19,9 @@ module tb_bs_golden;
     logic        iv_done_valid;
     logic [31:0] iv_done_sigma;
     logic [5:0]  iv_done_tid;
+    logic signed [31:0] iv_done_delta;
+    logic signed [31:0] iv_done_vega;
+    logic signed [31:0] iv_done_gamma;
 
     // Clock generation (250 MHz -> 4.0 ns period)
     initial clk = 0;
@@ -38,7 +41,10 @@ module tb_bs_golden;
         .fifo_full     (fifo_full),
         .iv_done_valid (iv_done_valid),
         .iv_done_sigma (iv_done_sigma),
-        .iv_done_tid   (iv_done_tid)
+        .iv_done_tid   (iv_done_tid),
+        .iv_done_delta (iv_done_delta),
+        .iv_done_vega  (iv_done_vega),
+        .iv_done_gamma (iv_done_gamma)
     );
 
     int test_count = 0;
@@ -119,29 +125,43 @@ module tb_bs_golden;
         $finish;
     end
 
-    // Expected sigmas array
+    // Expected analytical values: Sigma, Delta, Vega, Gamma
     real expected_sigmas[1:4];
+    real expected_deltas[1:4];
+    real expected_vegas[1:4];
+    real expected_gammas[1:4];
     initial begin
-        expected_sigmas[1] = 0.167217;
-        expected_sigmas[2] = 0.294025;
-        expected_sigmas[3] = 0.319475;
-        expected_sigmas[4] = 0.150527;
+        expected_sigmas[1] = 0.167217; expected_deltas[1] = 0.6490; expected_vegas[1] = 37.0783; expected_gammas[1] = 0.022174;
+        expected_sigmas[2] = 0.294025; expected_deltas[2] = 0.5887; expected_vegas[2] = 27.5093; expected_gammas[2] = 0.018712;
+        expected_sigmas[3] = 0.319475; expected_deltas[3] = 0.5505; expected_vegas[3] = 15.8299; expected_gammas[3] = 0.030969;
+        expected_sigmas[4] = 0.150527; expected_deltas[4] = 0.5824; expected_vegas[4] = 19.5197; expected_gammas[4] = 0.051870;
     end
 
     // Monitor process
     always @(posedge clk) begin
         if (iv_done_valid) begin
+            automatic real calc_sig   = from_q24(iv_done_sigma);
+            automatic real calc_delta = from_q24(iv_done_delta);
+            automatic real calc_vega  = from_q24(iv_done_vega);
+            automatic real calc_gamma = from_q24(iv_done_gamma);
+
             test_count++;
-            $display("[%0t ns] RESULT RECEIVED: TID=#%0d | Calculated Sigma = %0.6f (0x%0h)",
-                     $time, iv_done_tid, from_q24(iv_done_sigma), iv_done_sigma);
+            $display("[%0t ns] RESULT RECEIVED: TID=#%0d | sigma=%0.4f | Delta=%0.4f | Vega=%0.4f | Gamma=%0.6f",
+                     $time, iv_done_tid, calc_sig, calc_delta, calc_vega, calc_gamma);
+
             if (iv_done_tid >= 1 && iv_done_tid <= 4) begin
-                automatic real calc_sig = from_q24(iv_done_sigma);
-                automatic real diff = calc_sig > expected_sigmas[iv_done_tid] ? (calc_sig - expected_sigmas[iv_done_tid]) : (expected_sigmas[iv_done_tid] - calc_sig);
-                if (diff < 0.005) begin // 0.5% vol tolerance (system claims 0.1824% MAE)
-                    $display("  => PASS (expected %0.4f, got %0.4f, diff %0.6f)", expected_sigmas[iv_done_tid], calc_sig, diff);
+                automatic real diff_sig   = (calc_sig > expected_sigmas[iv_done_tid]) ? (calc_sig - expected_sigmas[iv_done_tid]) : (expected_sigmas[iv_done_tid] - calc_sig);
+                automatic real diff_delta = (calc_delta > expected_deltas[iv_done_tid]) ? (calc_delta - expected_deltas[iv_done_tid]) : (expected_deltas[iv_done_tid] - calc_delta);
+                automatic real diff_vega  = (calc_vega > expected_vegas[iv_done_tid]) ? (calc_vega - expected_vegas[iv_done_tid]) : (expected_vegas[iv_done_tid] - calc_vega);
+                automatic real diff_gamma = (calc_gamma > expected_gammas[iv_done_tid]) ? (calc_gamma - expected_gammas[iv_done_tid]) : (expected_gammas[iv_done_tid] - calc_gamma);
+
+                if (diff_sig < 0.005 && diff_delta < 0.05 && diff_vega < 1.0 && diff_gamma < 0.005) begin
+                    $display("  => PASS: Sigma diff=%0.6f, Delta diff=%0.4f, Vega diff=%0.4f, Gamma diff=%0.6f",
+                             diff_sig, diff_delta, diff_vega, diff_gamma);
                     pass_count++;
                 end else begin
-                    $display("  => FAIL (expected %0.4f, got %0.4f, diff %0.6f) !!!", expected_sigmas[iv_done_tid], calc_sig, diff);
+                    $display("  => FAIL: Sigma diff=%0.6f, Delta diff=%0.4f, Vega diff=%0.4f, Gamma diff=%0.6f !!!",
+                             diff_sig, diff_delta, diff_vega, diff_gamma);
                 end
             end
         end

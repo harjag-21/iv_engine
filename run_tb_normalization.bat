@@ -13,10 +13,10 @@ call xvlog --sv --relax -L uvm ^
     "iv_engine.srcs/sources_1/new/iv_top.sv" ^
     "iv_engine.srcs/sources_1/new/iv_axis_wrapper.sv" ^
     "iv_engine.srcs/sources_1/new/iv_multi_engine_top.sv" ^
-    "iv_engine.srcs/sim_1/new/tb_extreme_corners.sv"
+    "iv_engine.srcs/sim_1/new/tb_normalization.sv"
 
 echo "=== Elaborating Design ==="
-call xelab -top tb_extreme_corners -snapshot tb_extreme_corners_snapshot -debug typical
+call xelab -top tb_normalization -snapshot tb_normalization_snapshot -debug typical
 
 echo "=== Running Simulation ==="
-call xsim tb_extreme_corners_snapshot -runall
+call xsim tb_normalization_snapshot -runall

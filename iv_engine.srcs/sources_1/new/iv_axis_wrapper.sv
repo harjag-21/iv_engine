@@ -13,11 +13,11 @@ module iv_axis_wrapper (
     input  logic         s_axis_tlast,
 
     // -----------------------------------------
-    // AXI4-Stream Master (Output Volatility)
+    // AXI4-Stream Master (Output Volatility & Greeks)
     // -----------------------------------------
     output logic         m_axis_tvalid,
     input  logic         m_axis_tready,
-    output logic [63:0]  m_axis_tdata,
+    output logic [127:0] m_axis_tdata,
     output logic         m_axis_tlast
 );
 
@@ -31,9 +31,12 @@ module iv_axis_wrapper (
     logic [5:0]  iv_tid_in;
     logic        iv_fifo_full;
     
-    logic        iv_done_valid;
-    logic [31:0] iv_done_sigma;
-    logic [5:0]  iv_done_tid;
+    logic               iv_done_valid;
+    logic signed [31:0] iv_done_sigma;
+    logic [5:0]         iv_done_tid;
+    logic signed [31:0] iv_done_delta;
+    logic signed [31:0] iv_done_vega;
+    logic signed [31:0] iv_done_gamma;
 
     // -----------------------------------------
     // Unpack the 256-bit AXI Input Stream
@@ -47,23 +50,28 @@ module iv_axis_wrapper (
     // Bits [255:166] are zero-padded/reserved
 
     // -----------------------------------------
-    // Pack the pipeline output into 64 bits
+    // Pack the pipeline output into 128 bits
+    // [31:0]   sigma (Q8.24)
+    // [63:32]  delta (Q8.24)
+    // [95:64]  vega  (Q8.24)
+    // [121:96] gamma (Q8.24, 26 bits)
+    // [127:122] tid   (6 bits)
     // -----------------------------------------
-    wire [63:0] packed_output = {26'b0, iv_done_tid, iv_done_sigma};
+    wire [127:0] packed_output = {iv_done_tid, iv_done_gamma[25:0], iv_done_vega, iv_done_delta, iv_done_sigma};
 
     // -----------------------------------------
     // Output FIFO (AXI4-Stream Compliance & Data Loss Prevention)
     // -----------------------------------------
-    localparam int FIFO_DEPTH = 256;
+    localparam int FIFO_DEPTH = 64;
     // Force distributed LUTRAM inference (prevents BRAM18 inference that would
-    // violate the "zero-BRAM" claim). 256x64b = 16Kbits < 18Kb BRAM threshold.
-    (* ram_style = "distributed" *) logic [63:0] fifo_mem [0:FIFO_DEPTH-1];
-    logic [7:0]  wr_ptr;
-    logic [7:0]  rd_ptr;
-    logic [8:0]  fifo_count;
+    // violate the "zero-BRAM" claim). 64x128b = 8Kbits.
+    (* ram_style = "distributed" *) logic [127:0] fifo_mem [0:FIFO_DEPTH-1];
+    logic [5:0]  wr_ptr;
+    logic [5:0]  rd_ptr;
+    logic [6:0]  fifo_count;
 
-    logic [63:0] m_axis_tdata_reg;
-    logic        m_axis_tvalid_reg;
+    logic [127:0] m_axis_tdata_reg;
+    logic         m_axis_tvalid_reg;
 
     wire out_ready = !m_axis_tvalid_reg || (m_axis_tready && m_axis_tvalid_reg);
     wire fifo_write = iv_done_valid && (fifo_count < FIFO_DEPTH);
@@ -71,23 +79,23 @@ module iv_axis_wrapper (
 
     always_ff @(posedge aclk or negedge aresetn) begin
         if (!aresetn) begin
-            wr_ptr            <= 8'd0;
-            rd_ptr            <= 8'd0;
-            fifo_count        <= 9'd0;
+            wr_ptr            <= 6'd0;
+            rd_ptr            <= 6'd0;
+            fifo_count        <= 7'd0;
             m_axis_tvalid_reg <= 1'b0;
-            m_axis_tdata_reg  <= 64'd0;
+            m_axis_tdata_reg  <= 128'd0;
         end else begin
             if (fifo_write) begin
                 fifo_mem[wr_ptr] <= packed_output;
-                wr_ptr           <= wr_ptr + 8'd1;
+                wr_ptr           <= wr_ptr + 6'd1;
             end
             if (fifo_read) begin
-                rd_ptr           <= rd_ptr + 8'd1;
+                rd_ptr           <= rd_ptr + 6'd1;
             end
             
             case ({fifo_write, fifo_read})
-                2'b10: fifo_count <= fifo_count + 9'd1;
-                2'b01: fifo_count <= fifo_count - 9'd1;
+                2'b10: fifo_count <= fifo_count + 7'd1;
+                2'b01: fifo_count <= fifo_count - 7'd1;
                 default: ;
             endcase
 
@@ -106,8 +114,8 @@ module iv_axis_wrapper (
     assign m_axis_tdata  = m_axis_tdata_reg;
     assign m_axis_tlast  = m_axis_tvalid_reg;
 
-    // Almost-full threshold at 100 entries to leave safe margin for 144-cycle pipeline to drain
-    wire fifo_almost_full = (fifo_count >= 9'd100);
+    // Almost-full threshold at 48 entries (matches max in-flight capacity of 60)
+    wire fifo_almost_full = (fifo_count >= 7'd48);
     assign s_axis_tready = ~iv_fifo_full & ~fifo_almost_full;
     
     // Fire valid data into the core on valid AXI handshake
@@ -132,7 +140,10 @@ module iv_axis_wrapper (
         
         .iv_done_valid  (iv_done_valid),
         .iv_done_sigma  (iv_done_sigma),
-        .iv_done_tid    (iv_done_tid)
+        .iv_done_tid    (iv_done_tid),
+        .iv_done_delta  (iv_done_delta),
+        .iv_done_vega   (iv_done_vega),
+        .iv_done_gamma  (iv_done_gamma)
     );
 
 endmodule

@@ -23,7 +23,7 @@ module tb_axis_top;
     // Master interface (Output)
     logic         m_axis_tvalid;
     logic         m_axis_tready;
-    logic [63:0]  m_axis_tdata;
+    logic [127:0] m_axis_tdata;
     logic         m_axis_tlast;
 
     // Clock generation (250 MHz)
@@ -102,9 +102,14 @@ module tb_axis_top;
     // Monitor AXI outputs
     always @(posedge aclk) begin
         if (aresetn && m_axis_tvalid && m_axis_tready) begin
+            automatic real r_sig   = real'(signed'(m_axis_tdata[31:0])) / 16777216.0;
+            automatic real r_del   = real'(signed'(m_axis_tdata[63:32])) / 16777216.0;
+            automatic real r_veg   = real'(signed'(m_axis_tdata[95:64])) / 16777216.0;
+            automatic real r_gam   = real'(unsigned'(m_axis_tdata[121:96])) / 16777216.0;
+            automatic int  tid_rx  = int'(m_axis_tdata[127:122]);
             rx_cnt++;
-            $display("[AXI TB @ %0t ps] Output Received #%0d | TID=%0d Data=0x%0h",
-                     $time, rx_cnt, m_axis_tdata[37:32], m_axis_tdata[31:0]);
+            $display("[AXI TB @ %0t ps] Output Received #%0d | TID=%0d | sigma=%0.4f | Delta=%0.4f | Vega=%0.4f | Gamma=%0.6f",
+                     $time, rx_cnt, tid_rx, r_sig, r_del, r_veg, r_gam);
         end
     end
 

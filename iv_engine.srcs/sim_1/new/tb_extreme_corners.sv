@@ -21,7 +21,7 @@ module tb_extreme_corners;
 
     logic         m_axis_tvalid;
     logic         m_axis_tready;
-    logic [63:0]  m_axis_tdata;
+    logic [127:0] m_axis_tdata;
 
     // Clock generation (250 MHz)
     initial begin
@@ -46,7 +46,7 @@ module tb_extreme_corners;
     logic [31:0] expected_sigmas[1:5];
     initial begin
         expected_sigmas[1] = 32'h00028f5c; // Case 1 (Intrinsic-underflow clamp)
-        expected_sigmas[2] = 32'h00733333; // Case 2 (Deep OTM converged)
+        expected_sigmas[2] = 32'h000cacd7; // Case 2 (Deep OTM B-S guess within 1-cent tick)
         expected_sigmas[3] = 32'h00cb3b64; // Case 3 (Short-dated converged)
         expected_sigmas[4] = 32'h00202182; // Case 4 (Zero r converged)
         expected_sigmas[5] = 32'h0073d456; // Case 5 (High vol converged)
@@ -59,9 +59,9 @@ module tb_extreme_corners;
         if (aresetn && m_axis_tvalid && m_axis_tready) begin
             test_cnt++;
             $display("[CORNER TB @ %0t ps] Case #%0d Received | TID=%0d  Sigma_Q824=0x%08h",
-                $time, test_cnt, m_axis_tdata[37:32], m_axis_tdata[31:0]);
-            if (m_axis_tdata[37:32] >= 1 && m_axis_tdata[37:32] <= 5) begin
-                logic [31:0] exp_sig = expected_sigmas[m_axis_tdata[37:32]];
+                $time, test_cnt, m_axis_tdata[127:122], m_axis_tdata[31:0]);
+            if (m_axis_tdata[127:122] >= 1 && m_axis_tdata[127:122] <= 5) begin
+                logic [31:0] exp_sig = expected_sigmas[m_axis_tdata[127:122]];
                 logic [31:0] got_sig = m_axis_tdata[31:0];
                 int diff;
                 diff = got_sig > exp_sig ? (got_sig - exp_sig) : (exp_sig - got_sig);

@@ -139,23 +139,23 @@ Implied volatility $\\sigma^*$ is solved iteratively via Newton-Raphson:
 
 Synthesized and fully implemented (routed) using **AMD Vivado 2025.2**:
 
-| Metric | Single-Core Baseline | Single-Core Speed -3 | 4-Core Baseline | 4-Core Speed -3 |
+| Metric | Single-Core Baseline | Single-Core Speed -3 | 4-Core Baseline | 4-Core Speed -3 (Audited) |
 |---|:---:|:---:|:---:|:---:|
 | **Target Device** | Artix-7 `xc7a200t-2` | Artix-7 `xc7a200t-3` | Artix-7 `xc7a200t-2` | Artix-7 `xc7a200t-3` |
 | **Top Module** | `iv_axis_wrapper` | `iv_axis_wrapper` | `iv_multi_engine_top` | `iv_multi_engine_top` |
-| **Clock Frequency** | **100.000 MHz** (10.0 ns) | **125.000 MHz** (8.0 ns) | **100.000 MHz** (10.0 ns) | **110.000 MHz** (9.09 ns) |
-| **Setup Slack (WNS)** | **+0.658 ns (PASS)** | **+0.144 ns (PASS)** | **+0.016 ns (PASS)** | **+0.089 ns (PASS)** |
+| **Clock Frequency** | **100.000 MHz** (10.0 ns) | **125.000 MHz** (8.0 ns) | **100.000 MHz** (10.0 ns) | **100.000 MHz** (10.0 ns) |
+| **Setup Slack (WNS)** | **+0.658 ns (PASS)** | **+0.144 ns (PASS)** | **+0.016 ns (PASS)** | **+0.005 ns (PASS)** |
 | **Total Negative Slack (TNS)** | **0.000 ns** | **0.000 ns** | **0.000 ns** | **0.000 ns** |
-| **Hold Slack (WHS)** | **+0.037 ns** | **+0.062 ns** | **+0.027 ns** | **+0.044 ns** |
+| **Hold Slack (WHS)** | **+0.037 ns** | **+0.062 ns** | **+0.027 ns** | **+0.058 ns** |
 | **Total Hold Slack (THS)** | **0.000 ns** | **0.000 ns** | **0.000 ns** | **0.000 ns** |
-| **Total Slice LUTs** | 26,284 / 134,600 (19.5%) | 26,311 / 134,600 (18.5%) | 105,441 / 134,600 (78.3%) | **106,456 / 134,600 (79.6%)** |
-| **Flip-Flops (FFs)** | 34,465 / 269,200 (12.8%) | 34,465 / 269,200 (12.8%) | 137,433 / 269,200 (51.0%) | **137,754 / 269,200 (51.5%)** |
-| **DSP48E1 Blocks** | 140 / 740 (18.9%) | 140 / 740 (18.9%) | 560 / 740 (75.7%) | **560 / 740 (75.7%)** |
-| **Block RAM (BRAM)** | **0 / 730 (0.0%)** | **0 / 730 (0.0%)** | **0 / 730 (0.0%)** | **0 / 730 (0.0%)** |
-| **Total On-Chip Power** | **1.238 W** | **1.520 W** | **4.641 W** | **5.142 W** |
-| **Junction Temperature** | 26.8 °C | 27.2 °C | 31.7 °C | 33.5 °C |
-| **Streaming Throughput** | **100 MOps/sec** | **125 MOps/sec** | **400 MOps/sec** | **440 MOps/sec** |
-| **Energy Efficiency** | **80,775 kOps/Watt** | **82,236 kOps/Watt** | **86,188 kOps/Watt** | **85,570 kOps/Watt** |
+| **Total Slice LUTs** | 26,284 / 134,600 (19.5%) | 26,311 / 134,600 (18.5%) | 105,441 / 134,600 (78.3%) | **106,298 / 133,800 (79.45%)** |
+| **Flip-Flops (FFs)** | 34,465 / 269,200 (12.8%) | 34,465 / 269,200 (12.8%) | 137,433 / 269,200 (51.0%) | **129,786 / 267,600 (48.50%)** |
+| **DSP48E1 Blocks** | 140 / 740 (18.9%) | 140 / 740 (18.9%) | 560 / 740 (75.7%) | **608 / 740 (82.16%)** |
+| **Block RAM (BRAM)** | **0 / 730 (0.0%)** | **0 / 730 (0.0%)** | **0 / 730 (0.0%)** | **0 / 342 (0.00%)** |
+| **Total On-Chip Power** | **1.238 W** | **1.520 W** | **4.641 W** | **4.258 W** |
+| **Junction Temperature** | 26.8 °C | 27.2 °C | 31.7 °C | 31.2 °C |
+| **Streaming Throughput** | **100 MOps/sec** | **125 MOps/sec** | **400 MOps/sec** | **400 MOps/sec** |
+| **Energy Efficiency** | **80,775 kOps/Watt** | **82,236 kOps/Watt** | **86,188 kOps/Watt** | **93,940 kOps/Watt** |
 
 ---
 
@@ -165,7 +165,7 @@ Synthesized and fully implemented (routed) using **AMD Vivado 2025.2**:
 |---|---|---|---|---|---|
 | **Host CPU** (Intel i9-14900K) | 32-Thread OpenMP C++ | 120 × 10⁶ | 125 W | 960 kOps/W | 12.50 µs |
 | **Enterprise GPU** (NVIDIA RTX 4090) | CUDA 12.0 Kernel Batch | 4,200 × 10⁶ | 450 W | 9,333 kOps/W | 45.00 µs (Batch DMA) |
-| **Proposed 4-Core FPGA (Ours)** | **Custom Q8.24 Multi-Core** | **400 × 10⁶** | **4.64 W** | **86,188 kOps/W** | **1.26 µs** |
+| **Proposed 4-Core FPGA (Ours)** | **Custom Q8.24 Multi-Core** | **400 × 10⁶** | **4.26 W** | **93,940 kOps/W** | **1.26 µs** |
 
 ---
 
@@ -177,16 +177,18 @@ Synthesized and fully implemented (routed) using **AMD Vivado 2025.2**:
 │   ├── sources_1/new/             # SystemVerilog RTL Source Files
 │   │   ├── iv_top.sv              # Top-level engine with 64-entry context memory & 64-bit TID scoreboard
 │   │   ├── iv_bs_datapath.sv      # 126-cycle Black-Scholes pricing & Vega datapath
-│   │   ├── iv_norm_cdf.sv         # 49-stage Abramowitz & Stegun Horner CDF core
-│   │   ├── iv_divider_q824.sv     # 33-cycle non-restoring Q8.24 fixed-point divider
+│   │   ├── iv_bs_initial_guess.sv # 64-cycle Brenner-Subrahmanyam analytical initial guess engine
+│   │   ├── iv_norm_cdf.sv         # 49-stage Abramowitz & Stegun Horner CDF core (SRL32-optimized)
+│   │   ├── iv_divider_q824.sv     # 33-cycle compact restoring Q8.24 fixed-point divider (0 DSPs)
 │   │   ├── iv_sqrt_q824.sv        # 28-stage digit-by-digit square root engine
 │   │   ├── iv_arbitration_fsm.sv  # Iterative Newton-Raphson loopback arbitration FSM
 │   │   ├── iv_multi_engine_top.sv # 4-core parallel array with work-conserving arbiter
-│   │   ├── iv_axis_wrapper.sv     # 256-bit AXI4-Stream slave/master interface wrapper
+│   │   ├── iv_axis_wrapper.sv     # 128-bit AXI4-Stream egress wrapper ([sigma, delta, vega, gamma, tid])
 │   │   ├── iv_cordic_pipeline.sv  # 18-stage hyperbolic CORDIC pipeline (auxiliary mode)
 │   │   └── iv_kn_compensator.sv   # CORDIC 1/Kn gain compensation unit
 │   ├── sim_1/new/                 # Testbenches & Verification Suites
 │   │   ├── tb_bs_golden.sv        # Golden reference accuracy testbench (4/4 PASS)
+│   │   ├── tb_normalization.sv    # Scale-invariance verification testbench (4/4 PASS)
 │   │   ├── tb_extreme_corners.sv  # Extreme market corner-case verification (5/5 PASS)
 │   │   ├── tb_axis_top.sv         # AXI4-Stream packetized verification (5/5 PASS)
 │   │   ├── tb_multi_engine_top.sv # Multi-engine parallel throughput testbench (20/20 PASS)
@@ -221,28 +223,31 @@ Synthesized and fully implemented (routed) using **AMD Vivado 2025.2**:
 
 ## :test_tube: Verification & Simulation
 
-All 5 testbenches achieve a **100% PASS** rate:
+All 6 testbenches achieve a **100% PASS** rate:
 
-`ash
+```bash
 # 1. Run Black-Scholes Golden Model Verification (4/4 PASS)
 run_tb_bs_golden.bat
 
-# 2. Run Extreme Corner-Case Suite (5/5 PASS)
+# 2. Run Normalization & Scale-Invariance Suite (4/4 PASS)
+run_tb_normalization.bat
+
+# 3. Run Extreme Corner-Case Suite (5/5 PASS)
 run_tb_extreme_corners.bat
 
-# 3. Run AXI4-Stream Packetized Wrapper Verification (5/5 PASS)
+# 4. Run AXI4-Stream Packetized Wrapper Verification (5/5 PASS)
 run_tb_axis_top.bat
 
-# 4. Run Multi-Engine Parallel Array Verification (20/20 PASS)
+# 5. Run Multi-Engine Parallel Array Verification (20/20 PASS)
 run_tb_multi_engine_top.bat
 
-# 5. Run DPI-C Hardware/Software Co-Simulation (64/64 PASS)
+# 6. Run DPI-C Hardware/Software Co-Simulation (64/64 PASS, MAE=0.0129%)
 run_dpi_sim.bat
-`
+```
 
 ### Run Python Accuracy Benchmark (10,000 Samples)
 
-`ash
+` ash
 python benchmark_accuracy.py
 `
 
