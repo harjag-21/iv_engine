@@ -13,6 +13,17 @@
 \usepackage{microtype}
 \usepackage{url}
 
+% Micro-spacing adjustments for strict 6-page IEEE conference budget
+\setlength{\textfloatsep}{4.5pt plus 1.0pt minus 1.0pt}
+\setlength{\floatsep}{4.5pt plus 1.0pt minus 1.0pt}
+\setlength{\intextsep}{4.5pt plus 1.0pt minus 1.0pt}
+\setlength{\dbltextfloatsep}{5.0pt plus 1.0pt minus 1.0pt}
+\setlength{\dblfloatsep}{5.0pt plus 1.0pt minus 1.0pt}
+\setlength{\abovedisplayskip}{2.5pt plus 1.0pt minus 1.0pt}
+\setlength{\belowdisplayskip}{2.5pt plus 1.0pt minus 1.0pt}
+\setlength{\abovedisplayshortskip}{1.5pt plus 1.0pt minus 1.0pt}
+\setlength{\belowdisplayshortskip}{1.5pt plus 1.0pt minus 1.0pt}
+
 \graphicspath{{figures/}{./}}
 
 % Universal figure loader: automatically resolves both modern and legacy figure names in ./ or figures/
@@ -23,6 +34,17 @@
   \IfFileExists{figures/#3}{\includegraphics[#1]{figures/#3}}{%
   \includegraphics[#1]{#2}%
   }}}}%
+}
+
+% Tight bibliography environment
+\let\oldthebibliography\thebibliography
+\let\endoldthebibliography\endthebibliography
+\renewenvironment{thebibliography}[1]{%
+  \begin{oldthebibliography}{#1}%
+    \setlength{\itemsep}{0pt}%
+    \setlength{\parskip}{0pt}%
+}{%
+  \end{oldthebibliography}%
 }
 
 \begin{document}
@@ -37,11 +59,11 @@
 \maketitle
 
 \begin{abstract}
-In electronic options markets and high-frequency trading (HFT), real-time pricing and risk hedging demand continuous calculation of implied volatility (IV) and higher-order Greeks ($\Delta, \Gamma, \nu$) under strict sub-microsecond latency and deterministic throughput. Because the Black-Scholes model lacks a closed-form inverse, numerical solvers like Newton-Raphson are computationally intense and prone to divergent oscillation when derivative Vega approaches zero. Software implementations on multi-core CPUs and data-center GPUs suffer from non-deterministic operating system scheduling, long kernel launch overheads, and prohibitive power consumption in thermal-constrained co-location racks.
+In electronic options markets and high-frequency trading (HFT), real-time pricing and risk hedging demand continuous calculation of implied volatility (IV) and higher-order Greeks ($\Delta, \Gamma, \nu$) under strict sub-microsecond latency and deterministic throughput. Because the Black-Scholes model lacks a closed-form inverse, numerical solvers like Newton-Raphson are computationally intense and prone to divergent oscillation when Vega approaches zero. Software implementations on multi-core CPUs and GPUs suffer from non-deterministic OS scheduling jitter, kernel launch overheads, and prohibitive power consumption in thermal-constrained co-location racks.
 
-This paper presents a fully pipelined, four-core FPGA acceleration engine for real-time implied volatility and Greeks calculation. The architecture introduces three key contributions: (1) a dedicated closed-form Brenner-Subrahmanyam analytical guess generator providing quadratic Newton-Raphson convergence across near-the-money regimes; (2) scale-invariant fixed-point normalization ($\tilde{S} = S/K$) in Q8.24 precision, preventing dynamic range overflow while avoiding costly multi-precision arithmetic; and (3) an exclusive Zero-BRAM microarchitecture utilizing distributed LUTRAM and SRL32 shift registers for pipeline context storage, completely freeing on-chip block RAMs for network MAC and PCIe DMA infrastructure.
+This paper presents a fully pipelined, four-core FPGA acceleration engine for real-time implied volatility and Greeks calculation. The architecture introduces three key contributions: (1) a dedicated closed-form Brenner-Subrahmanyam analytical guess generator providing quadratic Newton-Raphson convergence across near-the-money regimes; (2) scale-invariant fixed-point normalization ($\tilde{S} = S/K$) in Q8.24 precision, bounding dynamic range while avoiding costly multi-precision arithmetic; and (3) an exclusive Zero-BRAM microarchitecture utilizing distributed LUTRAM and SRL32 shift registers for pipeline context storage, completely freeing on-chip block RAMs for network MAC and PCIe DMA infrastructure.
 
-Implemented and physically placed-and-routed on an AMD Xilinx Artix-7 200T FPGA (\texttt{xc7a200tffg1156-3}), the 4-core engine achieves timing closure at 100~MHz with positive slack ($WNS = +0.005\text{ ns}$), delivering 400.00~MOps/sec peak throughput (390.62~MOps/sec net sustained in liquid trading; 360.69~MOps/sec blended across all strikes) at a deterministic 2.27~$\mu$s cold transaction latency (1.26~$\mu$s core datapath). Extensive DPI-C co-simulation over 10,000 synthetic option contracts demonstrates institutional-grade accuracy with a Mean Absolute Error of 0.0157\% volatility across liquid strikes (0.0162\% blended across all strikes and maturities; 99.9\% of contracts within 1\% error). Operating at 4.258~W total power, the engine achieves 93,940~kOps/W peak (91,738~kOps/W net liquid; 84,709~kOps/W blended)---demonstrating a 28.1$\times$ throughput speedup and a 297$\times$ energy efficiency advantage over a 16-thread AVX2 host CPU.
+Implemented on an AMD Xilinx Artix-7 200T FPGA (\texttt{xc7a200tffg1156-3}), the 4-core engine closes timing at 100~MHz with positive slack ($WNS = +0.005\text{ ns}$), delivering 400.00~MOps/sec peak throughput (390.62~MOps/sec net sustained liquid; 360.69~MOps/sec blended) at a deterministic 2.27~$\mu$s cold latency (1.26~$\mu$s core datapath). DPI-C co-simulation over 10,000 contracts verifies institutional accuracy ($MAE = 0.0157\%$ volatility liquid, $0.0162\%$ blended; 99.9\% of contracts within 1\% error). At 4.258~W total power, the engine achieves 93,940~kOps/W peak (91,738~kOps/W net liquid)---demonstrating a 28.1$\times$ throughput speedup and a 297$\times$ energy efficiency advantage over a 16-thread AVX2 host CPU.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -51,201 +73,136 @@ FPGA Acceleration, High-Frequency Trading, Implied Volatility, Option Greeks, Bl
 % -------------------------------------------------------------------------
 \section{Introduction}
 % -------------------------------------------------------------------------
-In modern electronic options exchanges and algorithmic market-making, market participants quote bids and offers across thousands of strike prices and expiration dates simultaneously~\cite{omahony2024role}. The foundational metric governing option pricing, arbitrage bounding, and volatility surface construction is the Black-Scholes \textit{implied volatility} (IV)~\cite{black1973pricing}. While American-style options permit early exercise, European-style index options (e.g., S\&P 500 SPX, Nasdaq NDX, CBOE VIX) account for the overwhelming majority of institutional volume and volatility surface trading, where closed-form Black-Scholes dynamics apply directly. Market makers must continuously recalculate IV and associated risk sensitivities (the option Greeks: Delta $\Delta$, Gamma $\Gamma$, Vega $\nu$) on every incoming market tick to dynamically rebalance delta-neutral portfolios and cancel stale quotes before adverse fills occur.
+In modern electronic options exchanges and algorithmic market-making, market participants quote bids and offers across thousands of strike prices and expiration dates simultaneously~\cite{omahony2024role}. The foundational metric governing option pricing, arbitrage bounding, and volatility surface construction is the Black-Scholes \textit{implied volatility} (IV)~\cite{black1973pricing}. While American options permit early exercise, European-style index options (e.g., S\&P 500 SPX, Nasdaq NDX, CBOE VIX) account for the overwhelming majority of institutional volume, where closed-form Black-Scholes dynamics apply directly. Market makers must continuously recalculate IV and associated risk sensitivities (Delta $\Delta$, Gamma $\Gamma$, Vega $\nu$) on every incoming market tick to dynamically rebalance delta-neutral portfolios and cancel stale quotes before adverse fills occur.
 
-Here, 1 Operation (Op) is formally defined as the complete evaluation of a single option contract, encompassing implied volatility root inversion and concurrent extraction of all three Greeks ($\Delta, \nu, \Gamma$). Extracting IV from an observed market price $C_{\text{mkt}}$ requires numerically inverting the non-linear pricing equation $C_{\text{BS}}(S, K, T, r, \sigma) = C_{\text{mkt}}$. Because no analytical inverse exists, iterative root-finding algorithms such as the Newton-Raphson (NR) method are required. On conventional computing architectures, NR root-finding faces two primary obstacles:
+Here, 1 Operation (Op) is defined as the complete evaluation of a single contract: IV root inversion and concurrent extraction of all three Greeks ($\Delta, \nu, \Gamma$). Extracting IV from an observed market price $C_{\text{mkt}}$ requires numerically inverting the non-linear pricing equation $C_{\text{BS}}(S, K, T, r, \sigma) = C_{\text{mkt}}$. Because no analytical inverse exists, iterative solvers such as Newton-Raphson (NR) are required. On conventional architectures, NR root-finding faces two primary obstacles:
 \begin{enumerate}
-    \item \textbf{Numerical Sensitivity and Oscillation:} When maturity $T$ is short or an option moves away from the money, the derivative with respect to volatility (Vega, $\nu = \partial C / \partial \sigma$) drops sharply. Unseeded or statically initialized Newton-Raphson iterations divide by near-zero quantities, causing volatile step overshoot, limit cycling, or total divergence.
-    \item \textbf{Latency Non-Determinism and Power Density:} In exchange co-location facilities, server rack power is strictly budgeted (typically 5--10~kW per rack) with high density costs. High-end GPUs and multi-core CPUs require hundreds of watts and introduce non-deterministic execution jitter due to thread scheduling, PCIe batch transfer overheads, and operating system context switching.
+    \item \textbf{Numerical Sensitivity and Oscillation:} When maturity $T$ is short or an option moves out of the money, derivative Vega ($\nu = \partial C / \partial \sigma$) drops sharply. Unseeded iterations divide by near-zero quantities, causing step overshoot, limit cycling, or divergence.
+    \item \textbf{Latency Non-Determinism and Power Density:} In exchange co-location facilities, server rack power is strictly budgeted (5--10~kW per rack). High-end GPUs and CPUs draw hundreds of watts and introduce non-deterministic execution jitter from OS thread scheduling, PCIe batching, and context switches.
 \end{enumerate}
-
-To overcome these fundamental challenges, this paper presents a high-throughput, deterministic, zero-block-RAM FPGA acceleration engine for real-time option implied volatility and Greeks calculation.
+To overcome these challenges, we present a high-throughput, deterministic, zero-block-RAM FPGA acceleration engine for real-time IV and Greeks calculation.
 
 \subsection{Key Contributions}
-The main contributions of this work are summarized as follows:
 \begin{itemize}
-    \item \textbf{Analytical Brenner-Subrahmanyam Guess Engine:} We integrate a dedicated closed-form analytical initialization unit based on the Brenner-Subrahmanyam approximation~\cite{brenner1988simple}. By seeding the solver within $\pm 0.5\%$ of the true volatility root, 97.6\% of contracts converge in a single iteration, eliminating divergent loopback. A shared square-root datapath forwards $\sqrt{T}$ to both the guess engine and the core datapath, saving substantial DSP and LUT resources.
-    \item \textbf{Scale-Invariant Fixed-Point Normalization:} We establish a mathematical scale-invariance transform $\tilde{S} = S/K, \tilde{K} = 1.0, \tilde{C} = C/K$. This guarantees all internal state remains strictly bounded within an efficient Q8.24 fixed-point domain, enabling support for underlying asset prices from \$1 to \$128+ without floating-point overhead or multi-precision arithmetic.
-    \item \textbf{Zero-BRAM Microarchitecture:} All context buffers and pipeline delay balancing are implemented exclusively via distributed LUTRAM and SRL32 shift registers (\texttt{ram\_style = "distributed"}). Zero on-chip Block RAMs (RAMB36/18) are consumed, preserving 100\% of BRAMs for PCIe DMA, 10GbE MACs, and order book book-keeping.
-    \item \textbf{Full Hardware Timing Closure \& Empirical Validation:} The complete 4-core engine is fully placed and routed on an AMD Xilinx Artix-7 200T FPGA (\texttt{xc7a200tffg1156-3}), achieving positive slack ($WNS = +0.005\text{ ns}$) at 100~MHz. Delivering a deterministic 2.27~$\mu$s cold transaction latency (1.26~$\mu$s core datapath), extensive DPI-C co-simulation over 10,000 contracts verifies a Mean Absolute Error of 0.0157\% volatility. Empirical comparison against a 16-thread host CPU demonstrates a 28.1$\times$ peak (27.5$\times$ net) throughput gain and a 297$\times$ peak (290$\times$ net) energy efficiency advantage.
+    \item \textbf{Analytical Brenner-Subrahmanyam Guess Engine:} A dedicated analytical initialization unit seeds the solver within $\pm 0.5\%$ of the true volatility root, enabling 97.6\% of contracts to converge in a single pass. A shared square-root datapath forwards $\sqrt{T}$ downstream, saving substantial DSP and LUT area.
+    \item \textbf{Scale-Invariant Fixed-Point Normalization:} A scale transform $\tilde{S} = S/K, \tilde{K} = 1.0, \tilde{C} = C/K$ bounds all internal state strictly within Q8.24 fixed-point, supporting spot and strike prices from \$1 to \$128+ without floating-point overhead or multi-precision arithmetic.
+    \item \textbf{Zero-BRAM Microarchitecture:} All context buffers and pipeline matching registers are implemented exclusively via distributed LUTRAM and SRL32 shift registers (\texttt{ram\_style = "distributed"}). Zero Block RAMs (RAMB36/18) are consumed, preserving 100\% of BRAMs for PCIe DMA, 10GbE MACs, and order-book storage.
+    \item \textbf{Hardware Timing Closure \& Validation:} Placed and routed on an AMD Artix-7 200T FPGA (\texttt{xc7a200tffg1156-3}), the 4-core engine closes timing at 100~MHz ($WNS = +0.005\text{ ns}$), delivering 400.00~MOps/s peak throughput (390.62~MOps/s net liquid; 360.69~MOps/s blended) at a deterministic 2.27~$\mu$s latency. DPI-C co-simulation over 10,000 contracts verifies an MAE of 0.0157\% volatility. At 4.258~W, the engine achieves a 28.1$\times$ speedup and 297$\times$ energy efficiency gain over a 16-thread AVX2 host CPU.
 \end{itemize}
+
+% Declared on Page 1 to ensure emission at top of Page 2
+\begin{figure*}[t]
+\centering
+\includefigfile[width=0.86\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
+\caption{Microarchitecture of the 4-Core Pipelined Implied Volatility and Greeks Engine, illustrating scale-invariance normalization, Brenner-Subrahmanyam analytical guess generator with shared $\sqrt{T}$ path, pipelined datapath, Zero-BRAM distributed context store, and 128-bit egress bus.}
+\label{fig:arch}
+\end{figure*}
 
 % -------------------------------------------------------------------------
 \section{Mathematical Formulation}
 % -------------------------------------------------------------------------
 \subsection{Black-Scholes Model and Higher-Order Greeks}
-For a European call option with spot price $S$, strike price $K$, time-to-maturity $T$, and risk-free interest rate $r$, the Black-Scholes price $C_{\text{BS}}$ is:
+For a European call option with spot price $S$, strike $K$, maturity $T$, and risk-free rate $r$, the Black-Scholes price $C_{\text{BS}}$ is:
 \begin{equation}
 C_{\text{BS}}(S, K, T, r, \sigma) = S N(d_1) - K e^{-rT} N(d_2)
 \end{equation}
-where $N(x) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{x} e^{-u^2/2} du$ is the cumulative standard normal distribution function, and:
+where $N(x) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{x} e^{-u^2/2} du$ is the cumulative standard normal distribution, and:
 \begin{equation}
 d_1 = \frac{\ln(S/K) + \left(r + \frac{1}{2}\sigma^2\right)T}{\sigma \sqrt{T}}, \quad d_2 = d_1 - \sigma \sqrt{T}
 \end{equation}
-Note that $d_2$ is computed strictly as a subtraction $d_1 - \sigma\sqrt{T}$, requiring zero division resources. The corresponding first- and second-order Greeks evaluated concurrently are:
+Note that $d_2$ is computed strictly as a subtraction $d_1 - \sigma\sqrt{T}$, requiring zero division resources. The corresponding Greeks evaluated concurrently are:
 \begin{align}
 \text{Delta } (\Delta) &= \frac{\partial C}{\partial S} = N(d_1) \\
 \text{Vega } (\nu) &= \frac{\partial C}{\partial \sigma} = S \sqrt{T} N'(d_1) \\
 \text{Gamma } (\Gamma) &= \frac{\partial^2 C}{\partial S^2} = \frac{N'(d_1)}{S \sigma \sqrt{T}}
 \end{align}
-where $N'(x) = \frac{1}{\sqrt{2\pi}} e^{-x^2/2}$ is the standard normal probability density function.
+where $N'(x) = \frac{1}{\sqrt{2\pi}} e^{-x^2/2}$ is the standard normal PDF.
 
 \subsection{Scale-Invariance Normalization}
-Direct fixed-point evaluation of option pricing must accommodate wide asset price dynamics without catastrophic dynamic range overflow. In our architecture, the datapath operates in native Q8.24 fixed-point dollars, directly supporting individual equity contracts with underlying spot and strike up to $\$128$ ($S, K \le \$128.00$). 
-
-Crucially, all core transcendental driving quantities in the Black-Scholes formula are scale-invariant by construction. Specifically, the Pad\'{e} logarithm ratio:
+The engine datapath operates in native Q8.24 fixed-point dollars, directly supporting individual equity contracts with spot and strike up to $\$128$ ($S, K \le \$128.00$). All core transcendental driving quantities are scale-invariant: the Pad\'{e} logarithm ratio:
 \begin{equation}
 \frac{S - K}{S + K} \equiv \frac{S/K - 1}{S/K + 1}
 \end{equation}
-is identical whether evaluated in native dollars or normalized units, completely eliminating the need for a serialized 32-cycle hardware divider at ingress. The normal deviates $d_1$ and $d_2$, the discount factor $e^{-rT}$, and cumulative probabilities $N(d_1), N(d_2)$ are likewise dimensionless. Consequently, call price $C_{\text{BS}}$ and Vega $\nu$ are evaluated directly in native dollar units, allowing the convergence criterion $|C_{\text{BS}} - C_{\text{mkt}}| \le \$0.0100$ to be tested immediately without any denormalization cycle latency penalty.
+is identical whether evaluated in native dollars or normalized units, completely eliminating a 32-cycle hardware divider at ingress. The normal deviates $d_1, d_2$, discount factor $e^{-rT}$, and probabilities $N(d_1), N(d_2)$ are likewise dimensionless. Thus, $C_{\text{BS}}$ and $\nu$ are evaluated directly in native dollars, allowing the convergence criterion $|C_{\text{BS}} - C_{\text{mkt}}| \le \$0.0100$ to be evaluated without denormalization penalty.
 
-For high-notional index contracts (e.g., S\&P 500 SPX trading at $\$5{,}000$), we exploit the linear homogeneity of the Black-Scholes equation:
+For high-notional index contracts (e.g., SPX at $\$5{,}000$), we exploit linear homogeneity:
 \begin{equation}
 C_{\text{BS}}(S, K, T, r, \sigma) = K \cdot C_{\text{BS}}\left(\frac{S}{K}, 1.0, T, r, \sigma\right)
 \end{equation}
-Under this formulation, market data feeds provide pre-normalized inputs $(\tilde{S} = S/K, \tilde{K} = 1.0, \tilde{C}_{\text{mkt}} = C_{\text{mkt}}/K)$ directly into the engine, with the termination threshold set to $\tilde{\epsilon} = \$0.01 / K$. This guarantees all internal variables remain strictly bounded within the optimal $[0.5, 2.0]$ Q8.24 range across all financial asset classes with zero datapath modification.
+Pre-normalized inputs $(\tilde{S} = S/K, \tilde{K} = 1.0, \tilde{C}_{\text{mkt}} = C_{\text{mkt}}/K)$ enter the engine directly with threshold $\tilde{\epsilon} = \$0.01 / K$, bounding internal variables in $[0.5, 2.0]$ Q8.24 with zero datapath changes.
 
 \subsection{Analytical Guess Seeding (Brenner-Subrahmanyam)}
 Standard Newton-Raphson update steps follow:
 \begin{equation}
 \sigma_{n+1} = \sigma_n - \frac{C_{\text{BS}}(\sigma_n) - C_{\text{mkt}}}{\nu(\sigma_n)}
 \end{equation}
-If the initial guess $\sigma_0$ is chosen arbitrarily (e.g., static $\sigma_0 = 0.20$), options with true volatility $\sigma^* > 0.60$ or $\sigma^* < 0.10$ require dozens of iterations and risk divergence when $\nu \to 0$. While later literature proposed higher-order expansions (e.g., Corrado and Miller~\cite{corrado1996improved} or J{\"a}ckel's rational Chebyshev approach~\cite{jackel2015lets}), these formulations require cubic roots or extensive branch tables that severely penalize FPGA logic area and critical path delay. In contrast, the Brenner-Subrahmanyam approximation~\cite{brenner1988simple} operates at-the-money ($S \approx K$) with minimal hardware overhead:
+Arbitrary initial guesses (e.g., $\sigma_0 = 0.20$) require dozens of iterations and risk divergence when $\nu \to 0$. While higher-order expansions (e.g., Corrado-Miller~\cite{corrado1996improved}, J{\"a}ckel~\cite{jackel2015lets}) offer wide coverage, they require cubic roots or large branch tables that severely penalize FPGA area.
+
+In contrast, the Brenner-Subrahmanyam approximation~\cite{brenner1988simple} provides an elegant closed form. Whereas the classical formula assumes exact at-the-money ($S=K$) with denominator $S$ ($\sigma_0 \approx \sqrt{2\pi/T} \cdot C_{\text{mkt}}/S$), using spot $S$ alone introduces asymmetric bias for near-the-money contracts ($S \ne K$). To preserve symmetric convergence across both call and put strikes without extra logic, we employ the symmetric spot-strike mean $(S+K)/2$:
 \begin{equation}
-\sigma_0 \approx \sqrt{\frac{2\pi}{T}} \cdot \frac{C_{\text{mkt}}}{S} \approx \frac{2.5066}{\sqrt{T}} \cdot \left(\frac{C_{\text{mkt}}}{S}\right)
+\sigma_0 = \frac{\sqrt{2\pi}}{\sqrt{T}} \cdot \frac{C_{\text{mkt}}}{(S + K)/2} \approx \frac{2.5066}{\sqrt{T}} \cdot \frac{C_{\text{mkt}}}{(S + K)/2}
 \end{equation}
-This closed-form calculation is evaluated in dedicated hardware in 64 clock cycles, providing an initial value within $\pm 0.5\%$ volatility error across the active liquid trading range.
+Evaluated in dedicated hardware in 64 clock cycles, this closed-form seed initializes the solver within $\pm 0.5\%$ volatility error across the active liquid trading range, guaranteeing single-pass convergence for 97.6\% of contracts.
 
 \subsection{High-Speed Polynomial and Elementary Function Evaluation}
-To maintain 100~MHz timing without DSP cascades:
 \begin{itemize}
-    \item \textbf{Pad\'{e} Logarithm:} We evaluate the [1/1] Pad\'{e} approximant $\ln(x) \approx 2 \frac{x - 1}{x + 1} = 2\tanh(\frac{1}{2}\ln x)$ for $x = S/K$. The absolute approximation error is strictly bounded by $3.6 \times 10^{-4}$ ($<0.22\%$ relative error) across $0.85 \le S/K \le 1.15$, and $<0.05\%$ relative error across $0.925 \le S/K \le 1.08$. Over 95\% of active quote updates in liquid equity options concentrate within this near-the-money band; for deep wings ($|S-K|/K > 0.15$), the architecture automatically engages an exact 18-cycle vectoring CORDIC natural logarithm fallback path ($\ln x = 2\operatorname{atanh}((x-1)/(x+1))$). Because the 18-cycle CORDIC evaluation is latency-matched via a 15-cycle SRL15 shift register to exactly 33 clock cycles, the core datapath maintains an identical, deterministic 126-cycle latency across all strikes.
-    \item \textbf{Horner Normal CDF:} While Gaussian evaluation on FPGAs has historically relied on Box-Muller transforms or piecewise polynomial tables~\cite{thomas2009gaussian}, $N(x)$ is computed here via a 5th-order rational polynomial evaluated using Horner's scheme, pipelined into single-DSP multiply-accumulate stages.
+    \item \textbf{Pad\'{e} Logarithm:} We evaluate the [1/1] Pad\'{e} approximant $\ln(x) \approx 2 \frac{x - 1}{x + 1} = 2\tanh(\frac{1}{2}\ln x)$ for $x = S/K$. Absolute approximation error is bounded by $3.6 \times 10^{-4}$ ($<0.22\%$ relative error) across $0.85 \le S/K \le 1.15$, and $<0.05\%$ relative error across $0.925 \le S/K \le 1.08$. Over 95\% of active liquid quotes fall within this band; for deep wings ($|S-K|/K > 0.15$), the engine automatically engages an exact 18-cycle CORDIC logarithm fallback path ($\ln x = 2\operatorname{atanh}((x-1)/(x+1))$), latency-matched via an SRL15 shift register to exactly 33 cycles, preserving the 126-cycle datapath latency.
+    \item \textbf{Horner Normal CDF:} $N(x)$ is computed via a 5th-order rational polynomial evaluated with Horner's scheme, pipelined into single-DSP multiply-accumulate stages~\cite{thomas2009gaussian}.
     \item \textbf{Hyperbolic CORDIC:} Exponentials $e^{-rT}$ and $e^{-d_1^2/2}$ are computed using a fully pipelined 16-stage hyperbolic CORDIC engine.
 \end{itemize}
 
 % -------------------------------------------------------------------------
 \section{Hardware Microarchitecture}
 % -------------------------------------------------------------------------
-
-\begin{figure*}[t]
-\centering
-\includefigfile[width=0.92\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
-\caption{Microarchitecture of the 4-Core Pipelined Implied Volatility and Greeks Engine, illustrating scale-invariance normalization, Brenner-Subrahmanyam analytical guess generator with shared $\sqrt{T}$ path, pipelined datapath, Zero-BRAM distributed context store, and 128-bit egress bus.}
-\label{fig:arch}
-\end{figure*}
-
-Fig.~\ref{fig:arch} illustrates the top-level architecture. The design comprises four identical engine cores coordinated by round-robin ingress distribution and an AXI4-Stream egress arbiter.
+Fig.~\ref{fig:arch} shows the top-level architecture, comprising four identical cores coordinated by round-robin ingress and an AXI4-Stream egress arbiter.
 
 \subsection{Stage 1: Ingress Registration \& Queuing (1 Cycle)}
-The ingress interface receives a 256-bit AXI4-Stream packet containing $\{S, K, T, r, C_{\text{mkt}}, \text{TID}\}$. Ingress values are registered in a single clock cycle and tagged with the 6-bit Transaction ID (TID) before entering the analytical guess engine. Explicit normalization division by $K$ is not serialized prior to guess generation; instead, the Pad\'{e} ratio $\frac{S-K}{S+K} \equiv \frac{\tilde{S}-1}{\tilde{S}+1}$ is evaluated directly inside Stage 3, avoiding an extra 32-cycle ingress divider latency.
+The ingress interface receives a 256-bit AXI4-Stream packet containing $\{S, K, T, r, C_{\text{mkt}}, \text{TID}\}$. Ingress values are registered in 1 clock cycle and tagged with a 6-bit TID. Normalization division is omitted; the Pad\'{e} ratio $\frac{S-K}{S+K} \equiv \frac{\tilde{S}-1}{\tilde{S}+1}$ is evaluated inside Stage 3, saving 32 cycles.
 
-\subsection{Stage 2: Analytical Guess Engine \& Shared Sqrt Unit (64 Cycles)}
-The Brenner-Subrahmanyam engine evaluates:
-\begin{equation}
-\sigma_0 = \frac{2.5066}{\sqrt{T}} \cdot \frac{C_{\text{mkt}}}{(S + K)/2}
-\end{equation}
-A digit-recurrence square-root unit computes $\sqrt{T}$ in 29 clock cycles (plus alignment registers). Crucially, this value is stored in a distributed context RAM and forwarded downstream to the main datapath, eliminating the need for a redundant second square-root core. The internal non-restoring divider evaluates the ratio in 33 clock cycles, yielding a total seeder latency of exactly 64 clock cycles.
+\subsection{Stage 2: Analytical Guess Seeder \& Shared Sqrt Unit (64 Cycles)}
+The seeder evaluates Eq.~(9): $\sigma_0 = \frac{2.5066}{\sqrt{T}} \frac{C_{\text{mkt}}}{(S + K)/2}$. A digit-recurrence unit computes $\sqrt{T}$ in 29 cycles (plus alignment), storing $\sqrt{T}$ in distributed context RAM and forwarding it downstream, eliminating a redundant square-root core. An internal non-restoring divider evaluates the ratio in 33 cycles, producing a valid $\sigma_0$ in exactly 64 cycles.
 
 \subsection{Stage 3: Core Pipelined Black-Scholes Datapath (126 Cycles)}
-The core datapath consists of a 126-cycle fully unrolled feedforward pipeline with an initiation interval of $II = 1$ (accepting one new contract every clock cycle). Sub-operations are partitioned across registered boundaries to prevent multi-DSP combinational carry propagation. For deep wings ($|S-K|/K > 0.15$), the 18-cycle CORDIC natural logarithm fallback path is latency-matched using an SRL15 shift register to exactly 33 cycles, preserving the 126-cycle datapath latency across 100\% of transactions.
+The core datapath is a 126-cycle fully unrolled feedforward pipeline with Initiation Interval $II = 1$ (accepting one contract/cycle). Sub-operations are partitioned across registered boundaries. For deep wings ($|S-K|/K > 0.15$), the 18-cycle CORDIC logarithm is latency-matched via SRL15 to 33 cycles, maintaining 126-cycle deterministic latency across 100\% of transactions.
 
 \subsection{Zero-BRAM Context Memory Architecture}
-Conventional FPGA designs map FIFO buffers and pipeline matching registers to embedded Block RAMs (RAMB18/RAMB36). In high-density financial platforms, BRAMs are a scarce resource required for network MAC buffers and PCIe DMA descriptor rings. Our engine implements all context memories ($64 \times 32$-bit) using 6-input LUTs configured as distributed RAM (\texttt{ram\_style = "distributed"}) and SRL32 shift registers. Across all four cores, exactly \textbf{zero} BRAMs are consumed.
+Conventional designs map FIFOs to Block RAMs (RAMB18/36). In HFT platforms, BRAMs are required for 10GbE MAC buffers and PCIe DMA rings. Our engine implements all context memories ($64 \times 32$-bit) exclusively using 6-LUT distributed RAM (\texttt{ram\_style = "distributed"}) and SRL32 shift registers. Exactly \textbf{zero} BRAMs are consumed.
 
 \subsection{Stage 4: Newton-Raphson Update Step \& Greek Dividers (33 Cycles)}
-Following the 126-cycle pricing datapath, each core evaluates the convergence criterion:
+Following Stage 3, each core checks convergence:
 \begin{equation}
 |C_{\text{BS}} - C_{\text{mkt}}| \le \epsilon
 \end{equation}
-in direct dollar terms, where $\epsilon = 32'd167772 \approx \$0.0100$ in Q8.24 format. This threshold corresponds exactly to the 1-cent minimum price tick increment established by major options exchanges (e.g., CBOE, CME)~\cite{cboe2023specs}. Because exchange matching engines reject sub-penny price quotes, terminating at \$0.01 prevents unnecessary recirculating iterations with zero financial utility. 
-
-If $|C_{\text{BS}} - C_{\text{mkt}}| > \epsilon$, the update step $\Delta\sigma = (C_{\text{BS}} - C_{\text{mkt}})/\nu$ is evaluated by a dedicated 33-cycle pipelined divider (\texttt{u\_nr\_divider}), running concurrently with the 33-cycle Gamma divider (\texttt{u\_gamma\_divider}). The updated $\sigma_{n+1} = \sigma_n - \Delta\sigma$ loops back with priority over incoming new ticks via an active TID scoreboard.
+in direct dollars, where $\epsilon = 32'd167772 \approx \$0.0100$ in Q8.24, matching the 1-cent minimum exchange price tick (CBOE/CME)~\cite{cboe2023specs}. If $|C_{\text{BS}} - C_{\text{mkt}}| > \epsilon$, the update $\Delta\sigma = (C_{\text{BS}} - C_{\text{mkt}})/\nu$ is evaluated by a dedicated 33-cycle divider (\texttt{u\_nr\_divider}), concurrently with the 33-cycle Gamma divider (\texttt{u\_gamma\_divider}). Updated $\sigma_{n+1} = \sigma_n - \Delta\sigma$ loops back with priority via an active TID scoreboard.
 
 \subsection{Stage 5: Multi-Core Arbitration \& 128-Bit Egress (2 Cycles)}
-Upon convergence, each core packs results into a 128-bit streaming word:
+Upon convergence, results are packed into a 128-bit streaming word:
 \begin{multline}
 \text{Egress}[127:0] = \{ \text{TID}[5:0],\, \Gamma[25:0], \\
 \nu[31:0],\, \Delta[31:0],\, \sigma[31:0] \}
 \end{multline}
-Here, $\Gamma$ is allocated 26 bits by truncating 6 redundant high-order sign bits in Q8.24 (as Gamma rarely exceeds 0.5 in physical equity options), preserving full 24-bit fractional resolution while achieving single-flit packing. A 4-way round-robin arbiter drains output FIFOs with zero handshake stalls under backpressure in 2 clock cycles.
+$\Gamma$ is allocated 26 bits by truncating 6 high-order sign bits in Q8.24 (Gamma rarely exceeds 0.5 in equities), preserving 24-bit fractional resolution while achieving single-flit packing. A 4-way arbiter drains output FIFOs with zero handshake stalls in 2 cycles.
 
-\subsection{Pipeline Latency Breakdown and Sustained Throughput Reconciliation}
-The end-to-end latency for a contract traversing the engine comprises:
-\begin{itemize}
-    \item Stage 1 Ingress registration: 1 cycle
-    \item Stage 2 Analytical guess seeder: 64 cycles
-    \item Ingress Queue handoff: 1 cycle
-    \item Stage 3 Core Black-Scholes datapath: 126 cycles
-    \item Stage 4 Newton-Raphson update divider: 33 cycles
-    \item Stage 5 Egress arbitration and packing: 2 cycles
-\end{itemize}
-Thus, the total cold transaction latency from ingress to egress is exactly $1 + 64 + 1 + 126 + 33 + 2 = \mathbf{227\text{ clock cycles}}$ ($2.27\,\mu\text{s}$ at 100~MHz). For contracts requiring a second iteration, loopback bypasses Stages 1 and 2, requiring Stages 3 and 4: $126 + 33 = \mathbf{159\text{ cycles}}$ ($1.59\,\mu\text{s}$).
-
-Crucially, because Stage 3 is a fully unrolled feedforward pipeline with an Initiation Interval of $II = 1$, a looped-back contract does not stall or flush the datapath. During the 159 cycles while contract $k$ traverses the pipeline, the engine admits and processes 158 subsequent incoming contracts without interruption. When contract $k$ emerges from the NR divider and requires a second iteration, the loopback arbitration multiplexer grants it priority over incoming new ticks for \textbf{exactly one clock cycle}. Thus, a loopback displaces exactly one pipeline admission slot.
-
-\textbf{Liquid Trading Population ($S/K \in [0.85, 1.15]$):} In liquid equity markets, 97.6\% of contracts converge in 1 pass and 2.4\% require a second pass, consuming $1.024$ admission slots per contract. Across 4 cores at 100~MHz, the net sustained throughput is:
+\subsection{Pipeline Latency and Sustained Throughput Reconciliation}
+Cold transaction latency from ingress to egress is:
 \begin{equation}
-T_{\text{net, liquid}} = \frac{400.00\text{ MOps/s}}{1 + 0.024} = 390.62\text{ MOps/s}
+L_{\text{cold}} = \underbrace{1}_{\text{Stg 1}} + \underbrace{64}_{\text{Stg 2}} + \underbrace{1}_{\text{Queue}} + \underbrace{126}_{\text{Stg 3}} + \underbrace{33}_{\text{Stg 4}} + \underbrace{2}_{\text{Stg 5}} = \mathbf{227\text{ cycles}} \; (2.27\,\mu\text{s})
+\end{equation}
+Loopback bypasses Stages 1--2, requiring Stages 3--4: $126 + 33 = \mathbf{159\text{ cycles}}$ ($1.59\,\mu\text{s}$).
+
+Because Stage 3 has $II = 1$, looped-back contracts do not stall the pipeline: during the 159 cycles, the core processes 158 subsequent contracts. When contract $k$ loops back, it preempts ingress for \textbf{exactly one cycle}, displacing one admission slot.
+
+\textbf{Liquid Trading ($S/K \in [0.85, 1.15]$):} 97.6\% of contracts converge in 1 pass and 2.4\% require 2 passes, consuming 1.024 slots/contract. Across 4 cores at 100~MHz, net sustained throughput is:
+\begin{equation}
+T_{\text{net, liquid}} = \frac{400.00\text{ MOps/s}}{1 + 0.024} = \mathbf{390.62\text{ MOps/s}}
 \end{equation}
 
-\textbf{Blended Population ($S/K \in [0.70, 1.40]$):} When extended to extreme strikes, deep wings represent 7.9\% of contracts, averaging 2.1 passes. The blended average across the entire market is $\bar{P} = 0.921(1.024) + 0.079(2.100) = 1.109$ slots per contract, yielding a blended sustained throughput of:
+\textbf{Blended Population ($S/K \in [0.70, 1.40]$):} Deep wings represent 7.9\% of contracts, averaging 2.1 passes. The blended average is $\bar{P} = 0.921(1.024) + 0.079(2.100) = 1.109$ slots/contract, yielding:
 \begin{equation}
-T_{\text{net, blended}} = \frac{400.00\text{ MOps/s}}{1.109} = 360.69\text{ MOps/s}
+T_{\text{net, blended}} = \frac{400.00\text{ MOps/s}}{1.109} = \mathbf{360.69\text{ MOps/s}}
 \end{equation}
 
-% -------------------------------------------------------------------------
-\section{Physical Implementation \& Timing Closure}
-% -------------------------------------------------------------------------
-
-The complete design was synthesized, placed, and routed using AMD Vivado 2025.2 targeting an Artix-7 200T (\texttt{xc7a200tffg1156-3}). 
-
-\begin{table}[t]
-\caption{Artix-7 200T (\texttt{xc7a200tffg1156-3}) Physical Signoff}
-\label{tab:util}
-\centering
-\begin{tabular}{lrrr}
-\toprule
-\textbf{Resource Metric} & \textbf{Utilized} & \textbf{Available} & \textbf{Utilization \%} \\
-\midrule
-Worst Negative Slack (WNS) & \textbf{+0.005 ns} & 0.000 ns & \textbf{Timing Met} \\
-Worst Hold Slack (WHS)     & \textbf{+0.058 ns} & 0.000 ns & \textbf{Hold Met} \\
-Total Timing Endpoints     & 189,999            & ---      & 0 Failing \\
-Slice LUTs (Total)         & 106,298            & 133,800  & 79.45\% \\
-\quad Logic LUTs           & 96,386             & 133,800  & 72.04\% \\
-\quad Distributed LUTRAM   & 1,256              & 46,200   & 2.72\% \\
-\quad Shift Registers (SRL)& 8,656              & 46,200   & 18.74\% \\
-Slice Registers (FFs)      & 129,786            & 267,600  & 48.50\% \\
-DSP48E1 Blocks             & 608                & 740      & 82.16\% \\
-\textbf{Block RAM (RAMB36/18)} & \textbf{0}     & \textbf{365} & \textbf{0.00\% (Zero)} \\
-\midrule
-Total On-Chip Power        & \textbf{4.258 W}   & ---      & Dynamic: 4.126 W \\
-Device Static Power        & 0.132 W            & ---      & Tj = 31.2~$^\circ$C \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-As detailed in Table~\ref{tab:util}, the complete 4-core array occupies 79.45\% of Slice LUTs and 82.16\% of DSP48E1 slices while strictly consuming \textbf{0 BRAMs}.
-
-\subsection{Critical Timing Path Analysis}
-Timing closed at 100.00~MHz ($T_{\text{clk}} = 10.000\text{ ns}$) with setup slack $WNS = +0.005\text{ ns}$ and hold slack $WHS = +0.058\text{ ns}$ across 189,999 endpoints. The critical path originates at the Core 1 restoring divider (\texttt{SLICE\_X48Y87}) and terminates at the remainder register (\texttt{SLICE\_X49Y100}), spanning 9.777~ns data path delay (3.775~ns logic, 6.002~ns routing over 22 logic levels). 
-
-While $WNS = +0.005\text{ ns}$ represents a tight closure margin, this reflects dense routing across 79.45\% logic utilization on the compact Artix-7 200T. In contrast, an unconstrained single-core instance easily closes at 125~MHz ($WNS = +0.144\text{ ns}$). For deployments requiring larger margin, a 5\% clock derating to 95~MHz provides $>0.5\text{ ns}$ positive slack.
-
-\subsection{Power and Thermal Budget}
-Vivado post-route vectorless power analysis confirms total power of 4.258~W (4.126~W dynamic, 0.132~W static) at a junction temperature of 31.2~$^\circ$C. This enables passive or low-profile active cooling in 75~W PCIe server slots.
-
-% -------------------------------------------------------------------------
-\section{Experimental Evaluation}
-% -------------------------------------------------------------------------
-
-\begin{figure}[t]
-\centering
-\includefigfile[width=\columnwidth]{fig2_error_distribution.pdf}{fig1_error_distribution.pdf}
-\caption{(a) Probability density error distribution and (b) cumulative accuracy curve across 10,000 synthetic contracts evaluated via DPI-C co-simulation.}
-\label{fig:accuracy}
-\end{figure}
-
+% Placed early to guarantee emission at top of Page 4
 \begin{table*}[t]
 \caption{Head-to-Head Architectural Benchmark Comparison}
 \label{tab:comparison}
@@ -276,72 +233,108 @@ Block RAM Used & N/A & N/A & \textbf{0 BRAMs (100\% Distributed LUTRAM)} \\
 \textsuperscript{2} GPU throughput denotes single-pass forward Black-Scholes pricing from CUDA SDK literature~\cite{nvidia2023a100}; iterative IV inversion throughput is not benchmarked with matching methodology.}
 \end{table*}
 
-\subsection{Accuracy and Moneyness Coverage Across Volatility Regimes}
-To verify arithmetic integrity and boundary behavior, the placed-and-routed RTL was co-simulated against an IEEE-754 double-precision golden model via SystemVerilog DPI-C over 10,000 randomized options contracts ($S \in [20, 80], K/S \in [0.70, 1.40], T \in [0.05, 1.5], r \in [0.02, 0.06], \sigma^* \in [0.15, 0.55]$).
+% -------------------------------------------------------------------------
+\section{Physical Implementation \& Timing Closure}
+% -------------------------------------------------------------------------
+The complete design was synthesized, placed, and routed using AMD Vivado 2025.2 targeting an Artix-7 200T (\texttt{xc7a200tffg1156-3}). As detailed in Table~\ref{tab:util}, the complete 4-core array occupies 79.45\% of Slice LUTs and 82.16\% of DSP48E1 slices while strictly consuming \textbf{0 BRAMs}.
 
-\textbf{Liquid Trading Range ($0.85 \le S/K \le 1.15$):} Over 95\% of exchange quote updates in liquid equity and index options concentrate within $\pm 15\%$ moneyness. In this regime, the fast Pad\'{e} logarithm is active:
-\begin{itemize}
-    \item \textbf{Mean Absolute Error (MAE):} 0.000157 (0.0157\% volatility).
-    \item \textbf{Percentile Breakdown:} Median (50th percentile) error is $0.000118$ (0.0118\% vol), 95th percentile error is $0.001692$ (0.1692\% vol), and 99th percentile error is $0.04168$ (0.4168\% vol).
-    \item \textbf{Institutional Compliance:} 99.9\% of contracts converge within 1.0\% volatility error, and 100.0\% converge within 10\% error.
-    \item \textbf{Single-Iteration Convergence:} 97.6\% of contracts converge in exactly 1 pass; 99.9\% converge within 2 passes.
-\end{itemize}
+\begin{table}[t]
+\caption{Artix-7 200T (\texttt{xc7a200tffg1156-3}) Physical Signoff}
+\label{tab:util}
+\centering
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Resource Metric} & \textbf{Utilized} & \textbf{Available} & \textbf{Utilization \%} \\
+\midrule
+Worst Negative Slack (WNS) & \textbf{+0.005 ns} & 0.000 ns & \textbf{Timing Met} \\
+Worst Hold Slack (WHS)     & \textbf{+0.058 ns} & 0.000 ns & \textbf{Hold Met} \\
+Total Timing Endpoints     & 189,999            & ---      & 0 Failing \\
+Slice LUTs (Total)         & 106,298            & 133,800  & 79.45\% \\
+\quad Logic LUTs           & 96,386             & 133,800  & 72.04\% \\
+\quad Distributed LUTRAM   & 1,256              & 46,200   & 2.72\% \\
+\quad Shift Registers (SRL)& 8,656              & 46,200   & 18.74\% \\
+Slice Registers (FFs)      & 129,786            & 267,600  & 48.50\% \\
+DSP48E1 Blocks             & 608                & 740      & 82.16\% \\
+\textbf{Block RAM (RAMB36/18)} & \textbf{0}     & \textbf{365} & \textbf{0.00\% (Zero)} \\
+\midrule
+Total On-Chip Power        & \textbf{4.258 W}   & ---      & Dynamic: 4.126 W \\
+Device Static Power        & 0.132 W            & ---      & Tj = 31.2~$^\circ$C \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\textbf{Deep Out-of-the-Money / In-the-Money Wings ($S/K < 0.85$ or $S/K > 1.15$):} For extreme strikes where Pad\'{e} approximation error expands, the architecture automatically engages the 18-cycle vectoring CORDIC natural logarithm fallback path ($\ln x = 2\operatorname{atanh}((x-1)/(x+1))$):
-\begin{itemize}
-    \item In our extended test suite across $S/K \in [0.70, 1.40]$ and maturities down to $T=0.05$ (18 days to expiration), deep wings represent 7.9\% of contracts.
-    \item Because Vega diminishes in deep wings ($\nu < 0.05$), contracts in this regime require an average of 2.1 iterations (1 loopback pass).
-    \item The engine achieves an MAE of 0.0214\% volatility in deep wings, with 100.0\% of contracts converging within the \$0.01 price threshold and zero numerical divergence across all 10,000 contracts. Blended across all 10,000 contracts, the global MAE is $0.921(0.0157\%) + 0.079(0.0214\%) = \mathbf{0.0162\%}$ volatility ($0.000162$).
-\end{itemize}
+\subsection{Critical Timing Path Analysis}
+Timing closed at 100.00~MHz ($T_{\text{clk}} = 10.000\text{ ns}$) with setup slack $WNS = +0.005\text{ ns}$ and hold slack $WHS = +0.058\text{ ns}$ across 189,999 endpoints. The critical path originates at Core 1 restoring divider (\texttt{SLICE\_X48Y87}) and terminates at the remainder register (\texttt{SLICE\_X49Y100}), spanning 9.777~ns data path delay (3.775~ns logic, 6.002~ns routing over 22 logic levels). While $WNS = +0.005\text{ ns}$ represents a tight margin reflecting dense 79.45\% logic utilization, an unconstrained single-core instance easily closes at 125~MHz ($WNS = +0.144\text{ ns}$). A 5\% derating to 95~MHz yields $>0.5\text{ ns}$ slack.
 
-\subsection{Multi-Component Error Budget and Sensitivity Decomposition}
-The observed MAE of $0.0157\%$ volatility ($0.000157$) is explained by an analytical error budget linking hardware approximations to volatility error via first-order Vega sensitivities ($\Delta\sigma \approx \Delta C / \nu$):
+\subsection{Power and Thermal Budget}
+Vivado post-route vectorless power analysis confirms total power of 4.258~W (4.126~W dynamic, 0.132~W static) at junction temperature 31.2~$^\circ$C, enabling passive or low-profile active cooling in 75~W PCIe server slots.
+
+% Placed early to guarantee emission at top of Page 5
+\begin{figure*}[t]
+\centering
+\includefigfile[width=0.86\textwidth]{fig3_comparative_benchmark.pdf}{fig2_comparative_benchmark.pdf}
+\caption{Comparative evaluation of (a) Throughput (MOps/sec), (b) Power Dissipation (Watts), and (c) Energy Efficiency (kOps/Watt) across Host CPU, GPU baseline, and our 4-Core Artix-7 FPGA.}
+\label{fig:benchmark}
+\end{figure*}
+
+% -------------------------------------------------------------------------
+\section{Experimental Evaluation}
+% -------------------------------------------------------------------------
+
+\begin{figure}[t]
+\centering
+\includefigfile[width=\columnwidth]{fig2_error_distribution.pdf}{fig1_error_distribution.pdf}
+\caption{(a) Probability density error distribution and (b) cumulative accuracy curve across 10,000 synthetic contracts evaluated via DPI-C co-simulation.}
+\label{fig:accuracy}
+\end{figure}
+
+\subsection{Accuracy and Moneyness Coverage Across Regimes}
+The placed-and-routed RTL was co-simulated against an IEEE-754 double-precision golden model via SystemVerilog DPI-C over 10,000 contracts ($S \in [20, 80], K/S \in [0.70, 1.40], T \in [0.05, 1.5], r \in [0.02, 0.06], \sigma^* \in [0.15, 0.55]$).
+
+\textbf{Liquid Trading Range ($0.85 \le S/K \le 1.15$):} Over 95\% of quote updates fall within $\pm 15\%$ moneyness. In this regime, the engine achieves an MAE of $0.000157$ (\textbf{0.0157\% volatility}). Median error is $0.000118$ (0.0118\% vol), 95th-percentile is $0.001692$ (0.1692\% vol), and 99th-percentile is $0.04168$ (0.4168\% vol). Crucially, \textbf{99.9\% of contracts converge within 1.0\% volatility error} (100.0\% within 10\%), and 97.6\% converge in exactly 1 pass (99.9\% within 2 passes).
+
+\textbf{Deep Wings ($S/K < 0.85$ or $S/K > 1.15$):} For extreme strikes, the engine engages the 18-cycle CORDIC logarithm fallback ($\ln x = 2\operatorname{atanh}((x-1)/(x+1))$). Deep wings represent 7.9\% of contracts. Because Vega diminishes ($\nu < 0.05$), contracts average 2.1 passes. The engine achieves an MAE of 0.0214\% volatility in deep wings, with 100\% converging within \$0.01 and zero divergence. Blended across all 10,000 contracts, global MAE is $0.921(0.0157\%) + 0.079(0.0214\%) = \mathbf{0.0162\%}$ volatility ($0.000162$).
+
+\subsection{Multi-Component Error Budget & Sensitivity Decomposition}
+The observed MAE of $0.0157\%$ volatility ($0.000157$) is verified by an analytical error budget linking hardware approximations to volatility error via Vega sensitivities ($\Delta\sigma \approx \Delta C / \nu$):
 \begin{itemize}
-    \item \textbf{Pad\'{e} Logarithm ($\Delta_{\ln}$):} For normalized spot $x = S/K = 1+u$, the [1/1] Pad\'{e} error is $\Delta_{\ln} \approx u^3/12$. Across the liquid moneyness distribution with mean $\sqrt{T} \approx 0.89$, propagating through $\frac{\partial C}{\partial \ln x} = \frac{\nu}{\sqrt{T}}$ yields an RMS volatility perturbation of $\Delta\sigma_{\text{Pad\'{e}}} \approx 4.5 \times 10^{-5}$ ($0.0045\%$ vol).
-    \item \textbf{Hyperbolic CORDIC ($e^{-rT}$ and $e^{-d_1^2/2}$):} The 16-stage CORDIC engine provides 16 bits of effective mantissa precision ($2^{-16} \approx 1.53 \times 10^{-5}$). Truncation in discount factor $e^{-rT}$ induces price error $\Delta C \approx K N(d_2) \cdot 2^{-16} \approx 7.6 \times 10^{-6} K$. Dividing by typical Vega $\nu \approx 0.35 K$ yields $\Delta\sigma_{\text{CORDIC}} \approx 2.8 \times 10^{-5}$ ($0.0028\%$ vol).
-    \item \textbf{Horner Normal CDF:} The 5th-order rational polynomial approximation exhibits an error of $|\epsilon(x)| \le 7.5 \times 10^{-8}$, contributing $\Delta\sigma_{\text{Horner}} \approx 1.2 \times 10^{-6}$ ($0.00012\%$ vol).
-    \item \textbf{Fixed-Point Q8.24 Quantization:} Accumulated fractional roundoff noise ($2^{-24}$) across 126 pipeline registers contributes an RMS quantization uncertainty of $\approx 2.5 \times 10^{-6}$ in volatility space.
-    \item \textbf{Price Convergence Termination:} In financial units, option Vega $\nu = \frac{\partial C}{\partial \sigma}$ has units of dollars per unit volatility. For our dataset ($S \in [\$20, \$80]$, mean $S = \$50, \bar{T} = 0.8$), average Vega is $\bar{\nu} \approx 50 \times 0.89 \times 0.39 \approx \$17.35$. While the exchange stopping threshold is $\epsilon = \$0.0100$, quadratic Newton-Raphson convergence reduces the actual residual price error to a mean of $\overline{|\Delta C|} \approx \$0.0025$ upon pass-1 termination. Dividing by average Vega yields $\Delta\sigma_{\text{stop}} \approx \frac{\$0.0025}{\$17.35} \approx 1.45 \times 10^{-4}$ ($0.0145\%$ vol).
+    \item \textbf{Pad\'{e} Logarithm ($\Delta_{\ln}$):} For $x = S/K = 1+u$, [1/1] Pad\'{e} error is $\Delta_{\ln} \approx u^3/12$. Across liquid moneyness with mean $\sqrt{T} \approx 0.89$, propagating through $\frac{\partial C}{\partial \ln x} = \frac{\nu}{\sqrt{T}}$ yields an RMS perturbation of $\Delta\sigma_{\text{Pad\'{e}}} \approx 4.5 \times 10^{-5}$ ($0.0045\%$ vol).
+    \item \textbf{Hyperbolic CORDIC ($e^{-rT}, e^{-d_1^2/2}$):} The 16-stage CORDIC provides 16-bit mantissa precision ($2^{-16} \approx 1.53 \times 10^{-5}$). Truncation in $e^{-rT}$ induces price error $\Delta C \approx K N(d_2) \cdot 2^{-16} \approx 7.6 \times 10^{-6} K$. Dividing by typical Vega $\nu \approx 0.35 K$ yields $\Delta\sigma_{\text{CORDIC}} \approx 2.8 \times 10^{-5}$ ($0.0028\%$ vol).
+    \item \textbf{Horner Normal CDF:} The 5th-order rational polynomial exhibits $|\epsilon(x)| \le 7.5 \times 10^{-8}$, contributing $\Delta\sigma_{\text{Horner}} \approx 1.2 \times 10^{-6}$ ($0.00012\%$ vol).
+    \item \textbf{Q8.24 Quantization:} Accumulated fractional roundoff noise ($2^{-24}$) across 126 registers contributes an RMS uncertainty of $\approx 2.5 \times 10^{-6}$ in volatility space.
+    \item \textbf{Price Convergence Termination:} In financial units, Vega has units of \$/vol. For our dataset ($S \in [\$20, \$80]$, mean $S = \$50, \bar{T} = 0.8$), average Vega is $\bar{\nu} \approx 50 \times 0.89 \times 0.39 \approx \$17.35$. While exchange threshold is $\epsilon = \$0.0100$, quadratic convergence reduces actual residual price error to a mean of $\overline{|\Delta C|} \approx \$0.0025$ upon pass-1 termination. Dividing by average Vega yields $\Delta\sigma_{\text{stop}} \approx \frac{\$0.0025}{\$17.35} \approx 1.45 \times 10^{-4}$ ($0.0145\%$ vol).
 \end{itemize}
 Combining these independent error terms in root-mean-square yields:
 \begin{multline}
 \Delta\sigma_{\text{RMS}} = \sqrt{(4.5\times 10^{-5})^2 + (2.8\times 10^{-5})^2 + (1.2\times 10^{-6})^2} \\
 \overline{+ (2.5\times 10^{-6})^2 + (1.45\times 10^{-4})^2} = \mathbf{1.54 \times 10^{-4}} \; (0.0154\%\text{ vol})
 \end{multline}
-in close agreement with the observed DPI-C simulation MAE of $0.0157\%$ (within 2\% relative deviation), confirming that residual price tolerance and Vega sensitivity represent the principal numerical error source.
+matching the observed DPI-C simulation MAE of $0.0157\%$ within 2\% relative deviation.
 
 \subsection{Algorithmic Ablation: Seeding vs. Unseeded Newton-Raphson}
-To quantify the benefit of the Brenner-Subrahmanyam analytical seeder, we performed an ablation comparison against standard unseeded Newton-Raphson ($\sigma_0 = 0.20$):
 \begin{itemize}
-    \item \textbf{With Analytical Seeding:} 97.6\% of options converge in exactly 1 iteration, and 99.9\% converge in $\le 2$ iterations. Zero divergence occurs across the test space. Accounting for 2.4\% loopbacks, net sustained throughput is 390.62~MOps/sec.
-    \item \textbf{Without Seeding ($\sigma_0 = 0.20$):} Contracts require an average of 4.8 iterations, and 4.2\% of contracts fail to converge or oscillate when Vega $< 0.02$. The analytical seeder eliminates 79\% of recirculating loopback traffic.
+    \item \textbf{With Analytical Seeding:} 97.6\% of options converge in 1 iteration, and 99.9\% in $\le 2$ iterations. Zero divergence occurs. Sustained throughput is 390.62~MOps/sec.
+    \item \textbf{Without Seeding ($\sigma_0 = 0.20$):} Contracts require an average of 4.8 iterations, and 4.2\% fail to converge or oscillate when $\nu < 0.02$. Seeding eliminates 79\% of loopback traffic.
 \end{itemize}
 
 \subsection{Comparative Benchmark: CPU, GPU, and FPGA}
-Table~\ref{tab:comparison} and Fig.~\ref{fig:benchmark} summarize comparative performance across compute architectures. 
-We executed an empirical benchmark on a host CPU (Intel Core i5-12500H, 12 cores/16 threads, AVX2) computing identical Newton-Raphson iterations over 2,000,000 contracts, reaching 14.22~MOps/sec at 45~W TDP (316~kOps/W).
+Table~\ref{tab:comparison} and Fig.~\ref{fig:benchmark} summarize comparative performance. An empirical benchmark on a host CPU (Intel Core i5-12500H, 12 cores/16 threads, AVX2) over 2,000,000 contracts reaches 14.22~MOps/sec at 45~W TDP (316~kOps/W).
 
-The proposed 4-core FPGA engine achieves 400.00~MOps/sec peak throughput (390.62~MOps/sec net sustained) at 4.258~W total power:
+The 4-core FPGA engine achieves 400.00~MOps/sec peak (390.62~MOps/sec net liquid) at 4.258~W:
 \begin{itemize}
-    \item \textbf{Throughput Speedup:} 28.1$\times$ peak (27.5$\times$ net sustained) over the 16-thread AVX2 CPU.
-    \item \textbf{Energy Efficiency:} 93,940~kOps/Watt peak (91,738~kOps/Watt net), representing a \textbf{297$\times$ peak (290$\times$ net) efficiency advantage} over the multi-core CPU and over 12$\times$ higher than estimated GPU forward pricing.
-    \item \textbf{Deterministic Latency in Production HFT:} While an isolated CPU thread evaluating contracts from cache achieves a median latency of $1.40\,\mu\text{s}$ (idealized compute time of $\sim 0.70\,\mu\text{s}$), empirical single-tick profiling on our 16-thread host CPU reveals that operating system scheduling, thread preemption, and cache thrashing induce a 99.9th-percentile ($p99.9$) tail latency of $15.6\,\mu\text{s}$ and maximum jitter spikes exceeding $300\,\mu\text{s}$. In production trading environments, kernel network interrupts and thread contention exacerbate this tail latency, creating severe risk of missed quote cancellations and toxic adverse fills. In contrast, our FPGA engine operates directly on streaming Ethernet AXI-Stream packets with \textbf{zero operating system overhead and zero queuing jitter}: every single transaction completes at an exact, hardware-deterministic latency of $2.27\,\mu\text{s}$ (227 cycles at 100~MHz).
+    \item \textbf{Throughput Speedup:} 28.1$\times$ peak (27.5$\times$ net) over the 16-thread AVX2 CPU.
+    \item \textbf{Energy Efficiency:} 93,940~kOps/Watt peak (91,738~kOps/Watt net), representing a \textbf{297$\times$ peak (290$\times$ net) efficiency advantage} over the CPU and over 12$\times$ higher than estimated GPU forward pricing.
+    \item \textbf{Deterministic Latency in HFT:} While an isolated CPU thread evaluating cached contracts achieves a median latency of $1.40\,\mu\text{s}$, single-tick profiling reveals that OS scheduling, thread preemption, and cache thrashing induce a 99.9th-percentile ($p99.9$) tail latency of $15.6\,\mu\text{s}$ and jitter spikes exceeding $300\,\mu\text{s}$, creating risk of missed quote cancellations and toxic fills. In contrast, our FPGA operates directly on streaming Ethernet AXI-Stream packets with \textbf{zero OS overhead and zero queuing jitter}: every transaction completes at an exact, deterministic latency of $2.27\,\mu\text{s}$ (227 cycles at 100~MHz).
 \end{itemize}
 
-\noindent\textbf{Benchmarking Scope and Methodological Nuance:} We explicitly note that our high-end GPU baseline (NVIDIA A100) reflects published single-pass forward pricing throughput~\cite{nvidia2023a100} rather than an in-house iterative Newton-Raphson implementation. Because forward pricing evaluates Black-Scholes in a single pass while our FPGA architecture executes complete iterative root-finding with simultaneous Greek extraction, the reported throughput comparison serves as an architectural reference rather than an identical algorithmic baseline. Characterizing a matching seeded Newton-Raphson kernel under Warp-level CUDA optimizations is planned for future comparative benchmarking.
+\noindent\textbf{Benchmarking Scope and Methodological Nuance:} The GPU baseline (NVIDIA A100) reflects published single-pass forward pricing throughput~\cite{nvidia2023a100} rather than iterative root-finding, serving as an architectural reference.
 
-\begin{figure*}[t]
-\centering
-\includefigfile[width=0.92\textwidth]{fig3_comparative_benchmark.pdf}{fig2_comparative_benchmark.pdf}
-\caption{Comparative evaluation of (a) Throughput (MOps/sec), (b) Power Dissipation (Watts), and (c) Energy Efficiency (kOps/Watt) across Host CPU, GPU baseline, and our 4-Core Artix-7 FPGA.}
-\label{fig:benchmark}
-\end{figure*}
-
+% Placed early to guarantee emission at top of Page 6
 \begin{table*}[t]
 \caption{Comparison with Prior FPGA Financial Accelerators}
 \label{tab:prior_art}
 \centering
-\setlength{\tabcolsep}{3.8pt}
+\setlength{\tabcolsep}{4.0pt}
 \begin{tabular}{lcccccc}
 \toprule
 \textbf{Design} & \textbf{Target Device} & \textbf{Model / Task} & \textbf{Numerical Method} & \textbf{Throughput} & \textbf{Latency} & \textbf{BRAMs} \\
@@ -363,25 +356,23 @@ Tse et al.~\cite{tse2010customising} (2010) & Virtex-4 FX100 & Black-Scholes & F
 \subsection{Sub-Module Hardware Resource Breakdown}
 Analysis of post-implementation reports reveals the hardware distribution across major sub-modules per core:
 \begin{itemize}
-    \item \textbf{Pipelined Restoring Dividers (7 per Core, 28 Total):} As detailed in Table~\ref{tab:util}, the 4-core engine utilizes 96,386 logic LUTs. Across all 4 cores, the 28 divider instances consume approximately 62,600 LUTs (64.95\% of total logic LUTs). This high allocation is an intentional architectural trade-off: implementing division entirely in distributed slice logic consumes zero DSP48E1 slices, reserving 100\% of available DSPs (608 utilized) for high-order Horner polynomial evaluation and multi-operand multipliers, thereby avoiding routing congestion and meeting timing. Each core instantiates dedicated dividers for: (1) Initial guess ratio; (2) Pad\'{e} ratio $(S-K)/(S+K)$; (3) $d_1$ quotient; (4) Horner CDF $t$-parameter for $d_1$; (5) Horner CDF $t$-parameter for $d_2$; (6) Newton-Raphson update step $\Delta\sigma$; and (7) Gamma quotient.
-    \item \textbf{Horner Normal CDF (2 per core):} Consumes 3,097 LUTs and 48 DSP48E1 slices per core, pipelined into single-DSP multiply-accumulate stages to avoid cascading carry paths.
+    \item \textbf{Pipelined Restoring Dividers (7 per Core, 28 Total):} Across all 4 cores, the 28 divider instances consume approximately 62,600 LUTs (64.95\% of logic LUTs). Implementing division entirely in distributed slice logic consumes zero DSPs, reserving 100\% of DSPs (608 utilized) for Horner polynomials and multi-operand multipliers to avoid routing congestion. Dedicated dividers compute: (1) Initial guess ratio; (2) Pad\'{e} ratio $(S-K)/(S+K)$; (3) $d_1$ quotient; (4) Horner CDF $t$-parameter for $d_1$; (5) Horner CDF $t$-parameter for $d_2$; (6) NR update step $\Delta\sigma$; and (7) Gamma quotient.
+    \item \textbf{Horner Normal CDF (2 per core):} Consumes 3,097 LUTs and 48 DSP48E1 slices per core, pipelined into single-DSP MAC stages.
     \item \textbf{Brenner-Subrahmanyam Seeder:} Consumes 3,964 LUTs and 8 DSPs, including the shared digit-recurrence $\sqrt{T}$ unit (1,354 LUTs).
     \item \textbf{Hyperbolic CORDIC:} Consumes 1,256 LUTs and 0 DSPs for 16-stage exponential evaluation.
-    \item \textbf{Context Store:} Consumes 1,256 distributed LUTRAMs and 0 Block RAMs, preserving 100\% of on-chip BRAM for system-level networking.
+    \item \textbf{Context Store:} Consumes 1,256 distributed LUTRAMs and 0 Block RAMs, preserving 100\% of on-chip BRAM for networking.
 \end{itemize}
 
 \subsection{Architectural Scalability Projection to Datacenter FPGAs}
-The 4-core configuration saturates 82.16\% of available DSP48E1 slices on the cost-effective Artix-7 200T. On enterprise datacenter accelerators such as the AMD Alveo U50 (5,952 DSPs) or Virtex UltraScale+ VU9P (6,840 DSPs), the modular pipelined core scales linearly to 32 and 48 parallel cores, achieving projected throughputs of 3.2 to 4.8 Giga-Ops/sec while maintaining Zero-BRAM compliance and sub-microsecond determinism.
+The 4-core configuration saturates 82.16\% of available DSP48E1 slices on the Artix-7 200T. On enterprise datacenter accelerators such as the AMD Alveo U50 (5,952 DSPs) or Virtex UltraScale+ VU9P (6,840 DSPs), the modular core scales linearly to 32 and 48 parallel cores, achieving projected throughputs of 3.2 to 4.8 Giga-Ops/sec while maintaining Zero-BRAM compliance and sub-microsecond determinism.
 
 \subsection{Comparison with Prior FPGA Accelerators}
-Table~\ref{tab:prior_art} compares this work against prior FPGA financial accelerators. While prior works~\cite{wang2022fpga,becker2011dynamic,jin2012optimising} rely on multi-section brute-force searching or finite difference approximations and consume significant Block RAM, our engine is the first to achieve 400~MOps/sec throughput with full Greeks extraction while strictly consuming Zero BRAM blocks.
+Table~\ref{tab:prior_art} compares this work against prior FPGA financial accelerators. While prior works~\cite{wang2022fpga,becker2011dynamic,jin2012optimising} rely on multi-section searching or finite difference approximations and consume significant Block RAM, our engine is the first to achieve 400~MOps/sec throughput with full Greeks extraction while strictly consuming Zero BRAM blocks.
 
 % -------------------------------------------------------------------------
 \section{Conclusion}
 % -------------------------------------------------------------------------
-We presented a four-core FPGA acceleration engine for real-time option implied volatility and higher-order Greeks calculation. By synergizing closed-form Brenner-Subrahmanyam analytical guess seeding, fixed-point scale-invariance normalization, and an exclusive Zero-BRAM microarchitecture, the engine achieves complete physical timing closure at 100~MHz on an AMD Xilinx Artix-7 200T FPGA. 
-
-Delivering 400.00~MOps/sec peak throughput (390.62~MOps/sec net sustained in liquid trading; 360.69~MOps/sec blended across all strikes) at a deterministic 2.27~$\mu$s cold transaction latency (1.26~$\mu$s core datapath), the engine achieves institutional accuracy ($MAE = 0.0157\%$ liquid, $0.0162\%$ blended) while consuming only 4.258~W. Head-to-head benchmarking demonstrates a 28.1$\times$ peak (27.5$\times$ liquid / 25.4$\times$ blended net) speedup and a 297$\times$ peak (290$\times$ liquid / 268$\times$ blended net) energy efficiency advantage over a multi-core AVX2 host CPU, establishing a compelling solution for thermal-constrained high-frequency trading infrastructure.
+We presented a four-core FPGA acceleration engine for real-time option implied volatility and higher-order Greeks calculation. By synergizing closed-form Brenner-Subrahmanyam analytical guess seeding, fixed-point scale-invariance normalization, and an exclusive Zero-BRAM microarchitecture, the engine achieves physical timing closure at 100~MHz on an AMD Xilinx Artix-7 200T FPGA. Delivering 400.00~MOps/sec peak throughput (390.62~MOps/sec net liquid; 360.69~MOps/sec blended) at a deterministic 2.27~$\mu$s latency (1.26~$\mu$s core datapath), the engine achieves institutional accuracy ($MAE = 0.0157\%$ liquid, $0.0162\%$ blended) while consuming only 4.258~W. Head-to-head benchmarking demonstrates a 28.1$\times$ throughput speedup and a 297$\times$ energy efficiency advantage over a 16-thread AVX2 host CPU, establishing a compelling solution for thermal-constrained high-frequency trading infrastructure.
 
 \begin{thebibliography}{12}
 
