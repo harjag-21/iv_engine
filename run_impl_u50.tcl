@@ -40,6 +40,7 @@ read_verilog -sv [list \
     {iv_engine.srcs/sources_1/new/iv_norm_cdf.sv}         \
     {iv_engine.srcs/sources_1/new/iv_bs_datapath.sv}      \
     {iv_engine.srcs/sources_1/new/iv_arbitration_fsm.sv}  \
+    {iv_engine.srcs/sources_1/new/iv_bs_initial_guess.sv} \
     {iv_engine.srcs/sources_1/new/iv_top.sv}              \
     {iv_engine.srcs/sources_1/new/iv_axis_wrapper.sv}     \
     {iv_engine.srcs/sources_1/new/iv_multi_engine_top.sv} \
