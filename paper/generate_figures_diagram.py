@@ -1,85 +1,167 @@
-﻿import os
+# -*- coding: utf-8 -*-
+import os
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-out_dir = os.path.join(os.path.dirname(__file__), "figures")
+out_dir = os.path.join(os.path.dirname(__file__), 'figures')
+os.makedirs(out_dir, exist_ok=True)
 
-fig, ax = plt.subplots(figsize=(12, 6.2), dpi=300)
-ax.set_xlim(-12, 118)
-ax.set_ylim(0, 72)
+fig, ax = plt.subplots(figsize=(14.8, 8.0), dpi=300)
+ax.set_xlim(-24, 156)
+ax.set_ylim(0, 84)
 ax.axis('off')
 
-# Outer Container Box - clean, large, plenty of padding
-container = patches.FancyBboxPatch((2, 2), 108, 66, boxstyle="round,pad=1.5",
-                                  edgecolor="#2ca02c", facecolor="#fbfdfb", linewidth=2.0)
+# Outer Container Box
+container = patches.FancyBboxPatch((-3, 2), 138, 76, boxstyle='round,pad=1.5,rounding_size=2.5',
+                                  edgecolor='#2ca02c', facecolor='#fbfdfb', linewidth=2.0)
 ax.add_patch(container)
 
-# Clean title - no intersecting inner box
-ax.text(56, 64.0, "Four-Core Pipelined Implied Volatility & Greeks Engine (Artix-7 200T @ 100 MHz)",
-        ha='center', va='center', fontsize=12, fontweight='bold', color="#134713")
+# Main Title
+ax.text(66, 73.2, 'Four-Core Pipelined Implied Volatility & Greeks Engine (Artix-7 200T @ 100 MHz)',
+        ha='center', va='center', fontsize=13, fontweight='bold', color='#134713')
 
-# Stage 1: Scale Invariance & Ingress
-s1 = patches.FancyBboxPatch((6, 33), 27, 24, boxstyle="round,pad=0.8",
-                           edgecolor="#1f77b4", facecolor="#eef5fb", linewidth=1.5)
+def draw_elbow(p_start, p_c1, p_c2, p_end, color='#333333', lw=1.8, ls='-', label=None, label_pos=None, label_kw=None):
+    xs = [p_start[0], p_c1[0], p_c2[0], p_end[0]]
+    ys = [p_start[1], p_c1[1], p_c2[1], p_end[1]]
+    ax.plot(xs, ys, color=color, lw=lw, ls=ls, zorder=5)
+    ax.annotate('', xy=p_end, xytext=p_c2,
+                arrowprops=dict(arrowstyle='->', color=color, lw=lw, mutation_scale=14),
+                zorder=6)
+    if label and label_pos:
+        kw = dict(fontsize=7.4, fontweight='bold', color=color, ha='center', va='center', zorder=7)
+        if label_kw:
+            kw.update(label_kw)
+        ax.text(label_pos[0], label_pos[1], label, **kw)
+
+# =========================================================================
+# Column 1: Stage 1 & Context Memory (x = 0 to 26)
+# =========================================================================
+# Stage 1: Ingress Registration & Queuing (1 Cycle)
+s1 = patches.FancyBboxPatch((0, 40), 26, 28, boxstyle='round,pad=0.8,rounding_size=1.5',
+                           edgecolor='#1f77b4', facecolor='#eef5fb', linewidth=1.6)
 ax.add_patch(s1)
-ax.text(19.5, 52, "Stage 1: Scale Invariance\n& Input Ingress", ha='center', va='center', fontsize=9.5, fontweight='bold', color="#0f3c5c")
-ax.text(19.5, 41.5, "AXI4-Stream 256-bit Ingress\nS_tilde = S / K,  K_tilde = 1.0\nC_tilde = C_mkt / K\nQ8.24 Dynamic Protection",
-        ha='center', va='center', fontsize=8.2)
+ax.text(13, 62.8, 'Stage 1: Ingress Registration\n& Queuing (1 Cycle)',
+        ha='center', va='center', fontsize=9.0, fontweight='bold', color='#0f3c5c')
+ax.text(13, 49.5, '\u2022 AXI4-Stream 256-bit Ingress:\n  {S, K, T, r, C_mkt, TID}\n\u2022 Single-Cycle Register + TID Tag\n\u2022 No Ingress Divider\n  (Zero Division Latency)\n\u2022 Q8.24 Fixed-Point Precision',
+        ha='center', va='center', fontsize=7.4, linespacing=1.35)
 
-# Stage 2: Analytical Seeder
-s2 = patches.FancyBboxPatch((39, 33), 32, 24, boxstyle="round,pad=0.8",
-                           edgecolor="#ff7f0e", facecolor="#fef5ec", linewidth=1.5)
-ax.add_patch(s2)
-ax.text(55, 52, "Stage 2: Analytical Seeder\n(Brenner-Subrahmanyam)", ha='center', va='center', fontsize=9.5, fontweight='bold', color="#7a3c04")
-ax.text(55, 41.5, "sigma_0 = sqrt(2*pi/T) * (C / S)\nShared sqrt(T) Generator\nCompact 32-bit Restoring Div\nEliminates 2nd sqrt core",
-        ha='center', va='center', fontsize=8.2)
-
-# Stage 3: Zero-BRAM Context Memory
-s_mem = patches.FancyBboxPatch((6, 6), 27, 23, boxstyle="round,pad=0.8",
-                              edgecolor="#9467bd", facecolor="#f7f2fa", linewidth=1.5)
+# Zero-BRAM Context Store
+s_mem = patches.FancyBboxPatch((0, 6), 26, 28, boxstyle='round,pad=0.8,rounding_size=1.5',
+                              edgecolor='#9467bd', facecolor='#f7f2fa', linewidth=1.6)
 ax.add_patch(s_mem)
-ax.text(19.5, 23.5, "Zero-BRAM Context Store", ha='center', va='center', fontsize=9.5, fontweight='bold', color="#4a2468")
-ax.text(19.5, 14.5, "64 x 32-bit Distributed LUTRAM\nSRL32 Shift Register Pipeline\nZero RAMB36/18 Consumed\nMAC/DMA BRAM Preserved",
-        ha='center', va='center', fontsize=8.2)
+ax.text(13, 28.5, 'Zero-BRAM Context Store',
+        ha='center', va='center', fontsize=9.0, fontweight='bold', color='#4a2468')
+ax.text(13, 16.5, '\u2022 64 x 32-bit Distributed LUTRAM\n\u2022 SRL32 Delay Shift Registers\n\u2022 0 Block RAMs (Zero-BRAM)\n\u2022 Preserves 100% RAMB36/18 for\n  10GbE MAC & PCIe DMA Subsystems',
+        ha='center', va='center', fontsize=7.4, linespacing=1.35)
 
-# Stage 4: Newton-Raphson Datapath
-s4 = patches.FancyBboxPatch((39, 6), 32, 23, boxstyle="round,pad=0.8",
-                           edgecolor="#d62728", facecolor="#fdf0ef", linewidth=1.5)
+# =========================================================================
+# Column 2: Stage 2 Seeder & Stage 3 Core Datapath (x = 38 to 78)
+# =========================================================================
+# Stage 2: Analytical Seeder (Brenner-Subrahmanyam, 64 Cycles)
+s2 = patches.FancyBboxPatch((38, 40), 40, 28, boxstyle='round,pad=0.8,rounding_size=1.5',
+                           edgecolor='#ff7f0e', facecolor='#fef5ec', linewidth=1.6)
+ax.add_patch(s2)
+ax.text(58, 62.8, 'Stage 2: Analytical Seeder\n(Brenner-Subrahmanyam, 64 Cyc)',
+        ha='center', va='center', fontsize=9.2, fontweight='bold', color='#7a3c04')
+ax.text(58, 52.8, r'$\sigma_0 = \frac{2.5066}{\sqrt{T}} \cdot \frac{C_{\mathrm{mkt}}}{(S+K)/2}$',
+        ha='center', va='center', fontsize=9.2)
+ax.text(58, 44.8, '\u2022 Shared Digit-Recurrence ' + r'$\sqrt{T}$' + ' (29 Cyc)\n\u2022 Forwards ' + r'$\sqrt{T}$' + ' Directly to Stage 3\n\u2022 Internal Non-Restoring Divider (33 Cyc)\n\u2022 Bounds Initial Error: ' + r'$|\sigma_0 - \sigma^*| \leq 0.08$',
+        ha='center', va='center', fontsize=7.4, linespacing=1.35)
+
+# Stage 3: Core Black-Scholes Datapath (126 Cycles, II = 1)
+s3 = patches.FancyBboxPatch((38, 6), 40, 28, boxstyle='round,pad=0.8,rounding_size=1.5',
+                           edgecolor='#d62728', facecolor='#fdf0ef', linewidth=1.6)
+ax.add_patch(s3)
+ax.text(58, 28.5, 'Stage 3: Core BS Datapath\n(126 Cycles, II = 1)',
+        ha='center', va='center', fontsize=9.2, fontweight='bold', color='#681314')
+ax.text(58, 16.5, '• Scale-Invariant Padé Ratio (S-K)/(S+K)\n• 18-Cyc CORDIC Log Fallback (SRL15-Matched)\n• Horner 5th-Order Poly CDF N(d1), N(d2)\n• Hyperbolic CORDIC for exp(-rT) & exp(-d1²/2)\n• Fully Unrolled 126-Stage Feedforward',
+        ha='center', va='center', fontsize=7.4, linespacing=1.35)
+
+# =========================================================================
+# Column 3: Stage 4 NR Update & Stage 5 Egress (x = 98 to 132)
+# =========================================================================
+# Stage 4: NR Update & Greek Dividers (33 Cycles)
+s4 = patches.FancyBboxPatch((98, 40), 34, 28, boxstyle='round,pad=0.8,rounding_size=1.5',
+                           edgecolor='#2ca02c', facecolor='#edf7ed', linewidth=1.6)
 ax.add_patch(s4)
-ax.text(55, 23.5, "Stage 3: Newton-Raphson\nPipelined Datapath", ha='center', va='center', fontsize=9.5, fontweight='bold', color="#681314")
-ax.text(55, 14.5, "Padé Log: ln(S/K) ~ 2*(S-K)/(S+K)\nHyperbolic CORDIC exp(x)\nHorner 5th-order Poly CDF N(d)\nDelta = (C_model - C_mkt) / Vega",
-        ha='center', va='center', fontsize=8.0)
+ax.text(115, 62.8, 'Stage 4: NR Update & Dividers\n(33 Cycles)',
+        ha='center', va='center', fontsize=9.2, fontweight='bold', color='#134713')
+ax.text(115, 49.5, '• Convergence: ' + r'$|C_{\mathrm{BS}} - C_{\mathrm{mkt}}| \leq 0.0100$' + '\n• Concurrent ' + r'$\mathbf{u\_nr\_divider}$' + ' (Err / Vega)\n• Concurrent ' + r'$\mathbf{u\_gamma\_divider}$' + ' (Gamma)\n• Delta: N(d1), Vega: ' + r'$S\sqrt{T}\phi(d_1)$' + '\n• TID-Scoreboard Priority Loopback',
+        ha='center', va='center', fontsize=7.4, linespacing=1.35)
 
-# Stage 5: Greeks Output & Arbitration Egress
-s5 = patches.FancyBboxPatch((77, 12), 29, 39, boxstyle="round,pad=0.8",
-                           edgecolor="#2ca02c", facecolor="#edf7ed", linewidth=1.5)
+# Stage 5: Multi-Core Arbiter & 128-Bit Egress (2 Cycles)
+s5 = patches.FancyBboxPatch((98, 6), 34, 28, boxstyle='round,pad=0.8,rounding_size=1.5',
+                           edgecolor='#17becf', facecolor='#e8f8f9', linewidth=1.6)
 ax.add_patch(s5)
-ax.text(91.5, 44.5, "Stage 4: Multi-Core Arb\n& 128-bit Egress Bus", ha='center', va='center', fontsize=9.5, fontweight='bold', color="#134713")
-ax.text(91.5, 29.5, "Round-Robin Core Arbiter\n[31:0]   sigma (Implied Vol)\n[63:32]  Delta (First Order)\n[95:64]  Vega (Vol Sens)\n[121:96] Gamma (Second Order)\n[127:122] TID Transaction ID",
-        ha='center', va='center', fontsize=8.0)
+ax.text(115, 28.5, 'Stage 5: Multi-Core Arbiter\n& 128-Bit Egress (2 Cycles)',
+        ha='center', va='center', fontsize=9.2, fontweight='bold', color='#0e565d')
+ax.text(115, 16.5, '\u2022 Round-Robin 4-Core Complete Drain\n\u2022 Packed 128-Bit Single-Flit Bus:\n  [127:122] TID Transaction ID (6b)\n  [121:96]  Gamma Greek (26b)\n  [95:64]   Vega Greek (32b)\n  [63:32]   Delta Greek (32b)\n  [31:0]    sigma Implied Vol (32b)',
+        ha='center', va='center', fontsize=7.3, linespacing=1.35)
 
-# Inter-block Arrows
-arrow_kw = dict(arrowstyle="->", lw=1.8, color="#333333")
-ax.annotate("", xy=(39, 45), xytext=(33, 45), arrowprops=arrow_kw)
-ax.annotate("", xy=(55, 29), xytext=(55, 33), arrowprops=arrow_kw)
-ax.annotate("", xy=(19.5, 33), xytext=(19.5, 29), arrowprops=dict(arrowstyle="<->", lw=1.6, color="#9467bd"))
-ax.annotate("", xy=(77, 36), xytext=(71, 45), arrowprops=arrow_kw)
-ax.annotate("", xy=(77, 26), xytext=(71, 17.5), arrowprops=arrow_kw)
+# =========================================================================
+# Inter-block Arrows & Orthogonal Routing
+# =========================================================================
+arrow_kw = dict(arrowstyle='->', lw=1.8, color='#333333', mutation_scale=14)
 
-# Ingress & Egress External Arrows
-ax.annotate("AXI4-Stream Ingress\n(256-bit S, K, T, r, C, TID)", xy=(6, 45), xytext=(-9, 45),
-            ha='right', va='center', fontsize=8.8, fontweight='bold',
-            arrowprops=dict(arrowstyle="->", lw=2.0, color="#1f77b4"))
+# Stage 1 to Stage 2 (Gap from x=26 to x=38 is 12 units)
+ax.annotate('', xy=(38, 54.0), xytext=(26, 54.0), arrowprops=arrow_kw)
+ax.text(32.0, 56.5, 'Contract', fontsize=7.5, fontweight='bold', color='#444444', ha='center')
 
-ax.annotate("AXI4-Stream Egress\n(128-bit sigma + Greeks)", xy=(118, 31.5), xytext=(106, 31.5),
-            ha='left', va='center', fontsize=8.8, fontweight='bold',
-            arrowprops=dict(arrowstyle="<-", lw=2.0, color="#2ca02c"))
+# Stage 2 to Stage 3
+ax.annotate('', xy=(58, 34), xytext=(58, 40), arrowprops=arrow_kw)
+ax.text(60.5, 37.0, r'$\sigma_0, \sqrt{T}$' + ' (Forward)', fontsize=7.8, fontweight='bold', color='#7a3c04', va='center')
 
-fig3_png = os.path.join(out_dir, "fig3_architecture_block_diagram.png")
-fig3_pdf = os.path.join(out_dir, "fig3_architecture_block_diagram.pdf")
-plt.savefig(fig3_png, bbox_inches='tight')
-plt.savefig(fig3_pdf, bbox_inches='tight')
+# Stage 1 <-> Context Memory
+ax.annotate('', xy=(13, 40), xytext=(13, 34),
+            arrowprops=dict(arrowstyle='<->', lw=1.6, color='#9467bd', mutation_scale=12))
+ax.text(15.5, 37.0, 'Context', fontsize=7.4, fontweight='bold', color='#9467bd', va='center')
+
+# Stage 3 to Stage 4 via Lane 1 (x=85)
+draw_elbow(p_start=(78, 28.0), p_c1=(85.0, 28.0), p_c2=(85.0, 56.0), p_end=(98, 56.0),
+           color='#333333', lw=1.8, ls='-',
+           label=r'$C_{\mathrm{BS}}, \nu$' + '\n(126 Cyc)', label_pos=(85.0, 42.0),
+           label_kw=dict(bbox=dict(boxstyle='round,pad=0.25', facecolor='#ffffff', edgecolor='#aaaaaa', lw=0.6, alpha=0.9)))
+
+# Stage 4 Loopback to Stage 3 via Lane 2 (x=92)
+draw_elbow(p_start=(98, 44.0), p_c1=(92.0, 44.0), p_c2=(92.0, 16.0), p_end=(78, 16.0),
+           color='#d62728', lw=1.8, ls='--',
+           label='Loopback\n' + r'$\sigma_{n+1}$' + ' (2.4%)', label_pos=(92.0, 30.0),
+           label_kw=dict(bbox=dict(boxstyle='round,pad=0.25', facecolor='#ffffff', edgecolor='#d62728', lw=0.8, alpha=0.95)))
+
+# Stage 4 to Stage 5
+ax.annotate('', xy=(115, 34), xytext=(115, 40),
+            arrowprops=dict(arrowstyle='->', lw=1.8, color='#2ca02c', mutation_scale=14))
+ax.text(117.5, 37.0, 'Converged (97.6%)', fontsize=7.4, fontweight='bold', color='#2ca02c', va='center')
+
+# External Ingress Arrow
+ax.annotate('', xy=(0, 54.0), xytext=(-10, 54.0),
+            arrowprops=dict(arrowstyle='->', lw=2.0, color='#1f77b4', mutation_scale=14))
+ax.text(-12.0, 54.0, 'AXI4-Stream Ingress\n(256-bit S, K, T, r, C_mkt, TID)',
+        ha='right', va='center', fontsize=8.8, fontweight='bold', color='#0f3c5c')
+
+# External Egress Arrow
+ax.annotate('', xy=(140, 20.0), xytext=(132, 20.0),
+            arrowprops=dict(arrowstyle='->', lw=2.0, color='#17becf', mutation_scale=14))
+ax.text(142.0, 20.0, r'AXI4-Stream Egress' + '\n' + r'(128-bit $\sigma$ + Full Greeks)',
+        ha='left', va='center', fontsize=8.8, fontweight='bold', color='#0e565d')
+
+# Save to paper/figures
+target_names = [
+    'fig1_architecture_block_diagram.png',
+    'fig1_architecture_block_diagram.pdf',
+    'fig3_architecture_block_diagram.png',
+    'fig3_architecture_block_diagram.pdf',
+]
+
+for name in target_names:
+    path = os.path.join(out_dir, name)
+    plt.savefig(path, bbox_inches='tight')
+
+brain_dir = r'C:\Users\user\.gemini\antigravity\brain\3d06b5ef-1fd4-4b4a-a013-6c9e48e16291'
+plt.savefig(os.path.join(brain_dir, 'fig1_architecture_block_diagram.png'), bbox_inches='tight')
+plt.savefig(os.path.join(brain_dir, 'fig1_architecture_block_diagram.pdf'), bbox_inches='tight')
+
 plt.close()
-print("Clean Fig 3 generated!")
+print('Refined v6 diagram generated with perfect alignments!')
