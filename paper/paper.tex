@@ -13,7 +13,17 @@
 \usepackage{microtype}
 \usepackage{url}
 
-\graphicspath{{figures/}}
+\graphicspath{{figures/}{./}}
+
+% Universal figure loader: automatically resolves both modern and legacy figure names in ./ or figures/
+\newcommand{\includefigfile}[3][]{%
+  \IfFileExists{#2}{\includegraphics[#1]{#2}}{%
+  \IfFileExists{figures/#2}{\includegraphics[#1]{figures/#2}}{%
+  \IfFileExists{#3}{\includegraphics[#1]{#3}}{%
+  \IfFileExists{figures/#3}{\includegraphics[#1]{figures/#3}}{%
+  \includegraphics[#1]{#2}%
+  }}}}%
+}
 
 \begin{document}
 
@@ -120,7 +130,7 @@ To maintain 100~MHz timing without DSP cascades:
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.92\textwidth]{fig1_architecture_block_diagram.pdf}
+\includefigfile[width=0.92\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
 \caption{Microarchitecture of the 4-Core Pipelined Implied Volatility and Greeks Engine, illustrating scale-invariance normalization, Brenner-Subrahmanyam analytical guess generator with shared $\sqrt{T}$ path, pipelined datapath, Zero-BRAM distributed context store, and 128-bit egress bus.}
 \label{fig:arch}
 \end{figure*}
@@ -231,7 +241,7 @@ Vivado post-route vectorless power analysis confirms total power of 4.258~W (4.1
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{fig2_error_distribution.pdf}
+\includefigfile[width=\columnwidth]{fig2_error_distribution.pdf}{fig1_error_distribution.pdf}
 \caption{(a) Probability density error distribution and (b) cumulative accuracy curve across 10,000 synthetic contracts evaluated via DPI-C co-simulation.}
 \label{fig:accuracy}
 \end{figure}
@@ -322,7 +332,7 @@ The proposed 4-core FPGA engine achieves 400.00~MOps/sec peak throughput (390.62
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.92\textwidth]{fig3_comparative_benchmark.pdf}
+\includefigfile[width=0.92\textwidth]{fig3_comparative_benchmark.pdf}{fig2_comparative_benchmark.pdf}
 \caption{Comparative evaluation of (a) Throughput (MOps/sec), (b) Power Dissipation (Watts), and (c) Energy Efficiency (kOps/Watt) across Host CPU, GPU baseline, and our 4-Core Artix-7 FPGA.}
 \label{fig:benchmark}
 \end{figure*}
