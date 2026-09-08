@@ -14,15 +14,26 @@
 \usepackage{url}
 
 % Micro-spacing adjustments for strict 6-page IEEE conference budget
-\setlength{\textfloatsep}{4.5pt plus 1.0pt minus 1.0pt}
-\setlength{\floatsep}{4.5pt plus 1.0pt minus 1.0pt}
-\setlength{\intextsep}{4.5pt plus 1.0pt minus 1.0pt}
-\setlength{\dbltextfloatsep}{5.0pt plus 1.0pt minus 1.0pt}
-\setlength{\dblfloatsep}{5.0pt plus 1.0pt minus 1.0pt}
-\setlength{\abovedisplayskip}{2.5pt plus 1.0pt minus 1.0pt}
-\setlength{\belowdisplayskip}{2.5pt plus 1.0pt minus 1.0pt}
-\setlength{\abovedisplayshortskip}{1.5pt plus 1.0pt minus 1.0pt}
-\setlength{\belowdisplayshortskip}{1.5pt plus 1.0pt minus 1.0pt}
+\setlength{\textfloatsep}{3.5pt plus 1.0pt minus 1.0pt}
+\setlength{\floatsep}{3.5pt plus 1.0pt minus 1.0pt}
+\setlength{\intextsep}{3.5pt plus 1.0pt minus 1.0pt}
+\setlength{\dbltextfloatsep}{4.0pt plus 1.0pt minus 1.0pt}
+\setlength{\dblfloatsep}{4.0pt plus 1.0pt minus 1.0pt}
+\setlength{\abovedisplayskip}{2.0pt plus 1.0pt minus 1.0pt}
+\setlength{\belowdisplayskip}{2.0pt plus 1.0pt minus 1.0pt}
+\setlength{\abovedisplayshortskip}{1.0pt plus 1.0pt minus 1.0pt}
+\setlength{\belowdisplayshortskip}{1.0pt plus 1.0pt minus 1.0pt}
+
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\setcounter{dbltopnumber}{2}
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.10}
+\renewcommand{\floatpagefraction}{0.75}
+\renewcommand{\dbltopfraction}{0.85}
+\renewcommand{\dblfloatpagefraction}{0.75}
 
 \graphicspath{{figures/}{./}}
 
@@ -41,6 +52,7 @@
 \let\endoldthebibliography\endthebibliography
 \renewenvironment{thebibliography}[1]{%
   \begin{oldthebibliography}{#1}%
+    \small
     \setlength{\itemsep}{0pt}%
     \setlength{\parskip}{0pt}%
 }{%
@@ -93,7 +105,7 @@ To overcome these challenges, we present a high-throughput, deterministic, zero-
 % Declared on Page 1 to ensure emission at top of Page 2
 \begin{figure*}[t]
 \centering
-\includefigfile[width=0.86\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
+\includefigfile[width=0.78\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
 \caption{Microarchitecture of the 4-Core Pipelined Implied Volatility and Greeks Engine, illustrating scale-invariance normalization, Brenner-Subrahmanyam analytical guess generator with shared $\sqrt{T}$ path, pipelined datapath, Zero-BRAM distributed context store, and 128-bit egress bus.}
 \label{fig:arch}
 \end{figure*}
@@ -186,9 +198,10 @@ $\Gamma$ is allocated 26 bits by truncating 6 high-order sign bits in Q8.24 (Gam
 \subsection{Pipeline Latency and Sustained Throughput Reconciliation}
 Cold transaction latency from ingress to egress is:
 \begin{equation}
-L_{\text{cold}} = \underbrace{1}_{\text{Stg 1}} + \underbrace{64}_{\text{Stg 2}} + \underbrace{1}_{\text{Queue}} + \underbrace{126}_{\text{Stg 3}} + \underbrace{33}_{\text{Stg 4}} + \underbrace{2}_{\text{Stg 5}} = \mathbf{227\text{ cycles}} \; (2.27\,\mu\text{s})
+L_{\text{cold}} = 1\,(\text{Stg 1}) + 64\,(\text{Stg 2}) + 1\,(\text{Q}) + 126\,(\text{Stg 3}) + 33\,(\text{Stg 4}) + 2\,(\text{Stg 5}) = \mathbf{227\text{ cycles}}
 \end{equation}
-Loopback bypasses Stages 1--2, requiring Stages 3--4: $126 + 33 = \mathbf{159\text{ cycles}}$ ($1.59\,\mu\text{s}$).
+corresponding to $2.27\,\mu\text{s}$ at 100~MHz on Artix-7 ($0.91\,\mu\text{s}$ at 250~MHz on Alveo U50).
+Loopback bypasses Stages 1--2, requiring Stages 3--4: $126 + 33 = \mathbf{159\text{ cycles}}$ ($1.59\,\mu\text{s}$ on Artix-7; $0.64\,\mu\text{s}$ on U50).
 
 Because Stage 3 has $II = 1$, looped-back contracts do not stall the pipeline: during the 159 cycles, the core processes 158 subsequent contracts. When contract $k$ loops back, it preempts ingress for \textbf{exactly one cycle}, displacing one admission slot.
 
@@ -203,38 +216,6 @@ T_{\text{net, blended}} = \frac{400.00\text{ MOps/s}}{1.109} = \mathbf{360.69\te
 \end{equation}
 Even under an extreme stress condition where 100\% of arriving quotes reside in deep wings requiring 2 iterations, sustained throughput remains lower-bounded at $\frac{400.00}{2.0} = \mathbf{200.00\text{ MOps/s}}$, still $14.1\times$ faster than the 16-thread host CPU.
 
-% Placed early to guarantee emission at top of Page 4
-\begin{table*}[t]
-\caption{Head-to-Head Architectural Benchmark Comparison}
-\label{tab:comparison}
-\centering
-\setlength{\tabcolsep}{3.2pt}
-\begin{tabular}{lrrrr}
-\toprule
-\textbf{Metric} & \textbf{Host CPU\textsuperscript{1}} & \textbf{High-End GPU\textsuperscript{2}} & \textbf{Edge FPGA (Artix-7)} & \textbf{Datacenter FPGA (Alveo U50)} \\
-\midrule
-Device Target & Intel i5-12500H & NVIDIA A100 & Artix-7 200T (\texttt{xc7a200t}) & Alveo U50 (\texttt{xcu50}) \\
-Active Parallelism & 16 Threads (AVX2) & 6,912 CUDA Cores & 4 Pipelined Cores (100 MHz) & 4 Cores signoff / 32 Cores scaled (250 MHz) \\
-Evaluation Target & Iterative IV (NR) & Forward Pricing Only\textsuperscript{2} & \textbf{Iterative IV + Greeks ($\Delta, \nu, \Gamma$)} & \textbf{Iterative IV + Greeks ($\Delta, \nu, \Gamma$)} \\
-\midrule
-Throughput & 14.22 MOps/s & $\sim$3,000 MOps/s & \textbf{400.00 Peak / 390.62 Net MOps/s} & \textbf{1,000.00 MOps/s (Signoff) / 8,000.00 MOps/s (32-Core)} \\
-Speedup vs. CPU & 1.0$\times$ & 210.9$\times$ & \textbf{28.1$\times$ Peak / 27.5$\times$ Net} & \textbf{70.3$\times$ (4-Core) / 562.6$\times$ (32-Core)} \\
-Power Dissipation & 45.0 W (TDP) & 400.0 W (TDP) & \textbf{4.258 W (Post-Route Signoff)} & \textbf{9.560 W (4-Core Signoff) / $\sim$65 W (32-Core)} \\
-Energy Efficiency & 316 kOps/W & $\sim$7,500 kOps/W & \textbf{93,940 kOps/W (10.65 nJ/op)} & \textbf{104,602 kOps/W (9.56 nJ/op)} \\
-\textbf{Efficiency vs. CPU} & 1.0$\times$ & 23.7$\times$ & \textbf{297$\times$ (Artix-7)} & \textbf{331$\times$ (Alveo U50)} \\
-\midrule
-Latency & 1.40 $\mu$s ($p50$) / 15.6 $\mu$s ($p99.9$) & 15--50 $\mu$s (launch jitter) & \textbf{2.27 $\mu$s (Cold) / 1.26 $\mu$s (Core)} & \textbf{0.91 $\mu$s (Cold) / 0.50 $\mu$s (Core Datapath)} \\
-Latency Determinism & Non-deterministic (OS jitter) & High Jitter (PCIe batching) & \textbf{Cycle-Exact Deterministic (0 jitter)} & \textbf{Cycle-Exact Deterministic (0 jitter, Sub-$\mu$s)} \\
-Block RAM / UltraRAM & N/A & N/A & \textbf{0 BRAMs (100\% Distributed LUTRAM)} & \textbf{0 BRAMs, 0 URAMs (100\% Distributed LUTRAM)} \\
-\bottomrule
-\end{tabular}
-\vspace{1ex}
-
-\raggedright
-\footnotesize{\textsuperscript{1} Empirically measured using OpenMP/AVX2 on Intel Core i5-12500H across 2,000,000 contracts.\\
-\textsuperscript{2} GPU throughput denotes single-pass forward Black-Scholes pricing from CUDA SDK literature~\cite{nvidia2023a100}; iterative IV inversion throughput is not benchmarked with matching methodology.}
-\end{table*}
-
 % -------------------------------------------------------------------------
 \section{Physical Implementation \& Timing Closure}
 % -------------------------------------------------------------------------
@@ -244,7 +225,7 @@ The complete design was synthesized, placed, and routed using AMD Vivado 2025.2 
 \caption{Dual-Platform Physical Signoff (Artix-7 200T vs. Alveo U50)}
 \label{tab:util}
 \centering
-\setlength{\tabcolsep}{2.2pt}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lrrrr}
 \toprule
 \textbf{Signoff Metric} & \multicolumn{2}{c}{\textbf{Artix-7 200T}} & \multicolumn{2}{c}{\textbf{Alveo U50}} \\
@@ -271,7 +252,8 @@ Peak Array Throughput & \multicolumn{2}{c}{\textbf{400.00 MOps/s}} & \multicolum
 Total On-Chip Power & \multicolumn{2}{c}{\textbf{4.258 W}} & \multicolumn{2}{c}{\textbf{9.560 W}} \\
 Energy Efficiency & \multicolumn{2}{c}{10.65 nJ / op} & \multicolumn{2}{c}{\textbf{9.56 nJ / op}} \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \subsection{Critical Timing Path Analysis}
@@ -282,21 +264,13 @@ On the AMD Alveo U50, 16nm FinFET technology scaling reduces the critical path d
 \subsection{Power and Thermal Budget}
 Vivado post-route vectorless power analysis confirms total power of 4.258~W (4.126~W dynamic, 0.132~W static) at junction temperature 31.2~$^\circ$C on Artix-7 200T, requiring only 17\% of a standard 25~W low-profile SmartNIC power envelope. On the Alveo U50, the 4-core array at 250~MHz consumes 9.560~W total (7.214~W dynamic, 2.346~W device static, $T_j = 30.0\,^\circ\text{C}$), delivering 1.00~Giga-Ops/sec at an energy efficiency of 9.56~nJ/operation---an improvement over Artix-7's 10.65~nJ/operation.
 
-% Placed early to guarantee emission at top of Page 5
-\begin{figure*}[t]
-\centering
-\includefigfile[width=0.86\textwidth]{fig3_comparative_benchmark.pdf}{fig2_comparative_benchmark.pdf}
-\caption{Comparative evaluation of (a) Throughput (MOps/sec), (b) Power Dissipation (Watts), and (c) Energy Efficiency (kOps/Watt) across Host CPU, GPU baseline, and our 4-Core Artix-7 FPGA.}
-\label{fig:benchmark}
-\end{figure*}
-
 % -------------------------------------------------------------------------
 \section{Experimental Evaluation}
 % -------------------------------------------------------------------------
 
 \begin{figure}[t]
 \centering
-\includefigfile[width=\columnwidth]{fig2_error_distribution.pdf}{fig1_error_distribution.pdf}
+\includefigfile[width=0.92\columnwidth]{fig2_error_distribution.pdf}{fig1_error_distribution.pdf}
 \caption{(a) Probability density error distribution and (b) cumulative accuracy curve across 10,000 synthetic contracts evaluated via DPI-C co-simulation.}
 \label{fig:accuracy}
 \end{figure}
@@ -331,49 +305,70 @@ matching the observed DPI-C simulation MAE of $0.0157\%$ within 2\% relative dev
 \end{itemize}
 
 \subsection{Comparative Benchmark: CPU, GPU, and FPGA}
-Table~\ref{tab:comparison} and Fig.~\ref{fig:benchmark} summarize comparative performance. An empirical benchmark on a host CPU (Intel Core i5-12500H, 12 cores/16 threads, AVX2) over 2,000,000 contracts reaches 14.22~MOps/sec at 45~W TDP (316~kOps/W).
-
-The 4-core FPGA engine achieves 400.00~MOps/sec peak (390.62~MOps/sec net liquid) at 4.258~W:
-\begin{itemize}
-    \item \textbf{Throughput Speedup:} 28.1$\times$ peak (27.5$\times$ net) over the 16-thread AVX2 CPU.
-    \item \textbf{Energy Efficiency:} 93,940~kOps/Watt peak (91,738~kOps/Watt net), representing a \textbf{297$\times$ peak (290$\times$ net) efficiency advantage} over the CPU and over 12$\times$ higher than estimated GPU forward pricing.
-    \item \textbf{Deterministic Latency in HFT:} While an isolated CPU thread evaluating cached contracts achieves a median latency of $1.40\,\mu\text{s}$, single-tick profiling reveals that OS scheduling, thread preemption, and cache thrashing induce a 99.9th-percentile ($p99.9$) tail latency of $15.6\,\mu\text{s}$ and jitter spikes exceeding $300\,\mu\text{s}$, creating risk of missed quote cancellations and toxic fills. In contrast, our FPGA operates directly on streaming Ethernet AXI-Stream packets with \textbf{zero OS overhead and zero queuing jitter}: every transaction completes at an exact, deterministic latency of $2.27\,\mu\text{s}$ (227 cycles at 100~MHz).
-\end{itemize}
-
-\noindent\textbf{Architectural Positioning vs. GPUs:} While GPUs excel at batched forward pricing across millions of synthetic paths in offline portfolio risk analysis, they face fundamental bottlenecks in inline tick-to-trade market making. Real market ticks arrive sequentially over 10GbE lines, where PCIe batching introduces 15--50~$\mu$s of host-device roundtrip latency and iterative root-finding induces warp divergence across SIMT threads. Furthermore, 400~W GPU TDP strains strict 5--10~kW exchange co-location rack budgets. The proposed FPGA engine delivers a 12.5$\times$ energy efficiency advantage over estimated GPU forward pricing while guaranteeing cycle-deterministic 2.27~$\mu$s single-contract latency with zero PCIe batching jitter, satisfying the strict real-time requirements of inline trading.
-
-% Placed early to guarantee emission at top of Page 6
 \begin{table*}[t]
-\caption{Comparison with Prior FPGA Financial Accelerators}
-\label{tab:prior_art}
+\caption{Head-to-Head Architectural Benchmark Comparison}
+\label{tab:comparison}
 \centering
-\setlength{\tabcolsep}{4.0pt}
-\begin{tabular}{lcccccc}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrr}
 \toprule
-\textbf{Design} & \textbf{Target Device} & \textbf{Model / Task} & \textbf{Numerical Method} & \textbf{Throughput} & \textbf{Latency} & \textbf{BRAMs} \\
+\textbf{Architectural Metric} & \textbf{Host CPU\textsuperscript{1}} & \textbf{High-End GPU\textsuperscript{2}} & \textbf{Proposed Artix-7 200T} & \textbf{Proposed Alveo U50} \\
 \midrule
-Wang et al.~\cite{wang2022fpga} (2022) & Xilinx Kintex UltraScale & Implied Volatility & Multi-section Root & 120 MOps/s & $\sim$1.80 $\mu$s (End-to-End) & Consumed \\
-Becker et al.~\cite{becker2011dynamic} (2011) & Virtex-6 LX240T & Option Pricing & Finite Difference (DCR) & 85 MOps/s & $\sim$3.20 $\mu$s (End-to-End) & Consumed \\
-Jin et al.~\cite{jin2012optimising} (2012) & Virtex-6 LX240T & Option Pricing & Runtime Reconf. FD & 110 MOps/s & $\sim$2.80 $\mu$s (End-to-End) & Consumed \\
-Tse et al.~\cite{tse2010customising} (2010) & Virtex-4 FX100 & Black-Scholes & Forward Pricing (Single pass) & 150 MOps/s & $\sim$1.50 $\mu$s (End-to-End) & Consumed \\
-\textbf{This Work} & \textbf{Artix-7 200T} & \textbf{IV + Greeks ($\Delta, \nu, \Gamma$)} & \textbf{Analytical Seed + NR} & \textbf{400 MOps/s\textsuperscript{\dag}} & \shortstack{\textbf{2.27 $\mu$s (Cold)\textsuperscript{*}} \\ \textbf{1.26 $\mu$s (Core)}} & \textbf{0 (Zero-BRAM)} \\
+Device & Intel i5-12500H & NVIDIA A100 & Artix-7 200T (\texttt{xc7a200t}) & Alveo U50 (\texttt{xcu50}) \\
+Process Node & Intel 7 (10nm) & TSMC 7nm & 28nm Planar (-3) & 16nm FinFET (-2) \\
+Active Parallelism & 16 Threads (AVX2) & 6,912 CUDA Cores & 4 Pipelined Cores & 4 Cores (scales to 32) \\
+Evaluation Target & Iterative IV (Newton-Raphson) & Forward Pricing Only\textsuperscript{2} & \textbf{Iterative IV + Greeks ($\Delta, \nu, \Gamma$)} & \textbf{Iterative IV + Greeks ($\Delta, \nu, \Gamma$)} \\
+\midrule
+Clock Frequency & 4.50 GHz (Turbo) & 1.41 GHz & 100.00 MHz ($T_{\text{clk}}=10.0$ ns) & 250.00 MHz ($T_{\text{clk}}=4.0$ ns) \\
+Peak Array Throughput & 14.22 MOps/s & $\sim$3,000 MOps/s & \textbf{400.00 MOps/s} & \textbf{1,000.00 MOps/s (8.00 GOps/s @ 32c)} \\
+Net Sustained Throughput & 14.22 MOps/s & --- & \textbf{390.62 (Liquid) / 360.69 (Blended)} & \textbf{976.56 (Liquid) / 901.71 (Blended)} \\
+Throughput Speedup vs. CPU & 1.0$\times$ & 210.9$\times$ & \textbf{28.1$\times$ (Peak) / 27.5$\times$ (Net)} & \textbf{70.3$\times$ (4c) / 562.6$\times$ (32c)} \\
+\midrule
+Total Device Power & 45.0 W (TDP) & 400.0 W (TDP) & \textbf{4.258 W (Vivado Post-Route)} & \textbf{9.560 W (Vivado Post-Route)} \\
+Energy Efficiency (kOps/Watt) & 316 kOps/W & $\sim$7,500 kOps/W & \textbf{93,940 kOps/W (91,738 Net)} & \textbf{104,602 kOps/W (123,077 @ 32c)} \\
+Efficiency Gain vs. CPU & 1.0$\times$ & 23.7$\times$ & \textbf{297$\times$ (Peak) / 290$\times$ (Net)} & \textbf{331$\times$ (4c) / 389$\times$ (32c)} \\
+Energy per Operation & 3,164.5 nJ / op & $\sim$133.3 nJ / op & \textbf{10.65 nJ / op} & \textbf{9.56 nJ / op} \\
+\midrule
+Cold Latency (Ingress to Egress) & 1.40 $\mu$s ($p50$) / 15.6 $\mu$s ($p99.9$) & 15--50 $\mu$s (launch jitter) & \textbf{2.27 $\mu$s (227 cycles)} & \textbf{0.91 $\mu$s (227 cycles)} \\
+Core Datapath Latency & --- & --- & \textbf{1.26 $\mu$s (126 cycles)} & \textbf{0.50 $\mu$s (126 cycles)} \\
+Latency Determinism & Non-deterministic (OS jitter) & High Jitter (PCIe queuing) & \textbf{Cycle-Exact Deterministic (0 jitter)} & \textbf{Cycle-Exact Deterministic (0 jitter)} \\
+On-Chip BRAM / URAM & N/A & N/A & \textbf{0 BRAM36/18} & \textbf{0 BRAM36/18, 0 URAM288} \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \vspace{1ex}
 
 \raggedright
-\footnotesize{\textsuperscript{\dag} Peak pipeline throughput at 100~MHz (390.62~MOps/s net sustained accounting for 2.4\% loopbacks).\\
-\textsuperscript{*} Cold transaction latency from AXI4-Stream ingress registration to egress packing is 2.27~$\mu$s (227 cycles at 100~MHz); isolated core datapath latency is 1.26~$\mu$s (126 cycles).}
+\footnotesize{\textsuperscript{1} Measured empirically via OpenMP/AVX2 on Intel Core i5-12500H across 2,000,000 contracts.\\
+\textsuperscript{2} GPU baseline denotes single-pass forward Black-Scholes pricing from CUDA SDK literature~\cite{nvidia2023a100}; iterative IV inversion throughput is not benchmarked with matching methodology.}
 \end{table*}
+
+\begin{figure*}[t]
+\centering
+\includefigfile[width=0.74\textwidth]{fig3_comparative_benchmark.pdf}{fig2_comparative_benchmark.pdf}
+\caption{Comparative evaluation of (a) Throughput (MOps/sec), (b) Power Dissipation (Watts), and (c) Energy Efficiency (kOps/Watt) across Host CPU, GPU baseline, and our 4-Core FPGA engine.}
+\label{fig:benchmark}
+\end{figure*}
+
+Table~\ref{tab:comparison} and Fig.~\ref{fig:benchmark} summarize comparative performance. An empirical benchmark on a host CPU (Intel Core i5-12500H, 12 cores/16 threads, AVX2) over 2,000,000 contracts reaches 14.22~MOps/sec at 45~W TDP (316~kOps/W).
+
+The 4-core FPGA engine achieves 400.00~MOps/sec peak (390.62~MOps/sec net liquid) at 4.258~W on Artix-7, and 1,000.00~MOps/sec (1.00~GOps/s) at 9.560~W on Alveo U50:
+\begin{itemize}
+    \item \textbf{Throughput Speedup:} 28.1$\times$ peak (27.5$\times$ net) on Artix-7 and 70.3$\times$ on Alveo U50 over the 16-thread AVX2 CPU (scaling to 562.6$\times$ at 32 cores).
+    \item \textbf{Energy Efficiency:} 93,940~kOps/Watt peak (91,738~kOps/Watt net) on Artix-7 and 104,602~kOps/Watt on Alveo U50, representing a \textbf{297$\times$ to 331$\times$ efficiency advantage} over the CPU and over 12$\times$ higher than estimated GPU forward pricing.
+    \item \textbf{Deterministic Latency in HFT:} While an isolated CPU thread evaluating cached contracts achieves a median latency of $1.40\,\mu\text{s}$, single-tick profiling reveals that OS scheduling, thread preemption, and cache thrashing induce a 99.9th-percentile ($p99.9$) tail latency of $15.6\,\mu\text{s}$ and jitter spikes exceeding $300\,\mu\text{s}$, creating risk of missed quote cancellations and toxic fills. In contrast, our FPGA operates directly on streaming Ethernet AXI-Stream packets with \textbf{zero OS overhead and zero queuing jitter}: every transaction completes at an exact, deterministic latency of $2.27\,\mu\text{s}$ (227 cycles at 100~MHz on Artix-7) and $0.91\,\mu\text{s}$ (908~ns at 250~MHz on Alveo U50), breaking into sub-microsecond tick-to-trade execution.
+\end{itemize}
+
+\noindent\textbf{Architectural Positioning vs. GPUs:} While GPUs excel at batched forward pricing across millions of synthetic paths in offline portfolio risk analysis, they face fundamental bottlenecks in inline tick-to-trade market making. Real market ticks arrive sequentially over 10GbE lines, where PCIe batching introduces 15--50~$\mu$s of host-device roundtrip latency and iterative root-finding induces warp divergence across SIMT threads. Furthermore, 400~W GPU TDP strains strict 5--10~kW exchange co-location rack budgets. The proposed FPGA engine delivers a 12.5$\times$ energy efficiency advantage over estimated GPU forward pricing while guaranteeing cycle-deterministic latency with zero PCIe batching jitter, satisfying the strict real-time requirements of inline trading.
 
 \subsection{Sub-Module Hardware Resource Breakdown}
 Table~\ref{tab:submodule} summarizes post-implementation resource distribution per core from the post-route hierarchical signoff report. The seven pipelined restoring dividers—computing (1)~initial guess ratio, (2)~Pad\'{e} ratio $(S{-}K)/(S{+}K)$, (3)~$d_1$ quotient, (4)~Horner CDF $t$-parameter for $d_1$, (5)~Horner CDF $t$-parameter for $d_2$, (6)~NR update step $\Delta\sigma$, and (7)~Gamma quotient—are implemented entirely in distributed slice logic, consuming zero DSP48E1 slices and reserving all 608 engine DSPs for Horner polynomial MAC chains. Per-core utilization averages 26,574 LUTs and 152 DSPs, summing across four cores to exactly 106,298 Slice LUTs (79.45\%) and 608 DSPs (82.16\%), matching Table~\ref{tab:util} with zero discrepancy.
 
-\begin{table}[h]
+\begin{table}[t]
 \caption{Sub-Module Resource Breakdown (Per Core Signoff)}
 \label{tab:submodule}
 \centering
-\setlength{\tabcolsep}{3.0pt}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lrrl}
 \toprule
 \textbf{Sub-Module} & \textbf{LUTs} & \textbf{DSPs} & \textbf{Functional Implementation} \\
@@ -391,7 +386,8 @@ AXI4-Stream Interface \& FIFOs   & 2,748 &  0 & 256-bit ingress \& 128-bit packe
 \midrule
 \textbf{Average per Core}        & \textbf{26,574} & \textbf{152} & $\times 4 \Rightarrow$ \textbf{106{,}298 LUTs / 608 DSPs / 0 BRAM} \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \subsection{Two-Tier HFT Architecture and Datacenter Scalability}
@@ -403,8 +399,33 @@ To empirically demonstrate datacenter scalability beyond analytical projections,
 
 Crucially, because the microarchitecture consumes strictly \textbf{0 Block RAMs and 0 UltraRAMs}, 100\% of on-chip UltraRAM and BRAM blocks remain fully available for 100GbE packet FIFOs, PCIe DMA descriptor rings, and full order-book depth tracking.
 
+\begin{table*}[t]
+\caption{Comparison with Prior FPGA Financial Accelerators}
+\label{tab:prior_art}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Design} & \textbf{Target Device} & \textbf{Model / Task} & \textbf{Numerical Method} & \textbf{Throughput} & \textbf{Latency} & \textbf{BRAMs} \\
+\midrule
+Wang et al.~\cite{wang2022fpga} (2022) & Kintex UltraScale & Implied Volatility & Multi-section Root & 120 MOps/s & $\sim$1.80 $\mu$s (End-to-End) & Consumed \\
+Becker et al.~\cite{becker2011dynamic} (2011) & Virtex-6 LX240T & Option Pricing & Finite Difference (DCR) & 85 MOps/s & $\sim$3.20 $\mu$s (End-to-End) & Consumed \\
+Jin et al.~\cite{jin2012optimising} (2012) & Virtex-6 LX240T & Option Pricing & Runtime Reconf. FD & 110 MOps/s & $\sim$2.80 $\mu$s (End-to-End) & Consumed \\
+Tse et al.~\cite{tse2010customising} (2010) & Virtex-4 FX100 & Black-Scholes & Forward Pricing (Single pass) & 150 MOps/s & $\sim$1.50 $\mu$s (End-to-End) & Consumed \\
+\textbf{This Work (Artix-7 200T)} & \textbf{Artix-7 200T} & \textbf{IV + Greeks ($\Delta, \nu, \Gamma$)} & \textbf{Analytical Seed + NR} & \textbf{400 MOps/s\textsuperscript{\dag}} & \shortstack{\textbf{2.27 $\mu$s (Cold)\textsuperscript{*}} \\ \textbf{1.26 $\mu$s (Core)}} & \textbf{0 (Zero-BRAM)} \\
+\textbf{This Work (Alveo U50)} & \textbf{Alveo U50} & \textbf{IV + Greeks ($\Delta, \nu, \Gamma$)} & \textbf{Analytical Seed + NR} & \textbf{1,000 MOps/s (8.00 GOps/s @ 32c)} & \shortstack{\textbf{0.91 $\mu$s (Cold)} \\ \textbf{0.50 $\mu$s (Core)}} & \textbf{0 (Zero-BRAM / 0 URAM)} \\
+\bottomrule
+\end{tabular}%
+}
+\vspace{1ex}
+
+\raggedright
+\footnotesize{\textsuperscript{1} Peak pipeline throughput at 100~MHz on Artix-7 (390.62~MOps/s net sustained liquid); 1,000.00~MOps/s peak at 250~MHz on Alveo U50 4-core array (8.00~GOps/s projected on 32-core array).\\
+\textsuperscript{*} Cold transaction latency from AXI4-Stream ingress registration to egress packing is 2.27~$\mu$s (227 cycles at 100~MHz) on Artix-7 and 0.91~$\mu$s (227 cycles at 250~MHz) on Alveo U50; core datapath latency is 1.26~$\mu$s (126 cycles) on Artix-7 and 0.50~$\mu$s on Alveo U50.}
+\end{table*}
+
 \subsection{Comparison with Prior FPGA Accelerators}
-Table~\ref{tab:prior_art} compares this work against prior FPGA financial accelerators. As highlighted in recent survey literature by O'Mahony et al.~\cite{omahony2024role}, prior hardware implementations~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} focus either on forward-only pricing without root-finding or multi-section searching with significant embedded Block RAM consumption, which severely limits composability alongside 10GbE MAC and DMA infrastructure on production NICs. In contrast, our engine is the first to achieve 400~MOps/sec peak throughput (390.62~MOps/sec net sustained liquid) with concurrent Delta-Vega-Gamma extraction while strictly consuming Zero BRAM blocks.
+Table~\ref{tab:prior_art} compares this work against prior FPGA financial accelerators. As highlighted in recent survey literature by O'Mahony et al.~\cite{omahony2024role}, prior hardware implementations~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} focus either on forward-only pricing without root-finding or multi-section searching with significant embedded Block RAM consumption, which severely limits composability alongside 10GbE MAC and DMA infrastructure on production NICs. In contrast, our engine is the first to achieve 400~MOps/sec peak throughput (390.62~MOps/sec net sustained liquid) with concurrent Delta-Vega-Gamma extraction while strictly consuming Zero BRAM blocks. On the Alveo U50, throughput reaches 1,000.00~MOps/sec with 908~ns end-to-end latency, providing an $8.3\times$ throughput speedup over the 2022 Kintex UltraScale accelerator of Wang et al.~\cite{wang2022fpga} while completely eliminating block memory usage.
 
 % -------------------------------------------------------------------------
 \section{Conclusion}
