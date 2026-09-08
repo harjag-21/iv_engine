@@ -116,7 +116,7 @@ Note that $d_2$ is computed strictly as a subtraction $d_1 - \sigma\sqrt{T}$, di
 \text{Vega } (\nu) &= \frac{\partial C}{\partial \sigma} = S \sqrt{T} N'(d_1) \\
 \text{Gamma } (\Gamma) &= \frac{\partial^2 C}{\partial S^2} = \frac{N'(d_1)}{S \sigma \sqrt{T}}
 \end{align}
-where $N'(x) = \frac{1}{\sqrt{2\pi}} e^{-x^2/2}$ is the standard normal PDF. The interest-rate sensitivity Rho ($\rho = \partial C/\partial r = K T e^{-rT} N(d_2)$) exhibits near-zero intraday variance in high-frequency trading because benchmark rates are fixed during exchange sessions; nonetheless, because $K, T, e^{-rT},$ and $N(d_2)$ are already available in Stage~3, $\rho$ evaluates via two multipliers without requiring any additional division resources.
+where $N'(x) = \frac{1}{\sqrt{2\pi}} e^{-x^2/2}$ is the standard normal PDF. The interest-rate sensitivity Rho ($\rho = \partial C/\partial r = K T e^{-rT} N(d_2)$) exhibits near-zero intraday variance in high-frequency trading because benchmark rates are fixed during exchange sessions; nonetheless, because $K, T, e^{-rT},$ and $N(d_2)$ are already available in Stage~3, $\rho$ evaluates via two multipliers without requiring any additional division resources. By Put-Call parity ($C - P = S - K e^{-rT}$), Put option IV and Vega/Gamma are identical to Call values ($\Delta_{\text{put}} = \Delta_{\text{call}} - 1$), allowing Puts to map directly via single-cycle pre-ingress addition. Continuous dividend yields $q$ are accommodated identically by substituting forward price $F = S e^{-qT}$.
 
 \subsection{Scale-Invariance Normalization}
 The engine datapath operates in native Q8.24 fixed-point dollars, directly supporting individual equity contracts with spot and strike up to $\$128$ ($S, K \le \$128.00$). All core transcendental driving quantities are scale-invariant: the Pad\'{e} logarithm ratio:
@@ -142,7 +142,7 @@ In contrast, the Brenner-Subrahmanyam approximation~\cite{brenner1988simple} pro
 \begin{equation}
 \sigma_0 = \frac{\sqrt{2\pi}}{\sqrt{T}} \cdot \frac{C_{\text{mkt}}}{(S + K)/2} \approx \frac{2.5066}{\sqrt{T}} \cdot \frac{C_{\text{mkt}}}{(S + K)/2}
 \end{equation}
-Evaluated in dedicated hardware in 64 clock cycles, this closed-form seed initializes the solver within $\pm 0.5\%$ volatility error across the active liquid trading range, guaranteeing single-pass convergence for 97.6\% of contracts.
+Evaluated in dedicated hardware in 64 clock cycles, this closed-form seed initializes the solver within $\pm 0.5\%$ volatility error across active liquid expiries ($T \ge 0.02$ years), guaranteeing single-pass convergence for 97.6\% of contracts.
 
 \subsection{High-Speed Polynomial and Elementary Function Evaluation}
 \begin{itemize}
@@ -181,7 +181,7 @@ Upon convergence, results are packed into a 128-bit streaming word:
 \text{Egress}[127:0] = \{ \text{TID}[5:0],\, \Gamma[25:0], \\
 \nu[31:0],\, \Delta[31:0],\, \sigma[31:0] \}
 \end{multline}
-$\Gamma$ is allocated 26 bits by truncating 6 high-order sign bits in Q8.24 (Gamma rarely exceeds 0.5 in equities), preserving 24-bit fractional resolution while achieving single-flit packing. A 4-way arbiter drains output FIFOs with zero handshake stalls in 2 cycles.
+$\Gamma$ is allocated 26 bits by truncating 6 high-order sign bits in Q8.24 (Gamma rarely exceeds 0.5 in equities), preserving 24-bit fractional resolution while achieving single-flit packing. A 4-way arbiter drains output FIFOs with zero handshake stalls in 2 cycles. Because loopbacks complete asynchronously, retiring results are matched via the embedded 6-bit TID tag at the downstream network interface, completely avoiding the latency and resource penalty of a hardware reorder buffer.
 
 \subsection{Pipeline Latency and Sustained Throughput Reconciliation}
 Cold transaction latency from ingress to egress is:
@@ -201,6 +201,7 @@ T_{\text{net, liquid}} = \frac{400.00\text{ MOps/s}}{1 + 0.024} = \mathbf{390.62
 \begin{equation}
 T_{\text{net, blended}} = \frac{400.00\text{ MOps/s}}{1.109} = \mathbf{360.69\text{ MOps/s}}
 \end{equation}
+Even under an extreme stress condition where 100\% of arriving quotes reside in deep wings requiring 2 iterations, sustained throughput remains lower-bounded at $\frac{400.00}{2.0} = \mathbf{200.00\text{ MOps/s}}$, still $14.1\times$ faster than the 16-thread host CPU.
 
 % Placed early to guarantee emission at top of Page 4
 \begin{table*}[t]
