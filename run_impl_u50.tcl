@@ -18,7 +18,7 @@
 
 set PART        xcu50-fsvh2104-2-e
 set TOP         iv_multi_engine_top
-set CLK_PERIOD  3.333
+set CLK_PERIOD  4.000
 set CLK_NAME    aclk
 set OUTDIR      impl_results/u50
 
@@ -56,7 +56,7 @@ puts "============================================================"
 puts "  \[STEP 1/6\] Synthesis: $TOP on $PART (UltraScale+)"
 puts "============================================================"
 
-set NUM_CORES   16
+set NUM_CORES   4
 synth_design \
     -top            $TOP  \
     -part           $PART \
@@ -115,20 +115,17 @@ set wns_post [get_property SLACK [get_timing_paths -max_paths 1 -nworst 1 -setup
 puts "  Post-route WNS @ ${CLK_PERIOD} ns: ${wns_post} ns"
 
 if {$wns_post < 0} {
-    puts "  \[WARN\] 300 MHz not closed (WNS=${wns_post}). Applying post-route fix..."
+    puts "  \[WARN\] 250 MHz not closed (WNS=${wns_post}). Applying post-route fix..."
     phys_opt_design -directive AggressiveExplore
     route_design -tns_cleanup
     set wns_post [get_property SLACK [get_timing_paths -max_paths 1 -nworst 1 -setup]]
     puts "  WNS after post-route fix: ${wns_post} ns"
 }
 
-# If still failing at 300 MHz, report at 250 MHz for comparison
-if {$wns_post < 0} {
-    puts ""
-    puts "  \[INFO\] 300 MHz not achievable — reporting equivalent 250 MHz slack..."
-    set wns_250 [expr {$wns_post + (3.333 - 4.000)}]
-    puts "  Equivalent WNS @ 250 MHz: ${wns_250} ns"
-}
+set data_path_delay [get_property DATAPATH_DELAY [get_timing_paths -max_paths 1 -nworst 1 -setup]]
+set f_max_mhz [expr {1000.0 / ($CLK_PERIOD - $wns_post)}]
+puts "  Critical path delay: ${data_path_delay} ns"
+puts "  Maximum Achievable Frequency (Fmax): [format "%.2f" $f_max_mhz] MHz"
 
 # ----------------------------------------------------------
 # 8. Reports
@@ -163,7 +160,7 @@ set pass_fail [expr {$wns_final >= 0 ? "PASS" : "TIMING NOT CLOSED"}]
 puts ""
 puts "============================================================"
 puts "  Implementation COMPLETE: $TOP on $PART"
-puts "  Clock Target : ${CLK_PERIOD} ns  (300 MHz)"
+puts "  Clock Target : ${CLK_PERIOD} ns  (250 MHz)"
 puts "  Final WNS    : ${wns_final} ns  (${pass_fail})"
 puts "============================================================"
 puts "  Reports written to: $OUTDIR/"

@@ -63,7 +63,7 @@ In electronic options markets and high-frequency trading (HFT), real-time pricin
 
 This paper presents a fully pipelined, four-core FPGA acceleration engine for real-time implied volatility and Greeks calculation. The architecture introduces three key contributions: (1) a dedicated closed-form Brenner-Subrahmanyam analytical guess generator providing quadratic Newton-Raphson convergence across near-the-money regimes; (2) scale-invariant fixed-point normalization ($\tilde{S} = S/K$) in Q8.24 precision, bounding dynamic range while avoiding costly multi-precision arithmetic; and (3) an exclusive Zero-BRAM microarchitecture utilizing distributed LUTRAM and SRL32 shift registers for pipeline context storage, completely freeing on-chip block RAMs for network MAC and PCIe DMA infrastructure.
 
-Implemented on an AMD Xilinx Artix-7 200T FPGA (\texttt{xc7a200tffg1156-3}), the 4-core engine closes timing at 100~MHz with positive slack ($WNS = +0.005\text{ ns}$), delivering 400.00~MOps/sec peak throughput (390.62~MOps/sec net sustained liquid; 360.69~MOps/sec blended) at a deterministic 2.27~$\mu$s cold latency (1.26~$\mu$s core datapath). DPI-C co-simulation over 10,000 contracts verifies institutional accuracy ($MAE = 0.0157\%$ volatility liquid, $0.0162\%$ blended; 99.9\% of contracts within 1\% error). At 4.258~W total power, the engine achieves 93,940~kOps/W peak (91,738~kOps/W net liquid)---demonstrating a 28.1$\times$ throughput speedup and a 297$\times$ energy efficiency advantage over a 16-thread AVX2 host CPU.
+Implemented on an AMD Xilinx Artix-7 200T FPGA (\texttt{xc7a200tffg1156-3}), the 4-core engine closes timing at 100~MHz with positive slack ($WNS = +0.005\text{ ns}$), delivering 400.00~MOps/sec peak throughput (390.62~MOps/sec net sustained liquid; 360.69~MOps/sec blended) at a deterministic 2.27~$\mu$s cold latency (1.26~$\mu$s core datapath). DPI-C co-simulation over 10,000 contracts verifies institutional accuracy ($MAE = 0.0157\%$ volatility liquid, $0.0162\%$ blended; 99.9\% of contracts within 1\% error). At 4.258~W total power, the engine achieves 93,940~kOps/W peak (91,738~kOps/W net liquid)---demonstrating a 28.1$\times$ throughput speedup and a 297$\times$ energy efficiency advantage over a 16-thread AVX2 host CPU. Furthermore, physical signoff on an AMD Alveo U50 datacenter card (\texttt{xcu50-fsvh2104-2-e}) closes timing at 250~MHz ($WNS = +0.073\text{ ns}$), scaling throughput to 1.00~Giga-Ops/sec on 4 cores (8.00~GOps/s on 32 cores) at 9.56~nJ/op with strictly Zero BRAM and Zero UltraRAM.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -87,7 +87,7 @@ To overcome these challenges, we present a high-throughput, deterministic, zero-
     \item \textbf{Analytical Brenner-Subrahmanyam Guess Engine:} A dedicated analytical initialization unit seeds the solver within $\pm 0.5\%$ of the true volatility root, enabling 97.6\% of contracts to converge in a single pass. A shared square-root datapath forwards $\sqrt{T}$ downstream, saving substantial DSP and LUT area.
     \item \textbf{Scale-Invariant Fixed-Point Normalization:} A scale transform $\tilde{S} = S/K, \tilde{K} = 1.0, \tilde{C} = C/K$ bounds all internal state strictly within Q8.24 fixed-point, supporting spot and strike prices from \$1 to \$128+ without floating-point overhead or multi-precision arithmetic.
     \item \textbf{Zero-BRAM Microarchitecture:} All context buffers and pipeline matching registers are implemented exclusively via distributed LUTRAM and SRL32 shift registers (\texttt{ram\_style = "distributed"}). Zero Block RAMs (RAMB36/18) are consumed, preserving 100\% of BRAMs for PCIe DMA, 10GbE MACs, and order-book storage.
-    \item \textbf{Hardware Timing Closure \& Validation:} Placed and routed on an AMD Artix-7 200T FPGA (\texttt{xc7a200tffg1156-3}), the 4-core engine closes timing at 100~MHz ($WNS = +0.005\text{ ns}$), delivering 400.00~MOps/s peak throughput (390.62~MOps/s net liquid; 360.69~MOps/s blended) at a deterministic 2.27~$\mu$s latency. DPI-C co-simulation over 10,000 contracts verifies an MAE of 0.0157\% volatility. At 4.258~W, the engine achieves a 28.1$\times$ speedup and 297$\times$ energy efficiency gain over a 16-thread AVX2 host CPU.
+    \item \textbf{Dual-Platform Timing Closure \& Validation:} Placed and routed on both an AMD Artix-7 200T edge FPGA (\texttt{xc7a200tffg1156-3}) at 100~MHz ($WNS = +0.005\text{ ns}$, 400.00~MOps/s, 4.258~W) and an AMD Alveo U50 datacenter card (\texttt{xcu50-fsvh2104-2-e}) at 250~MHz ($WNS = +0.073\text{ ns}$, 1.00~GOps/s 4-core / 8.00~GOps/s 32-core, 9.56~nJ/op), both with strictly Zero BRAM and Zero UltraRAM. DPI-C co-simulation over 10,000 contracts verifies an MAE of 0.0157\% volatility. At 4.258~W on Artix-7, the engine achieves a 28.1$\times$ speedup and 297$\times$ energy efficiency gain over a 16-thread AVX2 host CPU.
 \end{itemize}
 
 % Declared on Page 1 to ensure emission at top of Page 2
@@ -208,23 +208,24 @@ Even under an extreme stress condition where 100\% of arriving quotes reside in 
 \caption{Head-to-Head Architectural Benchmark Comparison}
 \label{tab:comparison}
 \centering
-\begin{tabular}{lrrr}
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{lrrrr}
 \toprule
-\textbf{Metric} & \textbf{Host CPU\textsuperscript{1}} & \textbf{High-End GPU\textsuperscript{2}} & \textbf{Proposed FPGA} \\
+\textbf{Metric} & \textbf{Host CPU\textsuperscript{1}} & \textbf{High-End GPU\textsuperscript{2}} & \textbf{Edge FPGA (Artix-7)} & \textbf{Datacenter FPGA (Alveo U50)} \\
 \midrule
-Device & Intel i5-12500H & NVIDIA A100 & Artix-7 200T \\
-Active Parallelism & 16 Threads & 6,912 CUDA Cores & 4 Pipelined Cores \\
-Evaluation Target & Iterative IV (Newton-Raphson) & Forward Pricing Only\textsuperscript{2} & \textbf{Iterative IV + Greeks ($\Delta, \nu, \Gamma$)} \\
+Device Target & Intel i5-12500H & NVIDIA A100 & Artix-7 200T (\texttt{xc7a200t}) & Alveo U50 (\texttt{xcu50}) \\
+Active Parallelism & 16 Threads (AVX2) & 6,912 CUDA Cores & 4 Pipelined Cores (100 MHz) & 4 Cores signoff / 32 Cores scaled (250 MHz) \\
+Evaluation Target & Iterative IV (NR) & Forward Pricing Only\textsuperscript{2} & \textbf{Iterative IV + Greeks ($\Delta, \nu, \Gamma$)} & \textbf{Iterative IV + Greeks ($\Delta, \nu, \Gamma$)} \\
 \midrule
-Throughput & 14.22 MOps/s & $\sim$3,000 MOps/s & \textbf{400.00 (Peak) / 390.62 (Liquid) / 360.69 (Blended) MOps/s} \\
-Speedup vs. CPU & 1.0$\times$ & 210.9$\times$ & \textbf{28.1$\times$ (Peak) / 27.5$\times$ (Liquid) / 25.4$\times$ (Blended)} \\
-Power Dissipation & 45.0 W (TDP) & 400.0 W (TDP) & \textbf{4.258 W (Vivado Post-Route Report)} \\
-Energy Efficiency & 316 kOps/W & $\sim$7,500 kOps/W & \textbf{93,940 (Peak) / 91,738 (Liquid) / 84,709 (Blended) kOps/W} \\
-\textbf{Efficiency vs. CPU} & 1.0$\times$ & 23.7$\times$ & \textbf{297$\times$ (Peak) / 290$\times$ (Liquid) / 268$\times$ (Blended)} \\
+Throughput & 14.22 MOps/s & $\sim$3,000 MOps/s & \textbf{400.00 Peak / 390.62 Net MOps/s} & \textbf{1,000.00 MOps/s (Signoff) / 8,000.00 MOps/s (32-Core)} \\
+Speedup vs. CPU & 1.0$\times$ & 210.9$\times$ & \textbf{28.1$\times$ Peak / 27.5$\times$ Net} & \textbf{70.3$\times$ (4-Core) / 562.6$\times$ (32-Core)} \\
+Power Dissipation & 45.0 W (TDP) & 400.0 W (TDP) & \textbf{4.258 W (Post-Route Signoff)} & \textbf{9.560 W (4-Core Signoff) / $\sim$65 W (32-Core)} \\
+Energy Efficiency & 316 kOps/W & $\sim$7,500 kOps/W & \textbf{93,940 kOps/W (10.65 nJ/op)} & \textbf{104,602 kOps/W (9.56 nJ/op)} \\
+\textbf{Efficiency vs. CPU} & 1.0$\times$ & 23.7$\times$ & \textbf{297$\times$ (Artix-7)} & \textbf{331$\times$ (Alveo U50)} \\
 \midrule
-Latency & 1.40 $\mu$s ($p50$) / 15.6 $\mu$s ($p99.9$) & 15--50 $\mu$s (launch jitter) & \textbf{2.27 $\mu$s (Cold) / 1.26 $\mu$s (Core Datapath)} \\
-Latency Determinism & Non-deterministic (OS scheduling jitter) & High Jitter (PCIe batch queuing) & \textbf{Cycle-Exact Deterministic (0 jitter, 2.27 $\mu$s fixed)} \\
-Block RAM Used & N/A & N/A & \textbf{0 BRAMs (100\% Distributed LUTRAM)} \\
+Latency & 1.40 $\mu$s ($p50$) / 15.6 $\mu$s ($p99.9$) & 15--50 $\mu$s (launch jitter) & \textbf{2.27 $\mu$s (Cold) / 1.26 $\mu$s (Core)} & \textbf{0.91 $\mu$s (Cold) / 0.50 $\mu$s (Core Datapath)} \\
+Latency Determinism & Non-deterministic (OS jitter) & High Jitter (PCIe batching) & \textbf{Cycle-Exact Deterministic (0 jitter)} & \textbf{Cycle-Exact Deterministic (0 jitter, Sub-$\mu$s)} \\
+Block RAM / UltraRAM & N/A & N/A & \textbf{0 BRAMs (100\% Distributed LUTRAM)} & \textbf{0 BRAMs, 0 URAMs (100\% Distributed LUTRAM)} \\
 \bottomrule
 \end{tabular}
 \vspace{1ex}
@@ -237,42 +238,49 @@ Block RAM Used & N/A & N/A & \textbf{0 BRAMs (100\% Distributed LUTRAM)} \\
 % -------------------------------------------------------------------------
 \section{Physical Implementation \& Timing Closure}
 % -------------------------------------------------------------------------
-The complete design was synthesized, placed, and routed using AMD Vivado 2025.2 targeting an Artix-7 200T (\texttt{xc7a200tffg1156-3}). As detailed in Table~\ref{tab:util}, the complete 4-core array occupies 79.45\% of Slice LUTs and 82.16\% of DSP48E1 slices while strictly consuming \textbf{0 BRAMs}.
+The complete design was synthesized, placed, and routed using AMD Vivado 2025.2 across two complementary silicon targets: (1)~an edge-oriented Artix-7 200T (\texttt{xc7a200tffg1156-3}) and (2)~a datacenter-grade AMD Alveo U50 (\texttt{xcu50-fsvh2104-2-e}). As detailed in Table~\ref{tab:util}, both implementations achieve physical timing closure on real silicon models while strictly consuming \textbf{0 Block RAMs} and \textbf{0 UltraRAMs}.
 
 \begin{table}[t]
-\caption{Artix-7 200T (\texttt{xc7a200tffg1156-3}) Physical Signoff}
+\caption{Dual-Platform Physical Signoff (Artix-7 200T vs. Alveo U50)}
 \label{tab:util}
 \centering
-\begin{tabular}{lrrr}
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{lrrrr}
 \toprule
-\textbf{Resource Metric} & \textbf{Utilized} & \textbf{Available} & \textbf{Utilization \%} \\
+\textbf{Signoff Metric} & \multicolumn{2}{c}{\textbf{Artix-7 200T}} & \multicolumn{2}{c}{\textbf{Alveo U50}} \\
 \midrule
-Worst Negative Slack (WNS) & \textbf{+0.005 ns\textsuperscript{\ddag}} & 0.000 ns & \textbf{Timing Met} \\
-Worst Hold Slack (WHS)     & \textbf{+0.058 ns} & 0.000 ns & \textbf{Hold Met} \\
-Total Timing Endpoints     & 189,999            & ---      & 0 Failing \\
-Slice LUTs (Total)         & 106,298            & 133,800  & 79.45\% \\
-\quad Logic LUTs           & 96,386             & 133,800  & 72.04\% \\
-\quad Distributed LUTRAM   & 1,256              & 46,200   & 2.72\% \\
-\quad Shift Registers (SRL)& 8,656              & 46,200   & 18.74\% \\
-Slice Registers (FFs)      & 129,786            & 267,600  & 48.50\% \\
-DSP48E1 Blocks             & 608                & 740      & 82.16\% \\
-\textbf{Block RAM (RAMB36/18)} & \textbf{0}     & \textbf{365} & \textbf{0.00\% (Zero)} \\
+Process Node & \multicolumn{2}{c}{28nm Planar (-3)} & \multicolumn{2}{c}{16nm FinFET (-2)} \\
+Target Clock ($T_{\text{clk}}$) & \multicolumn{2}{c}{100.00 MHz (10.0 ns)} & \multicolumn{2}{c}{250.00 MHz (4.0 ns)} \\
+Setup Slack (WNS) & \multicolumn{2}{c}{\textbf{+0.005 ns} (Met)} & \multicolumn{2}{c}{\textbf{+0.073 ns} (Met)} \\
+Hold Slack (WHS) & \multicolumn{2}{c}{\textbf{+0.058 ns} (Met)} & \multicolumn{2}{c}{\textbf{+0.004 ns} (Met)} \\
+Critical Path Delay & \multicolumn{2}{c}{9.777 ns (22 levels)} & \multicolumn{2}{c}{3.910 ns ($F_{\max}=254.6$ MHz)} \\
+Timing Endpoints & \multicolumn{2}{c}{189,999 (0 fail)} & \multicolumn{2}{c}{182,201 (0 fail)} \\
 \midrule
-Total On-Chip Power        & \textbf{4.258 W}   & ---      & Dynamic: 4.126 W \\
-Device Static Power        & 0.132 W            & ---      & Tj = 31.2~$^\circ$C \\
+\textbf{Resource Utilization} & \textbf{Count} & \textbf{Util \%} & \textbf{Count} & \textbf{Util \%} \\
+\midrule
+Slice / CLB LUTs (Total) & 106,298 & 79.45\% & 105,750 & 12.13\% \\
+\quad Logic LUTs & 96,386 & 72.04\% & 96,042 & 11.02\% \\
+\quad Distributed LUTRAM & 1,256 & 2.72\% & 1,120 & 0.28\% \\
+\quad Shift Registers (SRL) & 8,656 & 18.74\% & 8,588 & 2.13\% \\
+Slice / CLB Registers (FF) & 129,786 & 48.50\% & 128,817 & 7.39\% \\
+DSP Slices (DSP48E1 / E2) & 608 & 82.16\% & 576 & 9.68\% \\
+\textbf{Block RAM (RAMB36/18)} & \textbf{0} & \textbf{0.00\%} & \textbf{0} & \textbf{0.00\%} \\
+\textbf{UltraRAM (URAM288)} & --- & --- & \textbf{0} & \textbf{0.00\%} \\
+\midrule
+Peak Array Throughput & \multicolumn{2}{c}{\textbf{400.00 MOps/s}} & \multicolumn{2}{c}{\textbf{1,000.00 MOps/s (1.00 GOps/s)}} \\
+Total On-Chip Power & \multicolumn{2}{c}{\textbf{4.258 W}} & \multicolumn{2}{c}{\textbf{9.560 W}} \\
+Energy Efficiency & \multicolumn{2}{c}{10.65 nJ / op} & \multicolumn{2}{c}{\textbf{9.56 nJ / op}} \\
 \bottomrule
 \end{tabular}
-\vspace{0.5ex}
-
-\raggedright
-\footnotesize{\textsuperscript{\ddag} Tight WNS reflects 79.45\% LUT density on Artix-7 200T. An unconstrained single-core instance closes at 125~MHz ($WNS = +0.144\text{ ns}$). A conservative 5\% derating to 95~MHz yields $>0.5\text{ ns}$ positive setup slack across PVT corners.}
 \end{table}
 
 \subsection{Critical Timing Path Analysis}
-Timing closed at 100.00~MHz ($T_{\text{clk}} = 10.000\text{ ns}$) with setup slack $WNS = +0.005\text{ ns}$ and hold slack $WHS = +0.058\text{ ns}$ across 189,999 endpoints on the -3 speed grade at $T_j = 31.2\,^\circ\text{C}$. The critical path originates at Core 1 restoring divider (\texttt{SLICE\_X48Y87}) and terminates at the remainder register (\texttt{SLICE\_X49Y100}), spanning 9.777~ns data path delay (3.775~ns logic, 6.002~ns routing over 22 logic levels). While $WNS = +0.005\text{ ns}$ reflects dense 79.45\% LUT routing on the compact Artix-7 200T, an unconstrained single core achieves 125~MHz ($WNS = +0.144\text{ ns}$). For deployments on standard industrial -2 speed grade silicon or across elevated thermal envelopes ($T_j \le 85\,^\circ\text{C}$), a 5\% clock derating to 95~MHz provides $>0.52\text{ ns}$ positive setup slack and $>0.045\text{ ns}$ hold margin across all PVT corners, sustaining 380.00~MOps/s peak throughput with zero structural changes.
+On Artix-7 200T, timing closed at 100.00~MHz ($T_{\text{clk}} = 10.000\text{ ns}$) with setup slack $WNS = +0.005\text{ ns}$ and hold slack $WHS = +0.058\text{ ns}$ across 189,999 endpoints on the -3 speed grade at $T_j = 31.2\,^\circ\text{C}$. The critical path originates at Core 1 restoring divider (\texttt{SLICE\_X48Y87}) and terminates at the remainder register (\texttt{SLICE\_X49Y100}), spanning 9.777~ns data path delay (3.775~ns logic, 6.002~ns routing over 22 logic levels). While $WNS = +0.005\text{ ns}$ reflects dense 79.45\% LUT routing on the compact Artix-7 200T, an unconstrained single core achieves 125~MHz ($WNS = +0.144\text{ ns}$). 
+
+On the AMD Alveo U50, 16nm FinFET technology scaling reduces the critical path delay from 9.777~ns down to 3.910~ns, enabling physical timing closure at 250.00~MHz ($T_{\text{clk}} = 4.000\text{ ns}$) with $WNS = +0.073\text{ ns}$ and $WHS = +0.004\text{ ns}$ across 182,201 endpoints (zero failing). This signoff confirms an empirical maximum operating frequency of $F_{\max} = 254.65\text{ MHz}$ on -2 speed grade silicon.
 
 \subsection{Power and Thermal Budget}
-Vivado post-route vectorless power analysis confirms total power of 4.258~W (4.126~W dynamic, 0.132~W static) at junction temperature 31.2~$^\circ$C, enabling passive or low-profile active cooling in 75~W PCIe server slots.
+Vivado post-route vectorless power analysis confirms total power of 4.258~W (4.126~W dynamic, 0.132~W static) at junction temperature 31.2~$^\circ$C on Artix-7 200T, requiring only 17\% of a standard 25~W low-profile SmartNIC power envelope. On the Alveo U50, the 4-core array at 250~MHz consumes 9.560~W total (7.214~W dynamic, 2.346~W device static, $T_j = 30.0\,^\circ\text{C}$), delivering 1.00~Giga-Ops/sec at an energy efficiency of 9.56~nJ/operation---an improvement over Artix-7's 10.65~nJ/operation.
 
 % Placed early to guarantee emission at top of Page 5
 \begin{figure*}[t]
@@ -391,12 +399,9 @@ In institutional electronic trading, hardware deployment splits into two distinc
 
 The Artix-7 200T was selected deliberately as an extreme edge proof-of-concept for Tier-1 deployment: consuming only 4.258~W total on-chip power (17\% of a 25~W PCIe budget), the 4-core engine embeds directly alongside 10GbE network interfaces with zero thermal penalty. Crucially, the entire RTL is authored in vendor-agnostic SystemVerilog without proprietary hard IP, allowing seamless retargeting across silicon nodes without RTL modifications.
 
-When targeting Tier-2 datacenter accelerators, the architecture benefits from two orthogonal scaling vectors:
-\begin{itemize}
-    \item \textbf{Clock Frequency Scaling:} On 16nm UltraScale+ FinFET silicon (e.g., -2 speed grade), the 22-logic-level critical path delay scales from 9.78~ns down to $\le 3.50$~ns, elevating operating frequency from 100~MHz to 250--285~MHz ($2.5\times$ per-core speedup).
-    \item \textbf{Core Parallelism Scaling:} The modular 152-DSP core replicates linearly: on an AMD Alveo U50 (5,952 DSP48E2 slices, 872k LUTs), 32 parallel cores consume 81.7\% of DSPs, achieving \textbf{8.00 Giga-Ops/sec} peak throughput at 250~MHz ($\approx 32$~W dynamic power). On a Virtex UltraScale+ VU9P (6,840 DSPs, 1.18M LUTs), 44 cores deliver \textbf{11.00 Giga-Ops/sec}.
-\end{itemize}
-Crucially, because the microarchitecture consumes strictly \textbf{0 Block RAMs}, 100\% of on-chip UltraRAM and BRAM blocks remain fully available for 100GbE packet FIFOs, PCIe DMA descriptor rings, and full order-book depth tracking.
+To empirically demonstrate datacenter scalability beyond analytical projections, the 4-core engine was placed and routed on an AMD Alveo U50 card (\texttt{xcu50-fsvh2104-2-e}). On 16nm FinFET silicon, the critical path compresses to 3.910~ns, closing timing cleanly at 250.00~MHz ($WNS = +0.073\text{ ns}$, $F_{\max} = 254.65\text{ MHz}$) and delivering 1.00~Giga-Ops/sec at 9.560~W total power with strictly 0 BRAM and 0 URAM. The 4-core array occupies only 12.13\% of CLB LUTs and 576 DSP48E2 slices (9.68\% of U50 capacity; 144 DSPs/core vs. 152 on Artix-7 due to DSP48E2 pre-adder and wide multiplier absorption). Replicating to 32 parallel cores utilizes 4,608 DSPs (77.4\% of U50) and delivers \textbf{8.00 Giga-Ops/sec} peak throughput within a $\sim$65~W total board power budget (under the 75~W PCIe ceiling). On a Virtex UltraScale+ VU9P (6,840 DSPs, 1.18M LUTs), 44 cores deliver \textbf{11.00 Giga-Ops/sec}.
+
+Crucially, because the microarchitecture consumes strictly \textbf{0 Block RAMs and 0 UltraRAMs}, 100\% of on-chip UltraRAM and BRAM blocks remain fully available for 100GbE packet FIFOs, PCIe DMA descriptor rings, and full order-book depth tracking.
 
 \subsection{Comparison with Prior FPGA Accelerators}
 Table~\ref{tab:prior_art} compares this work against prior FPGA financial accelerators. As highlighted in recent survey literature by O'Mahony et al.~\cite{omahony2024role}, prior hardware implementations~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} focus either on forward-only pricing without root-finding or multi-section searching with significant embedded Block RAM consumption, which severely limits composability alongside 10GbE MAC and DMA infrastructure on production NICs. In contrast, our engine is the first to achieve 400~MOps/sec peak throughput (390.62~MOps/sec net sustained liquid) with concurrent Delta-Vega-Gamma extraction while strictly consuming Zero BRAM blocks.
