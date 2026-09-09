@@ -19,6 +19,8 @@
 \setlength{\intextsep}{3.5pt plus 1.0pt minus 1.0pt}
 \setlength{\dbltextfloatsep}{4.0pt plus 1.0pt minus 1.0pt}
 \setlength{\dblfloatsep}{4.0pt plus 1.0pt minus 1.0pt}
+\setlength{\abovecaptionskip}{2.5pt plus 1.0pt minus 1.0pt}
+\setlength{\belowcaptionskip}{2.0pt plus 1.0pt minus 1.0pt}
 \setlength{\abovedisplayskip}{2.0pt plus 1.0pt minus 1.0pt}
 \setlength{\belowdisplayskip}{2.0pt plus 1.0pt minus 1.0pt}
 \setlength{\abovedisplayshortskip}{1.0pt plus 1.0pt minus 1.0pt}
@@ -52,7 +54,7 @@
 \let\endoldthebibliography\endthebibliography
 \renewenvironment{thebibliography}[1]{%
   \begin{oldthebibliography}{#1}%
-    \footnotesize
+    \scriptsize
     \setlength{\itemsep}{0pt plus 0.2pt}%
     \setlength{\parskip}{0pt}%
 }{%
@@ -87,26 +89,21 @@ FPGA Acceleration, High-Frequency Trading, Implied Volatility, Option Greeks, Bl
 % -------------------------------------------------------------------------
 \begin{figure*}[t]
 \centering
-\includefigfile[width=0.65\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
+\includefigfile[width=0.58\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
 \caption{Microarchitecture of the 4-Core Pipelined Implied Volatility and Greeks Engine, illustrating scale-invariance normalization, Brenner-Subrahmanyam analytical guess generator with shared $\sqrt{T}$ path, pipelined datapath, Zero-BRAM distributed context store, and 128-bit egress bus.}
 \label{fig:arch}
 \end{figure*}
 
 In modern electronic options exchanges and algorithmic market-making, market participants quote bids and offers across thousands of strike prices and expiration dates simultaneously~\cite{omahony2024role}. The foundational metric governing option pricing, arbitrage bounding, and volatility surface construction is the Black-Scholes \textit{implied volatility} (IV)~\cite{black1973pricing}. While American options permit early exercise, European-style index options (e.g., S\&P 500 SPX, Nasdaq NDX, CBOE VIX) account for the overwhelming majority of institutional volume, where closed-form Black-Scholes dynamics apply directly. Market makers must continuously recalculate IV and associated risk sensitivities (Delta $\Delta$, Gamma $\Gamma$, Vega $\nu$) on every incoming market tick to dynamically rebalance delta-neutral portfolios and cancel stale quotes before adverse fills occur.
 
-Here, 1 Operation (Op) is defined as the complete evaluation of a single contract: IV root inversion and concurrent extraction of all three Greeks ($\Delta, \nu, \Gamma$). Extracting IV from an observed market price $C_{\text{mkt}}$ requires numerically inverting the non-linear pricing equation $C_{\text{BS}}(S, K, T, r, \sigma) = C_{\text{mkt}}$. Because no analytical inverse exists, iterative solvers such as Newton-Raphson (NR) are required. On conventional architectures, NR root-finding faces two primary obstacles:
-\begin{enumerate}
-    \item \textbf{Numerical Sensitivity and Oscillation:} When maturity $T$ is short or an option moves out of the money, derivative Vega ($\nu = \partial C / \partial \sigma$) drops sharply. Unseeded iterations divide by near-zero quantities, causing step overshoot, limit cycling, or divergence.
-    \item \textbf{Latency Non-Determinism and Power Density:} In exchange co-location facilities, server rack power is strictly budgeted (5--10~kW per rack). High-end GPUs and CPUs draw hundreds of watts and introduce non-deterministic execution jitter from OS thread scheduling, PCIe batching, and context switches.
-\end{enumerate}
-To overcome these challenges, we present a high-throughput, deterministic, zero-block-RAM FPGA acceleration engine for real-time IV and Greeks calculation.
+Here, 1 Operation (Op) is defined as the complete evaluation of a single contract: IV root inversion and concurrent extraction of all three Greeks ($\Delta, \nu, \Gamma$). Extracting IV from an observed market price $C_{\text{mkt}}$ requires numerically inverting the non-linear pricing equation $C_{\text{BS}}(S, K, T, r, \sigma) = C_{\text{mkt}}$. Because no analytical inverse exists, iterative solvers such as Newton-Raphson (NR) are required. On conventional architectures, NR root-finding faces two primary obstacles: (1)~\textit{Numerical Sensitivity and Oscillation}: when maturity $T$ is short or an option moves out of the money, derivative Vega ($\nu = \partial C / \partial \sigma$) drops sharply, causing unseeded iterations to divide by near-zero quantities, triggering step overshoot or divergence; and (2)~\textit{Latency Non-Determinism and Power Density}: exchange server rack power is strictly budgeted (5--10~kW per rack), while high-end GPUs and CPUs draw hundreds of watts and suffer non-deterministic execution jitter from OS thread scheduling, PCIe batching, and context switches. To overcome these challenges, we present a high-throughput, deterministic, zero-block-RAM FPGA acceleration engine for real-time IV and Greeks calculation.
 
 \subsection{Key Contributions}
 \begin{itemize}
-    \item \textbf{Analytical Brenner-Subrahmanyam Guess Engine:} A dedicated analytical initialization unit seeds the solver within $\pm 0.5\%$ of the true volatility root, allowing 97.6\% of contracts to converge in a single pass. A shared square-root datapath forwards $\sqrt{T}$ downstream, saving substantial DSP and LUT area.
-    \item \textbf{Scale-Invariant Fixed-Point Normalization:} A scale transform ($\tilde{S} = S/K, \tilde{K} = 1.0, \tilde{C} = C/K$) bounds all internal state strictly within Q8.24 fixed point, supporting equity prices from \$1 to \$128+ without multi-precision floating-point overhead.
-    \item \textbf{Zero-BRAM Microarchitecture:} Context buffers and pipeline registers are mapped exclusively to distributed LUTRAM and SRL32 shift registers (\texttt{ram\_style = \"distributed\"}). Zero Block RAMs (RAMB36/18) are consumed, preserving 100\% of BRAMs for 10GbE MAC and PCIe DMA infrastructure.
-    \item \textbf{Dual-Platform Timing Closure \& Validation:} Physical signoff on Artix-7 200T at 100~MHz (400~MOps/s, 4.258~W, $WNS=+0.005\text{ ns}$) and Alveo U50 at 250~MHz (1.00~GOps/s, 9.56~W, $WNS=+0.073\text{ ns}$) with strictly 0 BRAM and 0 URAM. DPI-C co-simulation over 10,000 contracts confirms 0.0157\% MAE. On Artix-7, the engine delivers a 28.1$\times$ speedup and 297$\times$ energy efficiency gain over a 16-thread AVX2 host CPU.
+    \item \textbf{Analytical Brenner-Subrahmanyam Guess Engine:} A dedicated analytical seeder initializes within $\pm 0.5\%$ of the true volatility root, enabling 97.6\% single-pass convergence and forwarding $\sqrt{T}$ downstream to eliminate redundant square-root DSP logic.
+    \item \textbf{Scale-Invariant Fixed-Point Normalization:} A scale transform ($\tilde{S} = S/K, \tilde{K} = 1.0, \tilde{C} = C/K$) bounds state strictly within Q8.24 fixed point, supporting equity contracts from \$1 to \$128+ without multi-precision floating-point overhead.
+    \item \textbf{Zero-BRAM Microarchitecture:} Context buffers map exclusively to distributed LUTRAM and SRL32 registers (\texttt{ram\_style = \"distributed\"}), consuming strictly 0 BRAMs and preserving 100\% of on-chip RAM for 10GbE MAC and PCIe DMA queues.
+    \item \textbf{Dual-Platform Timing Closure \& Validation:} Physical signoff on Artix-7 200T at 100~MHz (400~MOps/s, 4.258~W, $WNS=+0.005\text{ ns}$) and Alveo U50 at 250~MHz (1.00~GOps/s, 9.56~W, $WNS=+0.073\text{ ns}$) with 0 BRAM and 0 URAM. DPI-C co-simulation verifies 0.0157\% MAE, delivering a 28.1$\times$ speedup and 297$\times$ energy efficiency gain over an AVX2 CPU.
 \end{itemize}
 
 % -------------------------------------------------------------------------
@@ -196,8 +193,7 @@ The complete design was synthesized, placed, and routed using AMD Vivado 2025.2 
 \midrule
 Process Node & \multicolumn{2}{c}{28nm Planar (-3)} & \multicolumn{2}{c}{16nm FinFET (-2)} \\
 Target Clock ($T_{\text{clk}}$) & \multicolumn{2}{c}{100.00 MHz (10.0 ns)} & \multicolumn{2}{c}{250.00 MHz (4.0 ns)} \\
-Setup Slack (WNS) & \multicolumn{2}{c}{\textbf{+0.005 ns} (Met)} & \multicolumn{2}{c}{\textbf{+0.073 ns} (Met)} \\
-Hold Slack (WHS) & \multicolumn{2}{c}{\textbf{+0.058 ns} (Met)} & \multicolumn{2}{c}{\textbf{+0.004 ns} (Met)} \\
+Timing Slack (WNS / WHS) & \multicolumn{2}{c}{\textbf{+0.005 / +0.058 ns} (Met)} & \multicolumn{2}{c}{\textbf{+0.073 / +0.004 ns} (Met)} \\
 Critical Path Delay & \multicolumn{2}{c}{9.777 ns (22 levels)} & \multicolumn{2}{c}{3.910 ns ($F_{\max}=254.6$ MHz)} \\
 Timing Endpoints & \multicolumn{2}{c}{189,999 (0 fail)} & \multicolumn{2}{c}{182,201 (0 fail)} \\
 \midrule
@@ -209,8 +205,7 @@ Slice / CLB LUTs (Total) & 106,298 & 79.45\% & 105,750 & 12.13\% \\
 \quad Shift Registers (SRL) & 8,656 & 18.74\% & 8,588 & 2.13\% \\
 Slice / CLB Registers (FF) & 129,786 & 48.50\% & 128,817 & 7.39\% \\
 DSP Slices (DSP48E1 / E2) & 608 & 82.16\% & 576 & 9.68\% \\
-\textbf{Block RAM (RAMB36/18)} & \textbf{0} & \textbf{0.00\%} & \textbf{0} & \textbf{0.00\%} \\
-\textbf{UltraRAM (URAM288)} & --- & --- & \textbf{0} & \textbf{0.00\%} \\
+\textbf{Block RAM / UltraRAM} & \textbf{0 / ---} & \textbf{0.00\%} & \textbf{0 / 0} & \textbf{0.00\%} \\
 \midrule
 Peak Array Throughput & \multicolumn{2}{c}{\textbf{400.00 MOps/s}} & \multicolumn{2}{c}{\textbf{1,000.00 MOps/s (1.00 GOps/s)}} \\
 Total On-Chip Power & \multicolumn{2}{c}{\textbf{4.258 W}} & \multicolumn{2}{c}{\textbf{9.560 W}} \\
@@ -330,10 +325,8 @@ Table~\ref{tab:submodule} summarizes post-implementation resource distribution p
 Restoring Dividers ($\times 7$)  & 15,654 &  0 & 33-cycle non-restoring slice logic \\
 Horner Normal CDF Poly ($\times 2$) & 1,760 & 96 & 5th-order Horner MAC stages (48/core) \\
 BS Datapath Multipliers \& Regs  & 2,261 & 44 & Normal deviates \& Black-Scholes math \\
-Digit-Recurrence $\sqrt{T}$ Unit & 1,354 &  0 & Shared square-root datapath \\
-B-S Seeder Multipliers \& Glue   &   342 &  8 & Symmetric analytical initial guess \\
-Hyperbolic CORDIC Engine         & 1,255 &  0 & 16-stage pipelined $e^{-rT}, e^{-d_1^2/2}$ \\
-CORDIC Gain Compensation        &    69 &  4 & $K_n$ hyperbolic scale factor scaling \\
+Digit-Recurrence $\sqrt{T}$ \& Seeder Glue & 1,696 & 8 & Shared $\sqrt{T}$ + guess generator \\
+Hyperbolic CORDIC \& Scaling     & 1,324 &  4 & 16-stage $e^{-rT}, e^{-d_1^2/2}$ + $K_n$ scale \\
 Arbitration, FSM \& Scoreboard   &   268 &  0 & Loopback preemption \& TID tracking \\
 Distributed Context Store / SRL  &   863 &  0 & 314 LUTRAM + 451 SRL32 (Zero BRAM) \\
 AXI4-Stream Interface \& FIFOs   & 2,748 &  0 & 256-bit ingress \& 128-bit packed egress \\
@@ -377,12 +370,12 @@ Tse et al.~\cite{tse2010customising} (2010) & Virtex-4 FX100 & BS / Forward Pass
 \scriptsize{\textsuperscript{\dag} 390.62~MOps/s net sustained liquid accounting for 2.4\% loopbacks.}
 \end{table}
 
-Table~\ref{tab:prior_art} compares this work against prior FPGA financial accelerators. As highlighted in recent survey literature by O'Mahony et al.~\cite{omahony2024role}, prior hardware implementations~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} focus either on forward-only pricing without root-finding or multi-section searching with significant embedded Block RAM consumption, which severely limits composability alongside 10GbE MAC and DMA infrastructure on production NICs. In contrast, our engine is the first to achieve 400~MOps/sec peak throughput (390.62~MOps/sec net sustained liquid) with concurrent Delta-Vega-Gamma extraction while strictly consuming Zero BRAM blocks. On the Alveo U50, throughput reaches 1,000.00~MOps/sec with 908~ns end-to-end latency, providing an $8.3\times$ throughput speedup over the 2022 Kintex UltraScale accelerator of Wang et al.~\cite{wang2022fpga} while completely eliminating block memory usage.
+Table~\ref{tab:prior_art} compares this work against prior FPGA accelerators. As surveyed by O'Mahony et al.~\cite{omahony2024role}, prior implementations~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} focus either on forward-only pricing or multi-section root-finding with heavy Block RAM consumption, severely compromising composability alongside 10GbE MAC and DMA infrastructure on production SmartNICs. In contrast, our engine is the first to achieve 400~MOps/s peak throughput (390.62~MOps/s net liquid) with concurrent Delta-Vega-Gamma extraction while consuming strictly Zero BRAM blocks. On Alveo U50, throughput reaches 1.00~GOps/s with 908~ns end-to-end latency, providing an $8.3\times$ throughput speedup over the 2022 Kintex UltraScale accelerator of Wang et al.~\cite{wang2022fpga} while eliminating block memory usage.
 
 % -------------------------------------------------------------------------
 \section{Conclusion}
 % -------------------------------------------------------------------------
-We presented a four-core FPGA acceleration engine for real-time option implied volatility and higher-order Greeks calculation. By synergizing closed-form Brenner-Subrahmanyam analytical guess seeding, fixed-point scale-invariance normalization, and an exclusive Zero-BRAM microarchitecture, the engine achieves physical timing closure at 100~MHz on an AMD Xilinx Artix-7 200T FPGA. Delivering 400.00~MOps/sec peak throughput (390.62~MOps/sec net liquid; 360.69~MOps/sec blended) at a deterministic 2.27~$\mu$s latency (1.26~$\mu$s core datapath), the engine achieves institutional accuracy ($MAE = 0.0157\%$ liquid, $0.0162\%$ blended) while consuming only 4.258~W. Head-to-head benchmarking demonstrates a 28.1$\times$ throughput speedup and a 297$\times$ energy efficiency advantage over a 16-thread AVX2 host CPU, establishing a compelling solution for thermal-constrained high-frequency trading infrastructure.
+We presented a four-core FPGA acceleration engine for real-time option implied volatility and higher-order Greeks ($\Delta, \Gamma, \nu$) calculation. By synergizing closed-form Brenner-Subrahmanyam analytical guess seeding, fixed-point scale-invariance normalization, and an exclusive Zero-BRAM microarchitecture, the engine achieves physical timing closure at 100~MHz on an AMD Artix-7 200T FPGA (400.00~MOps/s peak, 4.258~W) and 250~MHz on an AMD Alveo U50 datacenter card (1.00~GOps/s, 9.560~W) with strictly 0 BRAM and 0 URAM. DPI-C co-simulation over 10,000 contracts confirms institutional accuracy ($MAE = 0.0157\%$ liquid, $0.0162\%$ blended). Delivering a 28.1$\times$ throughput speedup and a 297$\times$ energy efficiency advantage over a 16-thread AVX2 host CPU under deterministic sub-microsecond latency, the architecture establishes a compelling, production-ready solution for latency-critical algorithmic market-making.
 
 \begin{thebibliography}{12}
 
