@@ -24,16 +24,16 @@
 \setlength{\abovedisplayshortskip}{1.0pt plus 1.0pt minus 1.0pt}
 \setlength{\belowdisplayshortskip}{1.0pt plus 1.0pt minus 1.0pt}
 
-\setcounter{topnumber}{2}
-\setcounter{bottomnumber}{2}
-\setcounter{totalnumber}{4}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{3}
+\setcounter{totalnumber}{6}
 \setcounter{dbltopnumber}{2}
-\renewcommand{\topfraction}{0.85}
-\renewcommand{\bottomfraction}{0.85}
-\renewcommand{\textfraction}{0.10}
-\renewcommand{\floatpagefraction}{0.75}
-\renewcommand{\dbltopfraction}{0.85}
-\renewcommand{\dblfloatpagefraction}{0.75}
+\renewcommand{\topfraction}{0.90}
+\renewcommand{\bottomfraction}{0.90}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.80}
+\renewcommand{\dbltopfraction}{0.90}
+\renewcommand{\dblfloatpagefraction}{0.80}
 
 \graphicspath{{figures/}{./}}
 
@@ -52,8 +52,8 @@
 \let\endoldthebibliography\endthebibliography
 \renewenvironment{thebibliography}[1]{%
   \begin{oldthebibliography}{#1}%
-    \small
-    \setlength{\itemsep}{0pt}%
+    \footnotesize
+    \setlength{\itemsep}{0pt plus 0.2pt}%
     \setlength{\parskip}{0pt}%
 }{%
   \end{oldthebibliography}%
@@ -343,12 +343,12 @@ On-Chip BRAM / URAM & N/A & N/A & \textbf{0 BRAM36/18} & \textbf{0 BRAM36/18, 0 
 \textsuperscript{2} GPU baseline denotes single-pass forward Black-Scholes pricing from CUDA SDK literature~\cite{nvidia2023a100}; iterative IV inversion throughput is not benchmarked with matching methodology.}
 \end{table*}
 
-\begin{figure*}[t]
+\begin{figure}[t]
 \centering
-\includefigfile[width=0.74\textwidth]{fig3_comparative_benchmark.pdf}{fig2_comparative_benchmark.pdf}
+\includefigfile[width=\columnwidth]{fig3_comparative_benchmark.pdf}{fig2_comparative_benchmark.pdf}
 \caption{Comparative evaluation of (a) Throughput (MOps/sec), (b) Power Dissipation (Watts), and (c) Energy Efficiency (kOps/Watt) across Host CPU, GPU baseline, and our 4-Core FPGA engine.}
 \label{fig:benchmark}
-\end{figure*}
+\end{figure}
 
 Table~\ref{tab:comparison} and Fig.~\ref{fig:benchmark} summarize comparative performance. An empirical benchmark on a host CPU (Intel Core i5-12500H, 12 cores/16 threads, AVX2) over 2,000,000 contracts reaches 14.22~MOps/sec at 45~W TDP (316~kOps/W).
 
@@ -390,31 +390,6 @@ AXI4-Stream Interface \& FIFOs   & 2,748 &  0 & 256-bit ingress \& 128-bit packe
 }
 \end{table}
 
-\begin{table*}[t]
-\caption{Comparison with Prior FPGA Financial Accelerators}
-\label{tab:prior_art}
-\centering
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lcccccc}
-\toprule
-\textbf{Design} & \textbf{Target Device} & \textbf{Model / Task} & \textbf{Numerical Method} & \textbf{Throughput} & \textbf{Latency} & \textbf{BRAMs} \\
-\midrule
-Wang et al.~\cite{wang2022fpga} (2022) & Kintex UltraScale & Implied Volatility & Multi-section Root & 120 MOps/s & $\sim$1.80 $\mu$s (End-to-End) & Consumed \\
-Becker et al.~\cite{becker2011dynamic} (2011) & Virtex-6 LX240T & Option Pricing & Finite Difference (DCR) & 85 MOps/s & $\sim$3.20 $\mu$s (End-to-End) & Consumed \\
-Jin et al.~\cite{jin2012optimising} (2012) & Virtex-6 LX240T & Option Pricing & Runtime Reconf. FD & 110 MOps/s & $\sim$2.80 $\mu$s (End-to-End) & Consumed \\
-Tse et al.~\cite{tse2010customising} (2010) & Virtex-4 FX100 & Black-Scholes & Forward Pricing (Single pass) & 150 MOps/s & $\sim$1.50 $\mu$s (End-to-End) & Consumed \\
-\textbf{This Work (Artix-7 200T)} & \textbf{Artix-7 200T} & \textbf{IV + Greeks ($\Delta, \nu, \Gamma$)} & \textbf{Analytical Seed + NR} & \textbf{400 MOps/s\textsuperscript{\dag}} & \shortstack{\textbf{2.27 $\mu$s (Cold)\textsuperscript{*}} \\ \textbf{1.26 $\mu$s (Core)}} & \textbf{0 (Zero-BRAM)} \\
-\textbf{This Work (Alveo U50)} & \textbf{Alveo U50} & \textbf{IV + Greeks ($\Delta, \nu, \Gamma$)} & \textbf{Analytical Seed + NR} & \textbf{1,000 MOps/s (8.00 GOps/s @ 32c)} & \shortstack{\textbf{0.91 $\mu$s (Cold)} \\ \textbf{0.50 $\mu$s (Core)}} & \textbf{0 (Zero-BRAM / 0 URAM)} \\
-\bottomrule
-\end{tabular}%
-}
-\vspace{1ex}
-
-\raggedright
-\footnotesize{\textsuperscript{1} Peak pipeline throughput at 100~MHz on Artix-7 (390.62~MOps/s net sustained liquid); 1,000.00~MOps/s peak at 250~MHz on Alveo U50 4-core array (8.00~GOps/s projected on 32-core array).\\
-\textsuperscript{*} Cold transaction latency from AXI4-Stream ingress registration to egress packing is 2.27~$\mu$s (227 cycles at 100~MHz) on Artix-7 and 0.91~$\mu$s (227 cycles at 250~MHz) on Alveo U50; core datapath latency is 1.26~$\mu$s (126 cycles) on Artix-7 and 0.50~$\mu$s on Alveo U50.}
-\end{table*}
-
 \subsection{Two-Tier HFT Architecture and Datacenter Scalability}
 In institutional electronic trading, hardware deployment splits into two distinct tiers: (1)~\textit{Tier-1 Inline SmartNIC Filtering} (half-height, half-length PCIe cards under strict 25~W thermal envelopes, e.g., AMD Solarflare / On-NIC FPGA mezzanine cards); and (2)~\textit{Tier-2 Centralized Co-Processing} (full-height 75--225~W datacenter accelerators, e.g., AMD Alveo U50 / VU9P). 
 
@@ -425,6 +400,31 @@ To empirically demonstrate datacenter scalability beyond analytical projections,
 Crucially, because the microarchitecture consumes strictly \textbf{0 Block RAMs and 0 UltraRAMs}, 100\% of on-chip UltraRAM and BRAM blocks remain fully available for 100GbE packet FIFOs, PCIe DMA descriptor rings, and full order-book depth tracking.
 
 \subsection{Comparison with Prior FPGA Accelerators}
+\begin{table}[t]
+\caption{Comparison with Prior FPGA Financial Accelerators}
+\label{tab:prior_art}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccccr}
+\toprule
+\textbf{Design} & \textbf{Target Device} & \textbf{Task / Method} & \textbf{Throughput} & \textbf{Latency} & \textbf{BRAMs} \\
+\midrule
+Wang et al.~\cite{wang2022fpga} (2022) & Kintex US & IV / Multi-section & 120 MOps/s & $\sim$1.80 $\mu$s & Consumed \\
+Becker et al.~\cite{becker2011dynamic} (2011) & Virtex-6 LX240T & Option / FD (DCR) & 85 MOps/s & $\sim$3.20 $\mu$s & Consumed \\
+Jin et al.~\cite{jin2012optimising} (2012) & Virtex-6 LX240T & Option / Reconf FD & 110 MOps/s & $\sim$2.80 $\mu$s & Consumed \\
+Tse et al.~\cite{tse2010customising} (2010) & Virtex-4 FX100 & BS / Forward Pass & 150 MOps/s & $\sim$1.50 $\mu$s & Consumed \\
+\midrule
+\textbf{This Work (Artix-7)} & \textbf{Artix-7 200T} & \textbf{IV + Greeks / Seed+NR} & \textbf{400 MOps/s\textsuperscript{\dag}} & \shortstack{\textbf{2.27 $\mu$s (Cold)}\\\textbf{1.26 $\mu$s (Core)}} & \textbf{0 (Zero-BRAM)} \\
+\textbf{This Work (Alveo U50)} & \textbf{Alveo U50} & \textbf{IV + Greeks / Seed+NR} & \shortstack{\textbf{1,000 MOps/s}\\\textbf{(8.00 GOps/s @ 32c)}} & \shortstack{\textbf{0.91 $\mu$s (Cold)}\\\textbf{0.50 $\mu$s (Core)}} & \shortstack{\textbf{0 (Zero-BRAM)}\\\textbf{0 (Zero-URAM)}} \\
+\bottomrule
+\end{tabular}%
+}
+\vspace{0.5ex}
+
+\raggedright
+\scriptsize{\textsuperscript{\dag} 390.62~MOps/s net sustained liquid accounting for 2.4\% loopbacks.}
+\end{table}
+
 Table~\ref{tab:prior_art} compares this work against prior FPGA financial accelerators. As highlighted in recent survey literature by O'Mahony et al.~\cite{omahony2024role}, prior hardware implementations~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} focus either on forward-only pricing without root-finding or multi-section searching with significant embedded Block RAM consumption, which severely limits composability alongside 10GbE MAC and DMA infrastructure on production NICs. In contrast, our engine is the first to achieve 400~MOps/sec peak throughput (390.62~MOps/sec net sustained liquid) with concurrent Delta-Vega-Gamma extraction while strictly consuming Zero BRAM blocks. On the Alveo U50, throughput reaches 1,000.00~MOps/sec with 908~ns end-to-end latency, providing an $8.3\times$ throughput speedup over the 2022 Kintex UltraScale accelerator of Wang et al.~\cite{wang2022fpga} while completely eliminating block memory usage.
 
 % -------------------------------------------------------------------------
