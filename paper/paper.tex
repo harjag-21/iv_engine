@@ -61,7 +61,7 @@
 
 \begin{document}
 
-\title{A 400 MOps/sec Zero-BRAM FPGA Accelerator for Real-Time Option Implied Volatility and Delta-Vega-Gamma Greeks}
+\title{A Sub-Microsecond Zero-BRAM FPGA Accelerator for Real-Time Option Implied Volatility and Delta-Vega-Gamma Greeks}
 
 \author{
 \IEEEauthorblockN{Anonymous Authors}
@@ -85,6 +85,13 @@ FPGA Acceleration, High-Frequency Trading, Implied Volatility, Option Greeks, Bl
 % -------------------------------------------------------------------------
 \section{Introduction}
 % -------------------------------------------------------------------------
+\begin{figure*}[t]
+\centering
+\includefigfile[width=0.78\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
+\caption{Microarchitecture of the 4-Core Pipelined Implied Volatility and Greeks Engine, illustrating scale-invariance normalization, Brenner-Subrahmanyam analytical guess generator with shared $\sqrt{T}$ path, pipelined datapath, Zero-BRAM distributed context store, and 128-bit egress bus.}
+\label{fig:arch}
+\end{figure*}
+
 In modern electronic options exchanges and algorithmic market-making, market participants quote bids and offers across thousands of strike prices and expiration dates simultaneously~\cite{omahony2024role}. The foundational metric governing option pricing, arbitrage bounding, and volatility surface construction is the Black-Scholes \textit{implied volatility} (IV)~\cite{black1973pricing}. While American options permit early exercise, European-style index options (e.g., S\&P 500 SPX, Nasdaq NDX, CBOE VIX) account for the overwhelming majority of institutional volume, where closed-form Black-Scholes dynamics apply directly. Market makers must continuously recalculate IV and associated risk sensitivities (Delta $\Delta$, Gamma $\Gamma$, Vega $\nu$) on every incoming market tick to dynamically rebalance delta-neutral portfolios and cancel stale quotes before adverse fills occur.
 
 Here, 1 Operation (Op) is defined as the complete evaluation of a single contract: IV root inversion and concurrent extraction of all three Greeks ($\Delta, \nu, \Gamma$). Extracting IV from an observed market price $C_{\text{mkt}}$ requires numerically inverting the non-linear pricing equation $C_{\text{BS}}(S, K, T, r, \sigma) = C_{\text{mkt}}$. Because no analytical inverse exists, iterative solvers such as Newton-Raphson (NR) are required. On conventional architectures, NR root-finding faces two primary obstacles:
@@ -101,14 +108,6 @@ To overcome these challenges, we present a high-throughput, deterministic, zero-
     \item \textbf{Zero-BRAM Microarchitecture:} All context buffers and pipeline matching registers are implemented exclusively via distributed LUTRAM and SRL32 shift registers (\texttt{ram\_style = "distributed"}). Zero Block RAMs (RAMB36/18) are consumed, preserving 100\% of BRAMs for PCIe DMA, 10GbE MACs, and order-book storage.
     \item \textbf{Dual-Platform Timing Closure \& Validation:} Placed and routed on both an AMD Artix-7 200T edge FPGA (\texttt{xc7a200tffg1156-3}) at 100~MHz ($WNS = +0.005\text{ ns}$, 400.00~MOps/s, 4.258~W) and an AMD Alveo U50 datacenter card (\texttt{xcu50-fsvh2104-2-e}) at 250~MHz ($WNS = +0.073\text{ ns}$, 1.00~GOps/s 4-core / 8.00~GOps/s 32-core, 9.56~nJ/op), both with strictly Zero BRAM and Zero UltraRAM. DPI-C co-simulation over 10,000 contracts verifies an MAE of 0.0157\% volatility. At 4.258~W on Artix-7, the engine achieves a 28.1$\times$ speedup and 297$\times$ energy efficiency gain over a 16-thread AVX2 host CPU.
 \end{itemize}
-
-% Declared on Page 1 to ensure emission at top of Page 2
-\begin{figure*}[t]
-\centering
-\includefigfile[width=0.78\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
-\caption{Microarchitecture of the 4-Core Pipelined Implied Volatility and Greeks Engine, illustrating scale-invariance normalization, Brenner-Subrahmanyam analytical guess generator with shared $\sqrt{T}$ path, pipelined datapath, Zero-BRAM distributed context store, and 128-bit egress bus.}
-\label{fig:arch}
-\end{figure*}
 
 % -------------------------------------------------------------------------
 \section{Mathematical Formulation}
@@ -178,7 +177,7 @@ The seeder evaluates Eq.~(9): $\sigma_0 = \frac{2.5066}{\sqrt{T}} \frac{C_{\text
 The core datapath is a 126-cycle fully unrolled feedforward pipeline with Initiation Interval $II = 1$ (accepting one contract/cycle). Sub-operations are partitioned across registered boundaries. For deep wings ($|S-K|/K > 0.15$), the 18-cycle CORDIC logarithm is latency-matched via SRL15 to 33 cycles, maintaining 126-cycle deterministic latency across 100\% of transactions.
 
 \subsection{Zero-BRAM Context Memory Architecture}
-Conventional designs map FIFOs to Block RAMs (RAMB18/36). In HFT platforms, BRAMs are required for 10GbE MAC buffers and PCIe DMA rings. Our engine implements all context memories ($64 \times 32$-bit) exclusively using 6-LUT distributed RAM (\texttt{ram\_style = "distributed"}) and SRL32 shift registers. Exactly \textbf{zero} BRAMs are consumed.
+Conventional designs map FIFOs to Block RAMs (RAMB18/36). In HFT platforms, BRAMs are required for 10GbE MAC buffers and PCIe DMA rings. Our engine implements all context memories ($64 \times 32$-bit) exclusively using 6-LUT distributed RAM (\texttt{ram\_style = "distributed"}) and SRL32 shift registers. Exactly \textbf{zero} BRAMs and \textbf{zero} UltraRAMs are consumed. While distributed context memory consumes 1,256 LUTRAM and 8,656 SRLs on Artix-7, this logic overhead represents merely 0.28\% of LUT capacity on modern 16nm FinFET silicon (Alveo U50), and is essential in production SmartNICs where 100\% of dedicated BRAMs are hard-allocated to dual-port 100GbE packet ring buffers and PCIe DMA descriptor queues.
 
 \subsection{Stage 4: Newton-Raphson Update Step \& Greek Dividers (33 Cycles)}
 Following Stage 3, each core checks convergence:
@@ -197,9 +196,10 @@ $\Gamma$ is allocated 26 bits by truncating 6 high-order sign bits in Q8.24 (Gam
 
 \subsection{Pipeline Latency and Sustained Throughput Reconciliation}
 Cold transaction latency from ingress to egress is:
-\begin{equation}
-L_{\text{cold}} = 1\,(\text{Stg 1}) + 64\,(\text{Stg 2}) + 1\,(\text{Q}) + 126\,(\text{Stg 3}) + 33\,(\text{Stg 4}) + 2\,(\text{Stg 5}) = \mathbf{227\text{ cycles}}
-\end{equation}
+\begin{align}
+L_{\text{cold}} &= 1\,(\text{Stg 1}) + 64\,(\text{Stg 2}) + 1\,(\text{Q}) \nonumber \\
+&\quad + 126\,(\text{Stg 3}) + 33\,(\text{Stg 4}) + 2\,(\text{Stg 5}) = \mathbf{227\text{ cycles}}
+\end{align}
 corresponding to $2.27\,\mu\text{s}$ at 100~MHz on Artix-7 ($0.91\,\mu\text{s}$ at 250~MHz on Alveo U50).
 Loopback bypasses Stages 1--2, requiring Stages 3--4: $126 + 33 = \mathbf{159\text{ cycles}}$ ($1.59\,\mu\text{s}$ on Artix-7; $0.64\,\mu\text{s}$ on U50).
 
@@ -280,7 +280,7 @@ The placed-and-routed RTL was co-simulated against an IEEE-754 double-precision 
 
 \textbf{Liquid Trading Range ($0.85 \le S/K \le 1.15$):} Over 95\% of quote updates fall within $\pm 15\%$ moneyness. In this regime, the engine achieves an MAE of $0.000157$ (\textbf{0.0157\% volatility}). Median error is $0.000118$ (0.0118\% vol), 95th-percentile is $0.001692$ (0.1692\% vol), and 99th-percentile is $0.04168$ (0.4168\% vol). Crucially, \textbf{99.9\% of contracts converge within 1.0\% volatility error} (100.0\% within 10\%), and 97.6\% converge in exactly 1 pass (99.9\% within 2 passes). Operationally, liquid market-maker quote widths range from $\pm 0.5\%$ to $\pm 1.0\%$ implied volatility; thus, 99.9\% of contracts converging within 1.0\% error guarantees sub-tick quotation fidelity.
 
-\textbf{Deep Wings ($S/K < 0.85$ or $S/K > 1.15$):} For extreme strikes, the engine engages the 18-cycle CORDIC logarithm fallback ($\ln x = 2\operatorname{atanh}((x-1)/(x+1))$). Deep wings represent 7.9\% of contracts. Because Vega diminishes ($\nu < 0.05$), contracts average 2.1 passes. The engine achieves an MAE of 0.0214\% volatility in deep wings, with 100\% converging within \$0.01 and zero divergence. Blended across all 10,000 contracts, global MAE is $0.921(0.0157\%) + 0.079(0.0214\%) = \mathbf{0.0162\%}$ volatility ($0.000162$). To verify statistical stability, evaluations across 5 independent random seeds (50,000 contracts total) confirmed identical CDF profiles with mean MAE of $0.0157\% \pm 0.0004\%$ (95\% confidence interval: $[0.0153\%, 0.0161\%]$).
+\textbf{Deep Wings ($S/K < 0.85$ or $S/K > 1.15$):} For extreme strikes, the engine engages the 18-cycle CORDIC logarithm fallback ($\ln x = 2\operatorname{atanh}((x-1)/(x+1))$). Deep wings represent 7.9\% of contracts. Because Vega diminishes ($\nu < 0.05$), contracts average 2.1 passes. The engine achieves an MAE of 0.0214\% volatility in deep wings, with 100\% converging within \$0.01 and zero divergence. Blended across all 10,000 contracts, global MAE is $0.921(0.0157\%) + 0.079(0.0214\%) = \mathbf{0.0162\%}$ volatility ($0.000162$). To verify statistical stability, evaluations across 5 independent random seeds (50,000 contracts total) confirmed identical CDF profiles with mean MAE of $0.0157\% \pm 0.0004\%$ (95\% confidence interval: $[0.0153\%, 0.0161\%]$). While synthetic parameter sweeps verify broad boundary coverage, European-style index options (e.g., SPX/NDX) represent the primary institutional market-making venue where closed-form Black-Scholes inversion applies directly; future extensions will benchmark across streaming OPRA (Options Price Reporting Authority) historical tick feeds.
 
 \subsection{Multi-Component Error Budget & Sensitivity Decomposition}
 The observed MAE of $0.0157\%$ volatility ($0.000157$) is verified by an analytical error budget linking hardware approximations to volatility error via Vega sensitivities ($\Delta\sigma \approx \Delta C / \nu$):
@@ -359,7 +359,7 @@ The 4-core FPGA engine achieves 400.00~MOps/sec peak (390.62~MOps/sec net liquid
     \item \textbf{Deterministic Latency in HFT:} While an isolated CPU thread evaluating cached contracts achieves a median latency of $1.40\,\mu\text{s}$, single-tick profiling reveals that OS scheduling, thread preemption, and cache thrashing induce a 99.9th-percentile ($p99.9$) tail latency of $15.6\,\mu\text{s}$ and jitter spikes exceeding $300\,\mu\text{s}$, creating risk of missed quote cancellations and toxic fills. In contrast, our FPGA operates directly on streaming Ethernet AXI-Stream packets with \textbf{zero OS overhead and zero queuing jitter}: every transaction completes at an exact, deterministic latency of $2.27\,\mu\text{s}$ (227 cycles at 100~MHz on Artix-7) and $0.91\,\mu\text{s}$ (908~ns at 250~MHz on Alveo U50), breaking into sub-microsecond tick-to-trade execution.
 \end{itemize}
 
-\noindent\textbf{Architectural Positioning vs. GPUs:} While GPUs excel at batched forward pricing across millions of synthetic paths in offline portfolio risk analysis, they face fundamental bottlenecks in inline tick-to-trade market making. Real market ticks arrive sequentially over 10GbE lines, where PCIe batching introduces 15--50~$\mu$s of host-device roundtrip latency and iterative root-finding induces warp divergence across SIMT threads. Furthermore, 400~W GPU TDP strains strict 5--10~kW exchange co-location rack budgets. The proposed FPGA engine delivers a 12.5$\times$ energy efficiency advantage over estimated GPU forward pricing while guaranteeing cycle-deterministic latency with zero PCIe batching jitter, satisfying the strict real-time requirements of inline trading.
+\noindent\textbf{Architectural Positioning vs. GPUs:} While GPUs excel at batched forward pricing across millions of synthetic paths in offline portfolio risk analysis, they face fundamental bottlenecks in inline tick-to-trade market making. Real market ticks arrive sequentially over 10GbE lines, where PCIe batching introduces 15--50~$\mu$s of host-device roundtrip latency and iterative root-finding induces severe warp divergence across SIMT threads. Note that the $\sim 3{,}000\text{ MOps/s}$ GPU baseline reflects single-pass forward Black-Scholes pricing; implementing true iterative Newton-Raphson root inversion on GPU would suffer thread serialization across diverging strike iterations, further depressing sustained GPU throughput and efficiency. Furthermore, 400~W GPU TDP strains strict 5--10~kW exchange co-location rack budgets. The proposed FPGA engine delivers a 12.5$\times$ energy efficiency advantage over estimated GPU forward pricing while guaranteeing cycle-deterministic latency with zero PCIe batching jitter, satisfying the strict real-time requirements of inline trading.
 
 \subsection{Sub-Module Hardware Resource Breakdown}
 Table~\ref{tab:submodule} summarizes post-implementation resource distribution per core from the post-route hierarchical signoff report. The seven pipelined restoring dividers—computing (1)~initial guess ratio, (2)~Pad\'{e} ratio $(S{-}K)/(S{+}K)$, (3)~$d_1$ quotient, (4)~Horner CDF $t$-parameter for $d_1$, (5)~Horner CDF $t$-parameter for $d_2$, (6)~NR update step $\Delta\sigma$, and (7)~Gamma quotient—are implemented entirely in distributed slice logic, consuming zero DSP48E1 slices and reserving all 608 engine DSPs for Horner polynomial MAC chains. Per-core utilization averages 26,574 LUTs and 152 DSPs, summing across four cores to exactly 106,298 Slice LUTs (79.45\%) and 608 DSPs (82.16\%), matching Table~\ref{tab:util} with zero discrepancy.
@@ -390,15 +390,6 @@ AXI4-Stream Interface \& FIFOs   & 2,748 &  0 & 256-bit ingress \& 128-bit packe
 }
 \end{table}
 
-\subsection{Two-Tier HFT Architecture and Datacenter Scalability}
-In institutional electronic trading, hardware deployment splits into two distinct tiers: (1)~\textit{Tier-1 Inline SmartNIC Filtering} (half-height, half-length PCIe cards under strict 25~W thermal envelopes, e.g., AMD Solarflare / On-NIC FPGA mezzanine cards); and (2)~\textit{Tier-2 Centralized Co-Processing} (full-height 75--225~W datacenter accelerators, e.g., AMD Alveo U50 / VU9P). 
-
-The Artix-7 200T was selected deliberately as an extreme edge proof-of-concept for Tier-1 deployment: consuming only 4.258~W total on-chip power (17\% of a 25~W PCIe budget), the 4-core engine embeds directly alongside 10GbE network interfaces with zero thermal penalty. Crucially, the entire RTL is authored in vendor-agnostic SystemVerilog without proprietary hard IP, allowing seamless retargeting across silicon nodes without RTL modifications.
-
-To empirically demonstrate datacenter scalability beyond analytical projections, the 4-core engine was placed and routed on an AMD Alveo U50 card (\texttt{xcu50-fsvh2104-2-e}). On 16nm FinFET silicon, the critical path compresses to 3.910~ns, closing timing cleanly at 250.00~MHz ($WNS = +0.073\text{ ns}$, $F_{\max} = 254.65\text{ MHz}$) and delivering 1.00~Giga-Ops/sec at 9.560~W total power with strictly 0 BRAM and 0 URAM. The 4-core array occupies only 12.13\% of CLB LUTs and 576 DSP48E2 slices (9.68\% of U50 capacity; 144 DSPs/core vs. 152 on Artix-7 due to DSP48E2 pre-adder and wide multiplier absorption). Replicating to 32 parallel cores utilizes 4,608 DSPs (77.4\% of U50) and delivers \textbf{8.00 Giga-Ops/sec} peak throughput within a $\sim$65~W total board power budget (under the 75~W PCIe ceiling). On a Virtex UltraScale+ VU9P (6,840 DSPs, 1.18M LUTs), 44 cores deliver \textbf{11.00 Giga-Ops/sec}.
-
-Crucially, because the microarchitecture consumes strictly \textbf{0 Block RAMs and 0 UltraRAMs}, 100\% of on-chip UltraRAM and BRAM blocks remain fully available for 100GbE packet FIFOs, PCIe DMA descriptor rings, and full order-book depth tracking.
-
 \begin{table*}[t]
 \caption{Comparison with Prior FPGA Financial Accelerators}
 \label{tab:prior_art}
@@ -423,6 +414,15 @@ Tse et al.~\cite{tse2010customising} (2010) & Virtex-4 FX100 & Black-Scholes & F
 \footnotesize{\textsuperscript{1} Peak pipeline throughput at 100~MHz on Artix-7 (390.62~MOps/s net sustained liquid); 1,000.00~MOps/s peak at 250~MHz on Alveo U50 4-core array (8.00~GOps/s projected on 32-core array).\\
 \textsuperscript{*} Cold transaction latency from AXI4-Stream ingress registration to egress packing is 2.27~$\mu$s (227 cycles at 100~MHz) on Artix-7 and 0.91~$\mu$s (227 cycles at 250~MHz) on Alveo U50; core datapath latency is 1.26~$\mu$s (126 cycles) on Artix-7 and 0.50~$\mu$s on Alveo U50.}
 \end{table*}
+
+\subsection{Two-Tier HFT Architecture and Datacenter Scalability}
+In institutional electronic trading, hardware deployment splits into two distinct tiers: (1)~\textit{Tier-1 Inline SmartNIC Filtering} (half-height, half-length PCIe cards under strict 25~W thermal envelopes, e.g., AMD Solarflare / On-NIC FPGA mezzanine cards); and (2)~\textit{Tier-2 Centralized Co-Processing} (full-height 75--225~W datacenter accelerators, e.g., AMD Alveo U50 / VU9P). 
+
+The Artix-7 200T was selected deliberately as an extreme edge proof-of-concept for Tier-1 deployment: consuming only 4.258~W total on-chip power (17\% of a 25~W PCIe budget), the 4-core engine embeds directly alongside 10GbE network interfaces with zero thermal penalty. Crucially, the entire RTL is authored in vendor-agnostic SystemVerilog without proprietary hard IP, allowing seamless retargeting across silicon nodes without RTL modifications.
+
+To empirically demonstrate datacenter scalability beyond analytical projections, the 4-core engine was placed and routed on an AMD Alveo U50 card (\texttt{xcu50-fsvh2104-2-e}). On 16nm FinFET silicon, the critical path compresses to 3.910~ns, closing timing cleanly at 250.00~MHz ($WNS = +0.073\text{ ns}$, $F_{\max} = 254.65\text{ MHz}$) and delivering 1.00~Giga-Ops/sec at 9.560~W total power with strictly 0 BRAM and 0 URAM. The 4-core array occupies only 12.13\% of CLB LUTs and 576 DSP48E2 slices (9.68\% of U50 capacity; 144 DSPs/core vs. 152 on Artix-7 due to DSP48E2 pre-adder and wide multiplier absorption). Replicating to 32 parallel cores utilizes 4,608 DSPs (77.4\% of U50) and delivers \textbf{8.00 Giga-Ops/sec} peak throughput within a $\sim$65~W total board power budget (under the 75~W PCIe ceiling). On a Virtex UltraScale+ VU9P (6,840 DSPs, 1.18M LUTs), 44 cores deliver \textbf{11.00 Giga-Ops/sec}.
+
+Crucially, because the microarchitecture consumes strictly \textbf{0 Block RAMs and 0 UltraRAMs}, 100\% of on-chip UltraRAM and BRAM blocks remain fully available for 100GbE packet FIFOs, PCIe DMA descriptor rings, and full order-book depth tracking.
 
 \subsection{Comparison with Prior FPGA Accelerators}
 Table~\ref{tab:prior_art} compares this work against prior FPGA financial accelerators. As highlighted in recent survey literature by O'Mahony et al.~\cite{omahony2024role}, prior hardware implementations~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} focus either on forward-only pricing without root-finding or multi-section searching with significant embedded Block RAM consumption, which severely limits composability alongside 10GbE MAC and DMA infrastructure on production NICs. In contrast, our engine is the first to achieve 400~MOps/sec peak throughput (390.62~MOps/sec net sustained liquid) with concurrent Delta-Vega-Gamma extraction while strictly consuming Zero BRAM blocks. On the Alveo U50, throughput reaches 1,000.00~MOps/sec with 908~ns end-to-end latency, providing an $8.3\times$ throughput speedup over the 2022 Kintex UltraScale accelerator of Wang et al.~\cite{wang2022fpga} while completely eliminating block memory usage.
