@@ -8,10 +8,7 @@
 
 ## 1. Title
 
-> **A 400 MOps/sec Zero-BRAM FPGA Accelerator for Real-Time Option Implied Volatility and Full Greeks**
-
-*Alternative Title*:  
-> **FPGA-Accelerated Real-Time Implied Volatility Engine with Zero-BRAM Architecture and Full Greeks at 400 MOps/sec**
+> **A Zero-BRAM FPGA Accelerator for Low-Latency Option Implied Volatility and Delta-Vega-Gamma Greeks**
 
 ---
 
@@ -25,13 +22,13 @@ In the Softconf submission form, select from:
 
 ---
 
-## 3. Abstract (Text for Portal Form, ~240 words)
+## 3. Abstract (Text for Portal Form, synchronized with paper.tex)
 
-In electronic options markets and high-frequency trading (HFT), real-time pricing and risk hedging demand continuous calculation of implied volatility (IV) and higher-order Greeks ($\Delta, \Gamma, \nu$) under strict sub-microsecond latency and deterministic throughput. Because the Black-Scholes model lacks a closed-form inverse, numerical solvers like Newton-Raphson are computationally intense and prone to divergent oscillation when derivative Vega approaches zero. Software implementations on multi-core CPUs and data-center GPUs suffer from non-deterministic operating system scheduling, long kernel launch overheads, and prohibitive power consumption in thermal-constrained co-location racks.
+In electronic options markets and high-frequency trading (HFT), real-time pricing and risk hedging demand continuous calculation of implied volatility (IV) and higher-order Greeks ($\Delta, \Gamma, \nu$) under strict low latency and deterministic throughput. Because the Black-Scholes model lacks a closed-form inverse, numerical solvers like Newton-Raphson are computationally intense and prone to divergent oscillation when Vega approaches zero. Software implementations on multi-core CPUs and GPUs suffer from non-deterministic OS scheduling jitter, kernel launch overheads, and prohibitive power consumption in thermal-constrained co-location racks.
 
-This paper presents a fully pipelined, four-core FPGA acceleration engine for real-time implied volatility and Greeks calculation. The architecture introduces three key contributions: (1) a dedicated closed-form Brenner-Subrahmanyam analytical guess generator providing quadratic Newton-Raphson convergence across near-the-money regimes; (2) scale-invariant fixed-point normalization ($\tilde{S} = S/K$) in Q8.24 precision, preventing dynamic range overflow while avoiding costly multi-precision arithmetic; and (3) an exclusive Zero-BRAM microarchitecture utilizing distributed LUTRAM and SRL32 shift registers for pipeline context storage, completely freeing on-chip block RAMs for network MAC and PCIe DMA infrastructure.
+This paper presents a fully pipelined, four-core FPGA acceleration engine for real-time implied volatility and Greeks calculation. The architecture introduces three key contributions: (1) a dedicated closed-form Brenner-Subrahmanyam analytical guess generator placing the initial estimate within the local quadratic convergence basin across near-the-money regimes; (2) scale-invariant fixed-point normalization ($\tilde{S} = S/K$) in Q8.24 precision, bounding dynamic range while avoiding costly multi-precision arithmetic; and (3) a zero-BRAM microarchitecture utilizing distributed LUTRAM and SRL32 shift registers for pipeline context storage, completely freeing on-chip block RAMs for network MAC and PCIe DMA infrastructure.
 
-Implemented and physically placed-and-routed on an AMD Xilinx Artix-7 200T FPGA (`xc7a200tffg1156-3`), the 4-core engine achieves timing closure at 100 MHz with positive slack ($WNS = +0.005\text{ ns}$), delivering 400.00 MOps/sec sustained throughput at a deterministic 1.26 $\mu$s latency. Extensive DPI-C co-simulation over 10,000 synthetic option contracts demonstrates institutional-grade accuracy with a Mean Absolute Error of 0.0157% volatility (99.9% of contracts within 1% error). Operating at 4.258 W total power, the engine achieves 93,940 kOps/W—demonstrating a 28.1$\times$ throughput speedup and a 297$\times$ energy efficiency advantage over a 16-thread AVX2 host CPU.
+Implemented on an AMD Xilinx Artix-7 200T FPGA (\texttt{xc7a200tffg1156-3}), the 4-core engine closes timing at 100~MHz ($WNS = +0.005\text{ ns}$), delivering 400.00~MOps/s peak throughput (390.62~MOps/s net liquid; 360.69~MOps/s blended) with cycle-deterministic execution per pass. DPI-C co-simulation over 10,000 contracts verifies high precision ($MAE = 0.0157\%$ volatility liquid, $0.0162\%$ blended; 99.9\% of contracts within 1\% error). At 4.258~W total power, the engine achieves 93,940~kOps/W peak (91,738~kOps/W net liquid)---demonstrating a 28.1$\times$ throughput speedup and substantial energy efficiency gains over an edge AVX2 host CPU. Furthermore, physical signoff on an AMD Alveo U50 datacenter card (\texttt{xcu50-fsvh2104-2-e}) closes timing at 250~MHz ($WNS = +0.073\text{ ns}$), scaling throughput to 1.00~GOps/s on 4 cores (projected to 8.00~GOps/s on 32 cores) at 9.56~nJ/op with sub-microsecond cold latency (0.91~$\mu$s) and strictly Zero BRAM and Zero UltraRAM.
 
 ---
 
