@@ -241,12 +241,12 @@ ax.add_patch(s4)
 ax.text(115, 62.5, 'Stage 4: NR Update & Dividers\n(33 Cycles)',
         ha='center', va='center', fontsize=9.0, fontweight='bold', color='#134713')
 ax.text(115, 49.5,
-        '\u2022 Convergence: ' + r'$|C_{\mathrm{BS}} - C_{\mathrm{mkt}}| \leq \$0.01$' + '\n'
-        '\u2022 Concurrent u_nr_divider (Err / Vega)\n'
-        '\u2022 Concurrent u_gamma_divider (Gamma)\n'
-        '\u2022 Delta: N(d1), Vega: ' + r'$S\sqrt{T}\,\phi(d_1)$' + '\n'
-        '\u2022 TID-Scoreboard Priority Loopback',
-        ha='center', va='center', fontsize=7.2, linespacing=1.32)
+        '• Convergence: ' + r'$|C_{\mathrm{BS}} - C_{\mathrm{mkt}}| \leq \$0.01$' + '\n'
+        '• u_nr_divider: ' + r'$\Delta\sigma = (C_{\mathrm{BS}} - C_{\mathrm{mkt}})/\nu$' + '\n'
+        '• u_gamma_divider: ' + r'$\Gamma = \phi(d_1)/(S\sigma\sqrt{T})$' + '\n'
+        '• Greeks: ' + r'$\Delta = N(d_1)$' + ', ' + r'$\nu = S\sqrt{T}\phi(d_1)$' + '\n'
+        '• TID-Scoreboard Priority Loopback',
+        ha='center', va='center', fontsize=7.1, linespacing=1.32)
 
 # --- Stage 5: Multi-Core Arbiter & 128-Bit Egress (x=98, bottom row) ---
 s5 = patches3.FancyBboxPatch((98, 6), 34, 28,
@@ -312,13 +312,13 @@ ax.annotate('', xy=(140, 20.0), xytext=(132, 20.0),
 ax.text(142.0, 20.0, r'AXI4-Stream Egress' + '\n' + r'(128-bit $\sigma$ + Full Greeks)',
         ha='left', va='center', fontsize=8.5, fontweight='bold', color='#0e565d')
 
-fig3_png = os.path.join(out_dir, "fig3_architecture_block_diagram.png")
-fig3_pdf = os.path.join(out_dir, "fig3_architecture_block_diagram.pdf")
-plt.savefig(fig3_png, bbox_inches='tight')
-plt.savefig(fig3_pdf, bbox_inches='tight')
+target_dirs = [out_dir, os.path.dirname(__file__)]
+for d in target_dirs:
+    for name in ['fig1_architecture_block_diagram', 'fig3_architecture_block_diagram']:
+        plt.savefig(os.path.join(d, f"{name}.png"), bbox_inches='tight')
+        plt.savefig(os.path.join(d, f"{name}.pdf"), bbox_inches='tight')
 plt.close()
-print(f"Saved: {fig3_png} and {fig3_pdf}")
-print("All 3 figures successfully updated!")
+print("All figures successfully updated across all paths!")
 
 
 

@@ -88,8 +88,8 @@ s4 = patches.FancyBboxPatch((98, 40), 34, 28, boxstyle='round,pad=0.8,rounding_s
 ax.add_patch(s4)
 ax.text(115, 62.8, 'Stage 4: NR Update & Dividers\n(33 Cycles)',
         ha='center', va='center', fontsize=9.2, fontweight='bold', color='#134713')
-ax.text(115, 49.5, '• Convergence: ' + r'$|C_{\mathrm{BS}} - C_{\mathrm{mkt}}| \leq 0.0100$' + '\n• Concurrent ' + r'$\mathbf{u\_nr\_divider}$' + ' (Err / Vega)\n• Concurrent ' + r'$\mathbf{u\_gamma\_divider}$' + ' (Gamma)\n• Delta: N(d1), Vega: ' + r'$S\sqrt{T}\phi(d_1)$' + '\n• TID-Scoreboard Priority Loopback',
-        ha='center', va='center', fontsize=7.4, linespacing=1.35)
+ax.text(115, 49.5, '• Convergence: ' + r'$|C_{\mathrm{BS}} - C_{\mathrm{mkt}}| \leq \$0.01$' + '\n• ' + r'$\mathbf{u\_nr\_divider}$' + ': ' + r'$\Delta\sigma = (C_{\mathrm{BS}} - C_{\mathrm{mkt}})/\nu$' + '\n• ' + r'$\mathbf{u\_gamma\_divider}$' + ': ' + r'$\Gamma = \phi(d_1)/(S\sigma\sqrt{T})$' + '\n• Greeks: ' + r'$\Delta = N(d_1)$' + ', ' + r'$\nu = S\sqrt{T}\phi(d_1)$' + '\n• TID-Scoreboard Priority Loopback',
+        ha='center', va='center', fontsize=7.1, linespacing=1.35)
 
 # Stage 5: Multi-Core Arbiter & 128-Bit Egress (2 Cycles)
 s5 = patches.FancyBboxPatch((98, 6), 34, 28, boxstyle='round,pad=0.8,rounding_size=1.5',
@@ -147,7 +147,8 @@ ax.annotate('', xy=(140, 20.0), xytext=(132, 20.0),
 ax.text(142.0, 20.0, r'AXI4-Stream Egress' + '\n' + r'(128-bit $\sigma$ + Full Greeks)',
         ha='left', va='center', fontsize=8.8, fontweight='bold', color='#0e565d')
 
-# Save to paper/figures
+# Save to both paper/figures and paper/ root
+target_dirs = [out_dir, os.path.dirname(__file__)]
 target_names = [
     'fig1_architecture_block_diagram.png',
     'fig1_architecture_block_diagram.pdf',
@@ -155,9 +156,10 @@ target_names = [
     'fig3_architecture_block_diagram.pdf',
 ]
 
-for name in target_names:
-    path = os.path.join(out_dir, name)
-    plt.savefig(path, bbox_inches='tight')
+for d in target_dirs:
+    for name in target_names:
+        path = os.path.join(d, name)
+        plt.savefig(path, bbox_inches='tight')
 
 brain_dir = r'C:\Users\user\.gemini\antigravity\brain\3d06b5ef-1fd4-4b4a-a013-6c9e48e16291'
 plt.savefig(os.path.join(brain_dir, 'fig1_architecture_block_diagram.png'), bbox_inches='tight')
