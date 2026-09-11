@@ -42,6 +42,21 @@ static double g_sum_rel_err  = 0.0;
 static int    g_pass_1pct    = 0;   /* |err| < 0.01 */
 static int    g_pass_10pct   = 0;   /* |err| < 0.10 */
 
+static double g_all_abs_err[MAX_TRANSACTIONS];
+static double g_liq_abs_err[MAX_TRANSACTIONS];
+static double g_wing_abs_err[MAX_TRANSACTIONS];
+static double g_fpga_iv[MAX_TRANSACTIONS];
+static int    g_liq_cnt  = 0;
+static int    g_wing_cnt = 0;
+
+static int compare_doubles(const void *a, const void *b) {
+    double da = *(const double *)a;
+    double db = *(const double *)b;
+    if (da < db) return -1;
+    if (da > db) return 1;
+    return 0;
+}
+
 /* -------------------------------------------------------
  * Standard Normal PDF: phi(x) = exp(-x^2/2) / sqrt(2*pi)
  * ------------------------------------------------------- */
@@ -151,6 +166,8 @@ void golden_init_test_vectors(int num_ticks) {
     g_sum_rel_err = 0.0;
     g_pass_1pct   = 0;
     g_pass_10pct  = 0;
+    g_liq_cnt     = 0;
+    g_wing_cnt    = 0;
 
     /* Seed for reproducibility — same pattern as benchmark_accuracy.py */
     srand(42);
@@ -158,8 +175,8 @@ void golden_init_test_vectors(int num_ticks) {
     for (int i = 0; i < num_ticks; i++) {
         /* S ∈ [20.0, 80.0] - safe within Q8.24 range */
         double S = 20.0 + (60.0 * rand()) / (double)RAND_MAX;
-        /* Moneyness K/S ∈ [0.90, 1.10] (near the money) */
-        double k_ratio = 0.90 + (0.20 * rand()) / (double)RAND_MAX;
+        /* Moneyness K/S ∈ [0.70, 1.40] */
+        double k_ratio = 0.70 + (0.70 * rand()) / (double)RAND_MAX;
         double K = S * k_ratio;
         /* T ∈ [0.1, 1.5] years */
         double T = 0.10 + (1.40 * rand()) / (double)RAND_MAX;
@@ -188,7 +205,7 @@ void golden_init_test_vectors(int num_ticks) {
         g_ref_iv[i] = true_iv;
     }
 
-    printf("[GOLDEN] Initialized %d test vectors (seed=42).\n", num_ticks);
+    printf("[GOLDEN] Initialized %d test vectors with K/S in [0.70, 1.40] (seed=42).\n", num_ticks);
     fflush(stdout);
 }
 
@@ -224,6 +241,16 @@ void golden_push_result(uint32_t result_sigma_q824, int tick_index) {
     if (abs_err < 0.01)  g_pass_1pct++;
     if (abs_err < 0.10)  g_pass_10pct++;
 
+    g_all_abs_err[g_result_cnt] = abs_err;
+    g_fpga_iv[tick_index] = fpga_sigma;
+
+    double sk = g_ticks[tick_index].S / g_ticks[tick_index].K;
+    if (sk >= 0.85 && sk <= 1.15) {
+        g_liq_abs_err[g_liq_cnt++] = abs_err;
+    } else {
+        g_wing_abs_err[g_wing_cnt++] = abs_err;
+    }
+
     g_result_cnt++;
 }
 
@@ -242,21 +269,101 @@ void golden_print_report(void) {
     double pct_1   = 100.0 * g_pass_1pct  / g_result_cnt;
     double pct_10  = 100.0 * g_pass_10pct / g_result_cnt;
 
+    /* Sort arrays for exact percentiles */
+    qsort(g_all_abs_err, g_result_cnt, sizeof(double), compare_doubles);
+    if (g_liq_cnt > 0) qsort(g_liq_abs_err, g_liq_cnt, sizeof(double), compare_doubles);
+    if (g_wing_cnt > 0) qsort(g_wing_abs_err, g_wing_cnt, sizeof(double), compare_doubles);
+
+    double p50_all = g_all_abs_err[g_result_cnt / 2];
+    double p95_all = g_all_abs_err[(int)(0.95 * g_result_cnt)];
+    double p99_all = g_all_abs_err[(int)(0.99 * g_result_cnt)];
+    double max_all = g_all_abs_err[g_result_cnt - 1];
+
+    /* Liquid statistics */
+    double liq_mae = 0.0, liq_p50 = 0.0, liq_p95 = 0.0, liq_max = 0.0;
+    int liq_1pct = 0;
+    if (g_liq_cnt > 0) {
+        double liq_sum = 0.0;
+        for (int i = 0; i < g_liq_cnt; i++) {
+            liq_sum += g_liq_abs_err[i];
+            if (g_liq_abs_err[i] < 0.01) liq_1pct++;
+        }
+        liq_mae = liq_sum / g_liq_cnt;
+        liq_p50 = g_liq_abs_err[g_liq_cnt / 2];
+        liq_p95 = g_liq_abs_err[(int)(0.95 * g_liq_cnt)];
+        liq_max = g_liq_abs_err[g_liq_cnt - 1];
+    }
+
+    /* Wing statistics */
+    double wing_mae = 0.0, wing_p50 = 0.0, wing_p95 = 0.0, wing_max = 0.0;
+    int wing_1pct = 0;
+    if (g_wing_cnt > 0) {
+        double wing_sum = 0.0;
+        for (int i = 0; i < g_wing_cnt; i++) {
+            wing_sum += g_wing_abs_err[i];
+            if (g_wing_abs_err[i] < 0.01) wing_1pct++;
+        }
+        wing_mae = wing_sum / g_wing_cnt;
+        wing_p50 = g_wing_abs_err[g_wing_cnt / 2];
+        wing_p95 = g_wing_abs_err[(int)(0.95 * g_wing_cnt)];
+        wing_max = g_wing_abs_err[g_wing_cnt - 1];
+    }
+
     printf("\n");
     printf("=================================================================\n");
-    printf("  DPI-C Co-Simulation Accuracy Report\n");
+    printf("  DPI-C Co-Simulation Accuracy Report (Wide Moneyness: K/S in [0.70, 1.40])\n");
     printf("  Transactions: %d sent / %d results received\n",
            g_num_ticks, g_result_cnt);
     printf("-----------------------------------------------------------------\n");
-    printf("  Mean Absolute Error (MAE)  : %.6f  (%.4f%% vol)\n",
+    printf("  Overall Population (%d contracts):\n", g_result_cnt);
+    printf("    Mean Absolute Error (MAE)  : %.6f  (%.4f%% vol)\n",
            mae, mae * 100.0);
-    printf("  Root Mean Square Error     : %.6f\n", rmse);
-    printf("  Mean Relative Error (MRE)  : %.4f%%\n", mre);
-    printf("  Within 1.0%% vol error     : %.1f%% of contracts\n", pct_1);
-    printf("  Within 10.0%% vol error    : %.1f%% of contracts\n", pct_10);
+    printf("    Root Mean Square Error     : %.6f\n", rmse);
+    printf("    Mean Relative Error (MRE)  : %.4f%%\n", mre);
+    printf("    Median Absolute Error      : %.6f  (%.4f%% vol)\n",
+           p50_all, p50_all * 100.0);
+    printf("    95th Percentile Error      : %.6f\n", p95_all);
+    printf("    99th Percentile Error      : %.6f\n", p99_all);
+    printf("    Maximum Absolute Error     : %.6f\n", max_all);
+    printf("    Within 1.0%% vol error     : %.1f%% of contracts\n", pct_1);
+    printf("    Within 10.0%% vol error    : %.1f%% of contracts\n", pct_10);
+    printf("-----------------------------------------------------------------\n");
+    printf("  Regime Breakdown:\n");
+    printf("  - Liquid Regime (0.85 <= S/K <= 1.15): %d contracts (%.1f%%)\n",
+           g_liq_cnt, 100.0 * g_liq_cnt / g_result_cnt);
+    printf("      MAE: %.6f (%.4f%% vol)\n", liq_mae, liq_mae * 100.0);
+    printf("      Median: %.6f, 95th-Pct: %.6f, Max: %.6f\n", liq_p50, liq_p95, liq_max);
+    printf("      Within 1.0%% vol: %.1f%%\n", 100.0 * liq_1pct / (g_liq_cnt > 0 ? g_liq_cnt : 1));
+    printf("  - Deep Wings (S/K < 0.85 or S/K > 1.15): %d contracts (%.1f%%)\n",
+           g_wing_cnt, 100.0 * g_wing_cnt / g_result_cnt);
+    printf("      MAE: %.6f (%.4f%% vol)\n", wing_mae, wing_mae * 100.0);
+    printf("      Median: %.6f, 95th-Pct: %.6f, Max: %.6f\n", wing_p50, wing_p95, wing_max);
+    printf("      Within 1.0%% vol: %.1f%%\n", 100.0 * wing_1pct / (g_wing_cnt > 0 ? g_wing_cnt : 1));
     printf("=================================================================\n");
     printf("  PASS criterion: MAE < 0.005 (0.5%% vol) — %s\n",
            mae < 0.005 ? "*** PASS ***" : "!!! FAIL !!!");
     printf("=================================================================\n");
+
+    /* Export full results to CSV */
+    FILE *fcsv = fopen("sim_results/dpi_10k_results.csv", "w");
+    if (fcsv) {
+        fprintf(fcsv, "tick,S,K,moneyness_SK,moneyness_KS,T,r,true_iv,fpga_iv,abs_err,is_liquid\n");
+        for (int i = 0; i < g_result_cnt; i++) {
+            double s = g_ticks[i].S;
+            double k = g_ticks[i].K;
+            double sk = s / k;
+            double ks = k / s;
+            double t = g_ticks[i].T;
+            double r = g_ticks[i].r;
+            double t_iv = g_ref_iv[i];
+            double f_iv = g_fpga_iv[i];
+            double err = fabs(f_iv - t_iv);
+            int is_liq = (sk >= 0.85 && sk <= 1.15) ? 1 : 0;
+            fprintf(fcsv, "%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.6f,%.6f,%.6f,%d\n",
+                    i, s, k, sk, ks, t, r, t_iv, f_iv, err, is_liq);
+        }
+        fclose(fcsv);
+        printf("[GOLDEN] Exported full tick results to sim_results/dpi_10k_results.csv\n");
+    }
     fflush(stdout);
 }
