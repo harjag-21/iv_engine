@@ -118,9 +118,9 @@ where $N(x) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{x} e^{-u^2/2} du$ is the cum
 \begin{equation}
 d_1 = \frac{\ln(S/K) + \left(r + \frac{1}{2}\sigma^2\right)T}{\sigma \sqrt{T}}, \quad d_2 = d_1 - \sigma \sqrt{T}
 \end{equation}
-Note that $d_2$ is computed strictly as a subtraction $d_1 - \sigma\sqrt{T}$, directly reusing the intermediate calculation of $d_1$ without duplicating the 33-cycle division datapath. The corresponding primary Greeks evaluated concurrently are:
+Note that $d_2$ is computed strictly as a subtraction $d_1 - \sigma\sqrt{T}$, directly reusing intermediate $d_1$ without duplicating the 33-cycle divider. The primary Greeks ($\Delta = \partial C/\partial S$, $\nu = \partial C/\partial \sigma$, $\Gamma = \partial^2 C/\partial S^2$) evaluate concurrently as:
 \begin{equation}
-\Delta = \frac{\partial C}{\partial S} = N(d_1), \quad \nu = \frac{\partial C}{\partial \sigma} = S \sqrt{T} N'(d_1), \quad \Gamma = \frac{\partial^2 C}{\partial S^2} = \frac{N'(d_1)}{S \sigma \sqrt{T}}
+\Delta = N(d_1), \quad \nu = S \sqrt{T} N'(d_1), \quad \Gamma = \frac{N'(d_1)}{S \sigma \sqrt{T}}
 \end{equation}
 where $N'(x) = \frac{1}{\sqrt{2\pi}} e^{-x^2/2}$ is the standard normal PDF. The interest-rate sensitivity Rho ($\rho = \partial C/\partial r = K T e^{-rT} N(d_2)$) exhibits near-zero intraday variance in high-frequency trading because benchmark rates are fixed during exchange sessions; nonetheless, because $K, T, e^{-rT},$ and $N(d_2)$ are already available in Stage~3, $\rho$ evaluates via two multipliers without requiring any additional division resources. By Put-Call parity ($C - P = S - K e^{-rT}$), Put option IV and Vega/Gamma are identical to Call values ($\Delta_{\text{put}} = \Delta_{\text{call}} - 1$), allowing Puts to map directly via single-cycle pre-ingress addition.
 
