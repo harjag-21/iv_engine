@@ -96,7 +96,7 @@ Here, 1 Operation (Op) evaluates a single contract: IV root inversion and concur
 
 \subsection{Key Contributions}
 \begin{itemize}
-    \item \textbf{Analytical Guess Engine:} Brenner-Subrahmanyam seeder initializes within relative error $\le 0.5\%$ in the liquid near-the-money regime ($0.85 \le S/K \le 1.15$, $\le 0.08$ absolute vol in wings), enabling 97.6\% 1-pass convergence while forwarding shared $\sqrt{T}$.
+    \item \textbf{Analytical Guess Engine:} Brenner-Subrahmanyam seeder is tailored for low relative error in the liquid near-the-money regime, enabling 97.6\% 1-pass convergence while forwarding shared $\sqrt{T}$.
     \item \textbf{Scale-Invariant Normalization:} Exploiting Black-Scholes linear homogeneity ($\tilde{S} = S/K, \tilde{K} = 1.0, \tilde{C} = C/K$) bounds dynamic range strictly within Q8.24, supporting high-notional contracts without multi-precision arithmetic.
     \item \textbf{Zero-BRAM Microarchitecture:} Context buffers map to distributed LUTRAM/SRL32 registers (\texttt{ram\_style = \"distributed\"}), consuming 0 BRAMs and leaving dedicated on-chip block RAMs completely available for external packet and DMA buffers.
     \item \textbf{Dual-Platform Timing Signoff:} Implemented on Artix-7 200T at 100~MHz (400~MOps/s, 4.258~W post-route power estimate, $WNS=+0.005\text{ ns}$) and Alveo U50 at 250~MHz (1.00~GOps/s, 9.56~W post-route estimate, $WNS=+0.073\text{ ns}$) with 0 BRAM/URAM. DPI-C co-simulation confirms $1.57 \times 10^{-4}$ absolute volatility MAE, yielding a peak throughput of 400~MOps/s (28.1$\times$ the companion AVX2 CPU throughput).
@@ -130,7 +130,7 @@ Standard Newton-Raphson update steps follow $\sigma_{n+1} = \sigma_n - [C_{\text
 \begin{equation}
 \sigma_0 = \frac{\sqrt{2\pi}}{\sqrt{T}} \cdot \frac{C_{\text{mkt}}}{(S + K)/2} \approx \frac{2.5066}{\sqrt{T}} \cdot \frac{C_{\text{mkt}}}{(S + K)/2}
 \end{equation}
-Evaluated in dedicated hardware in 64 clock cycles, this closed-form seed initializes the solver with relative error $\le 0.5\%$ across active expiries in the liquid near-the-money regime ($0.85 \le S/K \le 1.15$, $T \ge 0.02$ years), and absolute error bounded within $0.08$ volatility points across extreme wings. This enables single-pass convergence for 97.6\% of liquid quotes (deep wings average 2.1 passes).
+Evaluated in dedicated hardware in 64 clock cycles, this closed-form seed provides an accurate starting point in the liquid near-the-money regime ($0.85 \le S/K \le 1.15$) and safe initialization in extreme wings, directly enabling single-pass convergence for 97.6\% of liquid quotes (deep wings average 2.1 passes).
 
 \subsection{High-Speed Polynomial and Elementary Function Evaluation}
 \begin{itemize}
@@ -183,7 +183,7 @@ Loopback does not stall the Stage-3 $II=1$ datapath; however, each loopback cons
 
 \textbf{Liquid Trading ($S/K \in [0.85, 1.15]$):} 97.6\% of contracts converge in 1 pass and 2.4\% require 2 passes (1.024 slots/contract). Across 4 cores at 100~MHz, net sustained throughput is $T_{\text{net, liquid}} = \frac{400.00\text{ MOps/s}}{1 + 0.024} = \mathbf{390.62\text{ MOps/s}}$.
 
-\textbf{Extended-Domain Projection:} For contracts in the deep-wing regime ($|S/K - 1| > 0.15$), the 18-cycle CORDIC logarithm fallback engages and Vega diminishes ($\nu < 0.05$), requiring an average of 2.1 passes. A behavioral projection assuming 100\% deep-wing traffic gives $\frac{400.00}{2.0} = \mathbf{200.00\text{ MOps/s}}$ lower-bound throughput, still $14.1\times$ faster than the 16-thread host CPU. For a realistic population combining liquid and deep-wing contracts (e.g., 92.1\% liquid, 7.9\% wings), average slots/contract $\bar{P} = 0.921(1.024) + 0.079(2.100) = 1.109$, yielding $\mathbf{360.69\text{ MOps/s}}$ blended net throughput.
+\textbf{Extended-Domain Projection:} For contracts in the deep-wing regime ($|S/K - 1| > 0.15$), the 18-cycle CORDIC logarithm fallback engages and Vega diminishes ($\nu < 0.05$), requiring an average of 2.1 passes. A behavioral projection assuming 100\% deep-wing traffic gives $\frac{400.00}{2.0} = \mathbf{200.00\text{ MOps/s}}$ lower-bound throughput, still $14.1\times$ faster than the 16-thread host CPU. For the measured extended-domain population, combining 43.9\% liquid and 56.1\% deep-wing contracts gives an average scheduling cost of $\bar{P} = 0.439(1.024) + 0.561(2.100) = 1.628$ slots/contract, yielding approximately \textbf{245.8~MOps/s blended net throughput} on Artix-7 and \textbf{614.4~MOps/s} on Alveo U50.
 
 % -------------------------------------------------------------------------
 \section{Physical Implementation \& Timing Closure}
@@ -311,7 +311,7 @@ Evaluation Target & Iterative IV (Newton-Raphson) & Forward Pricing Only\textsup
 Clock Frequency & 4.50 GHz (Turbo) & 1.41 GHz & 100.00 MHz ($T_{\text{clk}}=10.0$ ns) & 250.00 MHz ($T_{\text{clk}}=4.0$ ns) \\
 \midrule
 Peak Throughput (Speedup vs. CPU\textsuperscript{1}) & 14.22 MOps/s ($1.0\times$) & $\sim$3,000 MOps/s & \textbf{400.00 MOps/s (28.1$\times$)} & \textbf{1,000.00 MOps/s (70.3$\times$ / 562.6$\times$\textsuperscript{\ddag} @ 32c)} \\
-Net Sustained Throughput & 14.22 MOps/s & --- & \textbf{390.62 (Liquid) / 360.69 (Blended)} & \textbf{976.56 (Liquid) / 901.71 (Blended)} \\
+Net Sustained Throughput\textsuperscript{3} & 14.22 MOps/s & --- & \textbf{390.62 (Liquid) / 245.8 (Extended)} & \textbf{976.56 (Liquid) / 614.4 (Extended)} \\
 Total Device Power & 45.0 W (TDP) & 400.0 W (TDP) & \textbf{4.258 W (Vivado Post-Route)} & \textbf{9.560 W (Vivado Post-Route)} \\
 Energy Efficiency (Gain vs. CPU) & 316 kOps/W ($1.0\times$) & $\sim$7,500 kOps/W ($23.7\times$) & \textbf{93,940 kOps/W (297$\times$ pk / 290$\times$ net)} & \textbf{104,602 kOps/W (331$\times$ 4c / 389$\times$ 32c)} \\
 Energy per Operation & 3,164.5 nJ / op & $\sim$133.3 nJ / op & \textbf{10.65 nJ / op} & \textbf{9.56 nJ / op} \\
@@ -325,7 +325,7 @@ On-Chip BRAM / URAM & N/A & N/A & \textbf{0 BRAM} & \textbf{0 BRAM, 0 URAM} \\
 \vspace{0.1ex}
 
 \raggedright
-\scriptsize{\textsuperscript{1} Measured via OpenMP/AVX2 on i5-12500H across 2,000,000 contracts (representative companion edge host). \textsuperscript{2} GPU baseline denotes single-pass forward pricing from NVIDIA CUDA SDK Black-Scholes benchmark sample~\cite{cuda2023samples}; iterative IV inversion is not benchmarked with matching methodology.}
+\scriptsize{\textsuperscript{1} Measured via OpenMP/AVX2 on i5-12500H across 2,000,000 contracts (representative companion edge host). \textsuperscript{2} GPU baseline denotes single-pass forward pricing from NVIDIA CUDA SDK Black-Scholes benchmark sample~\cite{cuda2023samples}; iterative IV inversion is not benchmarked with matching methodology. \textsuperscript{3} Extended net sustained throughput evaluates the measured 43.9\% liquid / 56.1\% deep-wing population ($\bar{P}=1.628$ slots/contract).}
 \end{table*}
 
 \begin{figure}[t]
@@ -344,7 +344,7 @@ The 4-core FPGA engine achieves 400.00~MOps/s peak (390.62~MOps/s net liquid) at
     \item \textbf{Deterministic Accelerator Latency:} The CPU baseline provides a software throughput reference, but thread scheduling and cache state cause latency jitter. In contrast, our FPGA accelerator exposes a fixed-cycle hardware datapath with \textbf{no software scheduling overhead}: 97.6\% of liquid quotes complete in a single 2.27~$\mu$s pass on Artix-7 and \textbf{0.91~$\mu$s} on Alveo U50 (227 cycles cold, 159 loopback), achieving sub-microsecond accelerator ingress-to-egress datapath latency (external network PHY, MAC framing, feed handling, and host transfers are outside the accelerator boundary).
 \end{itemize}
 
-\noindent\textbf{Architectural Positioning vs. GPUs:} While GPUs excel at batched forward pricing across millions of synthetic paths in offline risk analysis, inline streaming options processing demands low-latency tick evaluation. Furthermore, 400~W GPU power is prohibitive in power-constrained colocation racks. We use the A100 only as a contextual forward-pricing reference rather than an equivalent IV+Greeks benchmark; even against this baseline, the FPGA provides superior energy efficiency while avoiding host-device transfers and kernel-batching mechanisms, maintaining deterministic hardware control flow.
+\noindent\textbf{Architectural Positioning vs. GPUs:} While GPUs excel at batched forward pricing across millions of synthetic paths in offline risk analysis, inline streaming options processing demands low-latency tick evaluation. The A100 result is therefore included only as a contextual forward-pricing reference rather than an equivalent IV+Greeks benchmark. The FPGA avoids host-device transfers and kernel-batching mechanisms while maintaining deterministic hardware control flow.
 
 \subsection{Sub-Module Hardware Resource Breakdown}
 Table~\ref{tab:submodule} summarizes post-implementation resource distribution per core. The seven pipelined non-restoring dividers—computing guess ratio, Pad\'{e} ratio, $d_1$ normal deviate, CDF polynomial terms, NR step $\Delta\sigma$, and Gamma quotient—are implemented in distributed slice logic, consuming 0 DSPs. The 608 DSPs are distributed across the Horner normal CDF MAC chains (384), Black-Scholes datapath multipliers (176), the square-root/seeder unit (32), and CORDIC scaling stages (16). Sub-module logic scales symmetrically across cores ($\approx 26.6\text{k}$ LUTs and 152 DSPs/core), bringing total chip utilization to 106,298 Slice LUTs (79.45\%) and 608 DSPs (82.16\%) as reported in Table~\ref{tab:util}.
@@ -378,7 +378,7 @@ Tse et al.~\cite{tse2010customising} (2010) & Virtex-4 FX100 & BS / Forward Pass
 \vspace{0.0ex}
 
 \raggedright
-\scriptsize{\textsuperscript{\dag} 390.62~MOps/s net sustained liquid accounting for 2.4\% loopbacks. \textsuperscript{\ddag} Linear projection based on available DSP slices.}
+\scriptsize{\textsuperscript{\dag} 390.62~MOps/s net sustained liquid (245.8~MOps/s under the measured 43.9\% liquid / 56.1\% deep-wing population). \textsuperscript{\ddag} Linear projection based on available DSP slices.}
 \end{table}
 
 Table~\ref{tab:prior_art} compares this work against prior FPGA accelerators~\cite{omahony2024role}. Prior implementations~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} focus on forward pricing or multi-section methods with heavy Block RAM consumption. In contrast, our engine achieves 400~MOps/s peak (390.62~MOps/s net liquid) with concurrent Greeks while consuming strictly Zero BRAM blocks. On Alveo U50, throughput reaches 1.00~GOps/s with 0.91~$\mu$s (227 cycles) cold latency, delivering 8.3$\times$ the reported throughput of Wang et al.~\cite{wang2022fpga} (although target devices and algorithmic workloads differ) with zero block memory usage.
