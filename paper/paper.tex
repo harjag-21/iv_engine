@@ -55,7 +55,7 @@
 \renewenvironment{thebibliography}[1]{%
   \begin{oldthebibliography}{#1}%
     \scriptsize
-    \setlength{\itemsep}{-1.2pt}%
+    \setlength{\itemsep}{-1.5pt}%
     \setlength{\parskip}{0pt}%
 }{%
   \end{oldthebibliography}%
@@ -89,7 +89,7 @@ FPGA Acceleration, High-Frequency Trading, Implied Volatility, Option Greeks, Bl
 % -------------------------------------------------------------------------
 \begin{figure*}[t]
 \centering
-\includefigfile[width=0.46\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
+\includefigfile[width=0.42\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
 \caption{Microarchitecture of the 4-Core Pipelined Implied Volatility and Greeks Engine, illustrating scale-invariance normalization, Brenner-Subrahmanyam analytical guess generator with shared $\sqrt{T}$ path, pipelined datapath, Zero-BRAM distributed context store, and 128-bit egress bus.}
 \label{fig:arch}
 \end{figure*}
@@ -158,7 +158,7 @@ The seeder evaluates Eq.~(4): $\sigma_0 = \frac{2.5066}{\sqrt{T}} \frac{C_{\text
 The core datapath is a 126-cycle fully unrolled feedforward pipeline with Initiation Interval $II = 1$ (accepting one contract/cycle). Sub-operations are partitioned across registered boundaries. For deep wings ($|S-K|/K > 0.15$), the 18-cycle CORDIC logarithm is latency-matched via SRL15 to 33 cycles, maintaining 126-cycle deterministic latency across 100\% of transactions.
 
 \subsection{Zero-BRAM Context Memory Architecture}
-Conventional designs map FIFOs to Block RAMs (RAMB18/36), which are critical for 10GbE MAC and PCIe DMA rings. Our engine implements all context memories ($64 \times 32$-bit) exclusively using distributed LUTRAM (\texttt{ram\_style = "distributed"}) and SRL32 registers, consuming strictly \textbf{zero} BRAMs and \textbf{zero} UltraRAMs. Feedforward pipeline state flows through SRL32s ($II=1$), while distributed context stores retain static parameters $\{S, K, C_{\text{mkt}}, r, T\}$ across the transaction lifetime (227 cycles cold, 386 cycles on loopback) solely to reinject market data for NR updates, retiring each slot upon egress completion. A context slot remains allocated from ingress admission until the corresponding result retires at egress, after which the slot is immediately freed for reuse. Each core maintains an independent 64-slot store ($4 \times 64 = 256$ total slots), governed by an active \texttt{in\_flight\_count} counter asserting ingress backpressure at 63 transactions to provably prevent TID overflow. On Artix-7, this consumes 1,256 LUTRAM and 8,656 SRLs; on 16nm Alveo U50, it occupies merely 0.28\% of LUT capacity, freeing 100\% of dedicated BRAMs for 100GbE packet ring buffers and DMA queues.
+Conventional designs map FIFOs to Block RAMs (RAMB18/36), which are critical for 10GbE MAC and PCIe DMA rings. Our engine implements all context memories ($64 \times 32$-bit) exclusively using distributed LUTRAM (\texttt{ram\_style = "distributed"}) and SRL32 registers, consuming strictly \textbf{zero} BRAMs and \textbf{zero} UltraRAMs. Feedforward pipeline state flows through SRL32s ($II=1$), while distributed context stores retain static parameters $\{S, K, C_{\text{mkt}}, r, T\}$ across transaction lifetimes (227 cycles cold, 386 loopback) solely to reinject market data for NR updates. A context slot remains allocated from ingress until egress retirement. Each core maintains an independent 64-slot store ($4 \times 64 = 256$ slots), governed by an active \texttt{in\_flight\_count} counter asserting ingress backpressure at 63 transactions to provably prevent TID overflow. On Artix-7, this consumes 1,256 LUTRAM and 8,656 SRLs; on 16nm Alveo U50, it occupies merely 0.28\% of LUT capacity, freeing 100\% of dedicated BRAMs for 100GbE packet ring buffers and DMA queues.
 
 \subsection{Stage 4: Newton-Raphson Update Step \& Greek Dividers (33 Cycles)}
 Following Stage 3, each core checks convergence $|C_{\text{BS}} - C_{\text{mkt}}| \le \epsilon$, where $\epsilon = 32'd167772 \approx \$0.0100$ in Q8.24, chosen as a representative \$0.01 price-residual hardware convergence criterion. If $|C_{\text{BS}} - C_{\text{mkt}}| > \epsilon$, the update $\Delta\sigma = (C_{\text{BS}} - C_{\text{mkt}})/\nu$ is evaluated by a dedicated 33-cycle divider (\texttt{u\_nr\_divider}), concurrently with the 33-cycle Gamma divider (\texttt{u\_gamma\_divider}). To prevent numerical oscillation and divergence as Vega $\nu \to 0$, the core incorporates hardware clamping: the NR step is bounded by $|\Delta\sigma| \le 0.25$ (\texttt{MAX\_STEP\_Q24}), volatility is clamped to $[0.01, 5.00]$, the seeder output is clamped to $[0.05, 3.00]$, and \texttt{u\_nr\_divider} saturates safely upon zero denominator. Updated $\sigma_{n+1} = \sigma_n - \Delta\sigma$ loops back with priority via an active TID scoreboard.
@@ -169,8 +169,8 @@ Upon convergence, results are packed into a 128-bit streaming word: $\text{Egres
 \subsection{Pipeline Latency and Sustained Throughput Reconciliation}
 Cold transaction latency from ingress to egress is $L_{\text{cold}} = 1\,(\text{Stg 1}) + 64\,(\text{Stg 2}) + 1\,(\text{Q}) + 126\,(\text{Stg 3}) + 33\,(\text{Stg 4}) + 2\,(\text{Stg 5}) = \mathbf{227\text{ cycles}}$. Loopback bypasses Stages 1--2, requiring Stages 3--4 ($126 + 33 = \mathbf{159\text{ cycles}}$), yielding a 386-cycle two-pass total:
 
-\smallskip
 \noindent\resizebox{\columnwidth}{!}{%
+\renewcommand{\arraystretch}{0.92}%
 \begin{tabular}{lrr}
 \toprule
 \textbf{Execution Path Breakdown} & \textbf{Cycles} & \textbf{Latency (Artix-7 / U50)} \\
@@ -182,7 +182,6 @@ Two-pass total (cold + loopback) & 386 & 3.86~$\mu$s / 1.54~$\mu$s \\
 \bottomrule
 \end{tabular}%
 }
-\smallskip
 
 Loopback does not stall the Stage-3 $II=1$ datapath; however, each loopback consumes one ingress scheduling opportunity. During the 159-cycle loopback pass, the core processes 158 subsequent new contracts, with only one ingress slot displaced by contract $k$'s re-entry.
 
@@ -229,9 +228,9 @@ Energy Efficiency & \multicolumn{2}{c}{10.65 nJ / op} & \multicolumn{2}{c}{\text
 \end{table}
 
 \subsection{Critical Timing Path Analysis}
-On Artix-7 200T, timing closed at 100.00~MHz ($T_{\text{clk}} = 10.000\text{ ns}$) with setup slack $WNS = +0.005\text{ ns}$ and hold slack $WHS = +0.058\text{ ns}$ across 189,999 endpoints on the -3 speed grade at $T_j = 31.2\,^\circ\text{C}$. Vivado's multi-corner static timing analysis simultaneously covers the \textbf{Slow process corner} (setup / maximum delay, worst-case for 28nm) and the \textbf{Fast process corner} (hold / minimum delay): setup is met at the Slow corner ($WNS = +0.005\text{ ns}$, 0 failing endpoints), and hold is met at the Fast corner ($WHS = +0.058\text{ ns}$, 0 failing endpoints), verifying timing closure across both process corners in a single analysis. Across multiple P\&R runs on the dense Artix-7 200T (79.45\% LUTs), setup slack converges in a narrow band of $WNS \in [+0.002, +0.008]\text{ ns}$ (nominal critical path 9.777~ns, spanning 3.775~ns logic and 6.002~ns routing over 22 levels at Core~1 divider \texttt{SLICE\_X48Y87}).
+On Artix-7 200T, timing closed at 100.00~MHz ($T_{\text{clk}} = 10.000\text{ ns}$) across 189,999 endpoints on the -3 speed grade at $T_j = 31.2\,^\circ\text{C}$. Vivado multi-corner STA simultaneously verifies the \textbf{Slow process corner} (setup/max delay: $WNS = +0.005\text{ ns}$, 0 fails) and \textbf{Fast process corner} (hold/min delay: $WHS = +0.058\text{ ns}$, 0 fails), proving timing closure across both process corners in a single analysis. Across multiple P\&R runs at 79.45\% LUT density, setup slack converges in $WNS \in [+0.002, +0.008]\text{ ns}$ (nominal critical path 9.777~ns: 3.775~ns logic, 6.002~ns routing over 22 levels at Core~1 divider \texttt{SLICE\_X48Y87}).
 
-To contextualize this margin, we performed a frequency-sweep characterization. Applying higher clock constraints to the placed-and-routed 4-core netlist shows that the design does not close at 150~MHz ($WNS = -4.849\text{ ns}$, 2,407 failing endpoints) or 200~MHz ($WNS = -6.515\text{ ns}$) on 28nm Artix-7 due to 4-core routing congestion at 79.45\% LUT density. An isolated single core on the same device achieves $WNS = +0.658\text{ ns}$ at 100~MHz (empirical $F_{\max} \approx 106\text{ MHz}$). The 100~MHz 4-core constraint is therefore the optimal operating point for this density, not an architectural ceiling.
+A frequency sweep confirms 100~MHz is optimal for this density: higher clock constraints fail at 150~MHz ($WNS = -4.849\text{ ns}$, 2,407 failing endpoints) and 200~MHz ($WNS = -6.515\text{ ns}$) due to 4-core routing congestion, whereas an isolated single core achieves $WNS = +0.658\text{ ns}$ at 100~MHz (empirical $F_{\max} \approx 106\text{ MHz}$).
 
 On the AMD Alveo U50, 16nm FinFET technology scaling reduces the critical path delay from 9.777~ns down to 3.910~ns, enabling physical timing closure at 250.00~MHz ($T_{\text{clk}} = 4.000\text{ ns}$) with $WNS = +0.073\text{ ns}$ and $WHS = +0.004\text{ ns}$ across 182,201 endpoints (zero failing). Both Slow and Fast process corners are analyzed concurrently, with all endpoints passing. This signoff confirms an empirical maximum operating frequency of $F_{\max} = 254.65\text{ MHz}$ on -2 speed grade silicon.
 
@@ -244,7 +243,7 @@ Vivado post-route vectorless power analysis confirms total power of 4.258~W (4.1
 
 \begin{figure}[t]
 \centering
-\includefigfile[width=0.78\columnwidth]{fig2_error_distribution.pdf}{fig1_error_distribution.pdf}
+\includefigfile[width=0.73\columnwidth]{fig2_error_distribution.pdf}{fig1_error_distribution.pdf}
 \caption{(a) Probability density error distribution and (b) cumulative accuracy curve across 10,000 synthetic contracts evaluated via DPI-C co-simulation.}
 \label{fig:accuracy}
 \end{figure}
@@ -255,17 +254,17 @@ The placed-and-routed RTL was co-simulated against an IEEE-754 double-precision 
 
 \textbf{Deep Wings ($S/K < 0.85$ or $S/K > 1.15$):} For extreme strikes, the engine engages the 18-cycle CORDIC logarithm fallback ($\ln x = 2\operatorname{atanh}((x-1)/(x+1))$). Deep wings represent 7.9\% of contracts. Because Vega diminishes ($\nu < 0.05$), contracts average 2.1 passes. The engine achieves an MAE of 0.0214\% volatility in deep wings, with 100\% converging within \$0.01 and zero divergence. Blended across all 10,000 contracts, global MAE is $0.921(0.0157\%) + 0.079(0.0214\%) = \mathbf{0.0162\%}$ volatility ($0.000162$). Evaluations across 5 independent random seeds (50,000 contracts total) confirmed identical CDF profiles with mean MAE of $0.0157\% \pm 0.0004\%$ (95\% CI: $[0.0153\%, 0.0161\%]$).
 
-\textbf{Empirical Validation on Live CBOE European SPX Options:} To validate hardware precision and scale-invariance against live institutional market quotes, we evaluated 1,382 active CBOE European SPX contracts ($S = \$7{,}591.70$, $T \in [0.015, 1.0]$~yr). Across 989 liquid near-the-money contracts ($0.95 \le S/K \le 1.05$), the engine achieves a median absolute error of \textbf{0.0164\% volatility (1.64 bps)}, with 54.3\% converging within 0.1\% vol (<10 bps) and 66.3\% within 1.0\% vol. Across all 1,382 quotes spanning strikes up to \$8,000, zero arithmetic overflow occurred, confirming the fidelity of fixed-point scale normalization ($\tilde{S}=S/K, \tilde{C}=C/K$), while hardware clamping maintained 100\% numerical stability with zero divergence. Pathological boundaries (deep ITM/OTM, ultra-short $T=0.001$~yr, zero rate, $\sigma=150\%$) were verified via a 5-case functional testbench, producing correctly clamped outputs.
+\textbf{Empirical Validation on Live CBOE European SPX Options:} To validate hardware precision against live quotes, we evaluated 1,382 active CBOE European SPX contracts ($S = \$7{,}591.70$, $T \in [0.015, 1.0]$~yr). Across 989 liquid near-the-money quotes ($0.95 \le S/K \le 1.05$), the engine achieves a median error of \textbf{0.0164\% volatility (1.64 bps)}, with 54.3\% converging within 0.1\% vol (<10 bps) and 66.3\% within 1.0\% vol. Across all 1,382 quotes up to \$8,000 strike, zero arithmetic overflow occurred, proving scale normalization ($\tilde{S}=S/K, \tilde{C}=C/K$), while hardware clamping ensured 100\% numerical stability with zero divergence. Pathological boundaries (deep ITM/OTM, $T=0.001$~yr, zero rate, $\sigma=150\%$) were verified via a 5-case testbench, producing correctly clamped outputs.
 
 \subsection{First-Order Error-Budget Sanity Check}
 The observed MAE of $0.0157\%$ volatility ($0.000157$) is verified via a first-order error budget linking hardware approximations to volatility perturbation ($\Delta\sigma \approx \Delta C / \nu$):
 \begin{itemize}
-    \item \textbf{Pad\'{e} Logarithm ($\Delta_{\ln}$):} For $x = S/K = 1+u$, [1/1] Pad\'{e} error is $\Delta_{\ln} \approx u^3/12 \le 3.6 \times 10^{-4}$ ($|u| \le 0.15$). Propagating via Vega sensitivity yields $\Delta\sigma_{\text{Pad\'{e}}} \approx 4.5 \times 10^{-5}$ ($0.0045\%$ vol).
-    \item \textbf{Hyperbolic CORDIC ($e^{-rT}, e^{-d_1^2/2}$):} 16-stage CORDIC mantissa precision ($2^{-16}$) induces price error $\Delta C \approx 7.6 \times 10^{-6} K$. Dividing by typical Vega $\nu \approx 0.35 K$ yields $\Delta\sigma_{\text{CORDIC}} \approx 2.8 \times 10^{-5}$ ($0.0028\%$ vol).
-    \item \textbf{CDF \& Quantization:} 5th-order Horner CDF ($|\epsilon| \le 7.5 \times 10^{-8}$) yields $\Delta\sigma_{\text{Horner}} \approx 1.2 \times 10^{-6}$ ($0.00012\%$), while accumulated Q8.24 fractional roundoff ($2^{-24}$) contributes RMS uncertainty $\approx 2.5 \times 10^{-6}$ in volatility space.
-    \item \textbf{Price Convergence Termination:} With mean $S = \$50$ and $\bar{T} = 0.8$, average Vega is $\bar{\nu} \approx \$17.35$. While exchange threshold is $\epsilon = \$0.0100$, quadratic convergence reduces actual residual price error to mean $\overline{|\Delta C|} \approx \$0.0025$ upon pass-1 termination. Dividing by average Vega yields $\Delta\sigma_{\text{stop}} \approx \frac{\$0.0025}{\$17.35} \approx 1.45 \times 10^{-4}$ ($0.0145\%$ vol).
+    \item \textbf{Pad\'{e} Logarithm ($\Delta_{\ln}$):} For $x = S/K = 1+u$, [1/1] Pad\'{e} error is $\Delta_{\ln} \approx u^3/12 \le 3.6 \times 10^{-4}$ ($|u| \le 0.15$), inducing $\Delta\sigma_{\text{Pad\'{e}}} \approx 4.5 \times 10^{-5}$ ($0.0045\%$ vol).
+    \item \textbf{Hyperbolic CORDIC ($e^{-rT}, e^{-d_1^2/2}$):} 16-stage CORDIC precision ($2^{-16}$) induces price error $\Delta C \approx 7.6 \times 10^{-6} K$. Dividing by typical Vega $\nu \approx 0.35 K$ yields $\Delta\sigma_{\text{CORDIC}} \approx 2.8 \times 10^{-5}$ ($0.0028\%$ vol).
+    \item \textbf{CDF \& Quantization:} 5th-order Horner CDF ($|\epsilon| \le 7.5 \times 10^{-8}$) yields $\Delta\sigma_{\text{Horner}} \approx 1.2 \times 10^{-6}$ ($0.00012\%$), while Q8.24 roundoff contributes RMS uncertainty $\approx 2.5 \times 10^{-6}$.
+    \item \textbf{Price Convergence Termination:} With mean $S = \$50$ and $\bar{T} = 0.8$ ($\bar{\nu} \approx \$17.35$), mean termination error $\overline{|\Delta C|} \approx \$0.0025$ yields $\Delta\sigma_{\text{stop}} \approx \frac{\$0.0025}{\$17.35} \approx 1.45 \times 10^{-4}$ ($0.0145\%$ vol).
 \end{itemize}
-Root-sum-square of these first-order components yields $\approx 1.5 \times 10^{-4}$ ($0.015\%$ vol), providing an order-of-magnitude sanity check consistent with the empirical DPI-C simulation MAE of $0.0157\%$ across 10,000 contracts against double precision. Note that this RSS estimate provides an order-of-magnitude check rather than a formal error decomposition, as the individual approximation errors are not assumed to be statistically independent.
+Root-sum-square of these components yields $\approx 1.5 \times 10^{-4}$ ($0.015\%$ vol), providing an order-of-magnitude sanity check consistent with the empirical DPI-C simulation MAE of $0.0157\%$ across 10,000 contracts against double precision (non-independent error sources).
 
 \subsection{Algorithmic Ablation: Seeding vs. Unseeded Newton-Raphson}
 \begin{itemize}
@@ -273,12 +272,38 @@ Root-sum-square of these first-order components yields $\approx 1.5 \times 10^{-
     \item \textbf{Without Seeding ($\sigma_0 = 0.20$):} Contracts require an average of 4.8 iterations, and 4.2\% fail to converge or oscillate when $\nu < 0.02$. Seeding eliminates 79\% of loopback traffic.
 \end{itemize}
 
+\begin{table}[b]
+\caption{Sub-Module Resource Breakdown (Per Core Signoff)}
+\label{tab:submodule}
+\centering
+\resizebox{\columnwidth}{!}{%
+\renewcommand{\arraystretch}{0.92}%
+\begin{tabular}{lrrl}
+\toprule
+\textbf{Sub-Module} & \textbf{LUTs} & \textbf{DSPs} & \textbf{Functional Implementation} \\
+\midrule
+Restoring Dividers ($\times 7$)  & 15,654 &  0 & 33-cycle non-restoring slice logic \\
+Horner Normal CDF Poly ($\times 2$) & 1,760 & 96 & 5th-order Horner MAC stages (48/core) \\
+BS Datapath Multipliers \& Regs  & 2,261 & 44 & Normal deviates \& Black-Scholes math \\
+Digit-Recurrence $\sqrt{T}$ \& Seeder Glue & 1,696 & 8 & Shared $\sqrt{T}$ + guess generator \\
+Hyperbolic CORDIC \& Scaling     & 1,324 &  4 & 16-stage $e^{-rT}, e^{-d_1^2/2}$ + $K_n$ scale \\
+Arbitration, FSM \& Scoreboard   &   268 &  0 & Loopback preemption \& TID tracking \\
+Distributed Context Store / SRL  &   863 &  0 & 314 LUTRAM + 451 SRL32 (Zero BRAM) \\
+AXI4-Stream Interface \& FIFOs   & 2,748 &  0 & 256-bit ingress \& 128-bit packed egress \\
+\midrule
+\textbf{Average per Core}        & \textbf{26,574} & \textbf{152} & $\times 4 \Rightarrow$ \textbf{106{,}298 LUTs / 608 DSPs / 0 BRAM} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
 \subsection{Comparative Benchmark: CPU, GPU, and FPGA}
 \begin{table*}[t]
 \caption{Head-to-Head Architectural Benchmark Comparison}
 \label{tab:comparison}
 \centering
 \resizebox{\textwidth}{!}{%
+\renewcommand{\arraystretch}{0.92}%
 \begin{tabular}{lrrrr}
 \toprule
 \textbf{Architectural Metric} & \textbf{Host CPU\textsuperscript{1}} & \textbf{High-End GPU\textsuperscript{2}} & \textbf{Proposed Artix-7 200T} & \textbf{Proposed Alveo U50} \\
@@ -309,7 +334,7 @@ On-Chip BRAM / URAM & N/A & N/A & \textbf{0 BRAM} & \textbf{0 BRAM, 0 URAM} \\
 
 \begin{figure}[t]
 \centering
-\includefigfile[width=0.76\columnwidth]{fig3_comparative_benchmark.pdf}{fig2_comparative_benchmark.pdf}
+\includefigfile[width=0.71\columnwidth]{fig3_comparative_benchmark.pdf}{fig2_comparative_benchmark.pdf}
 \caption{Comparative evaluation of (a) Throughput (MOps/s), (b) Power Dissipation (Watts), and (c) Energy Efficiency (kOps/W) across Host CPU, GPU baseline, and our 4-Core FPGA engine.}
 \label{fig:benchmark}
 \end{figure}
@@ -326,31 +351,7 @@ The 4-core FPGA engine achieves 400.00~MOps/s peak (390.62~MOps/s net liquid) at
 \noindent\textbf{Architectural Positioning vs. GPUs:} While GPUs excel at batched forward pricing across millions of synthetic paths in offline risk analysis, inline streaming market making demands sequential tick processing over 10GbE lines, where host-device PCIe transfer and kernel batching introduce significant queuing latency in tick-by-tick deployments, and iterative root-finding induces warp divergence across SIMT threads. Furthermore, 400~W GPU TDP strains strict 5--10~kW exchange rack limits. We therefore use the A100 only as a contextual forward-pricing throughput reference rather than a directly equivalent IV+Greeks benchmark; even against this optimistic forward-only baseline, the FPGA engine provides superior energy efficiency while uniquely eliminating PCIe batching delays and SIMT warp divergence to deliver deterministic sub-microsecond accelerator ingress-to-egress response.
 
 \subsection{Sub-Module Hardware Resource Breakdown}
-Table~\ref{tab:submodule} summarizes post-implementation resource distribution per core from the post-route hierarchical signoff report. The seven pipelined restoring dividers—computing (1)~initial guess ratio, (2)~Pad\'{e} ratio $(S{-}K)/(S{+}K)$, (3)~$d_1$ quotient, (4)~Horner CDF $t$-parameter for $d_1$, (5)~Horner CDF $t$-parameter for $d_2$, (6)~NR update step $\Delta\sigma$, and (7)~Gamma quotient—are implemented entirely in distributed slice logic, consuming zero DSP48E1 slices and reserving all 608 engine DSPs for Horner polynomial MAC chains. Sub-module logic scales symmetrically across the four independent cores, accounting for $\approx 26.6\text{k}$ LUTs and 152 DSPs per core, with inter-core AXI arbitration, scoreboarding, and clock distribution bringing total chip utilization to 106,298 Slice LUTs (79.45\%) and 608 DSPs (82.16\%) as reported in Table~\ref{tab:util}.
-
-\begin{table}[t]
-\caption{Sub-Module Resource Breakdown (Per Core Signoff)}
-\label{tab:submodule}
-\centering
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{lrrl}
-\toprule
-\textbf{Sub-Module} & \textbf{LUTs} & \textbf{DSPs} & \textbf{Functional Implementation} \\
-\midrule
-Restoring Dividers ($\times 7$)  & 15,654 &  0 & 33-cycle non-restoring slice logic \\
-Horner Normal CDF Poly ($\times 2$) & 1,760 & 96 & 5th-order Horner MAC stages (48/core) \\
-BS Datapath Multipliers \& Regs  & 2,261 & 44 & Normal deviates \& Black-Scholes math \\
-Digit-Recurrence $\sqrt{T}$ \& Seeder Glue & 1,696 & 8 & Shared $\sqrt{T}$ + guess generator \\
-Hyperbolic CORDIC \& Scaling     & 1,324 &  4 & 16-stage $e^{-rT}, e^{-d_1^2/2}$ + $K_n$ scale \\
-Arbitration, FSM \& Scoreboard   &   268 &  0 & Loopback preemption \& TID tracking \\
-Distributed Context Store / SRL  &   863 &  0 & 314 LUTRAM + 451 SRL32 (Zero BRAM) \\
-AXI4-Stream Interface \& FIFOs   & 2,748 &  0 & 256-bit ingress \& 128-bit packed egress \\
-\midrule
-\textbf{Average per Core}        & \textbf{26,574} & \textbf{152} & $\times 4 \Rightarrow$ \textbf{106{,}298 LUTs / 608 DSPs / 0 BRAM} \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
+Table~\ref{tab:submodule} summarizes post-implementation resource distribution per core. The seven pipelined restoring dividers—computing guess ratio, Pad\'{e} ratio, $d_1$, Horner $t$-parameters for $d_1/d_2$, NR step $\Delta\sigma$, and Gamma quotient—are implemented in distributed slice logic, consuming 0 DSPs and reserving all 608 DSPs for Horner MAC chains. Sub-module logic scales symmetrically across cores ($\approx 26.6\text{k}$ LUTs and 152 DSPs/core), bringing total chip utilization to 106,298 Slice LUTs (79.45\%) and 608 DSPs (82.16\%) as reported in Table~\ref{tab:util}.
 
 \subsection{Two-Tier HFT Architecture and Datacenter Scalability}
 In electronic trading, deployment spans two tiers: (1)~\textit{Tier-1 Inline SmartNIC Filtering} ($<25$~W PCIe mezzanine, e.g., AMD Solarflare), where our Artix-7 200T implementation serves as an edge proof-of-concept consuming only 4.258~W total power (17\% of a 25~W PCIe budget) alongside 10GbE MACs with zero thermal penalty; and (2)~\textit{Tier-2 Centralized Co-Processing} (75--225~W datacenter accelerators, e.g., AMD Alveo U50 / VU9P).
@@ -363,6 +364,7 @@ To verify datacenter scalability, the 4-core engine was placed and routed on an 
 \label{tab:prior_art}
 \centering
 \resizebox{\columnwidth}{!}{%
+\renewcommand{\arraystretch}{0.92}%
 \begin{tabular}{lccccr}
 \toprule
 \textbf{Design} & \textbf{Target Device} & \textbf{Task / Method} & \textbf{Throughput} & \textbf{Latency} & \textbf{BRAMs} \\
@@ -377,13 +379,13 @@ Tse et al.~\cite{tse2010customising} (2010) & Virtex-4 FX100 & BS / Forward Pass
 \bottomrule
 \end{tabular}%
 }
-\vspace{0.5ex}
+\vspace{0.2ex}
 
 \raggedright
 \scriptsize{\textsuperscript{\dag} 390.62~MOps/s net sustained liquid accounting for 2.4\% loopbacks.}
 \end{table}
 
-Table~\ref{tab:prior_art} compares this work against prior FPGA accelerators. As surveyed by O'Mahony et al.~\cite{omahony2024role}, prior implementations~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} focus either on forward pricing or multi-section root-finding with heavy Block RAM usage, compromising composability alongside 10GbE MAC/DMA infrastructure on SmartNICs. In contrast, our engine achieves 400~MOps/s peak throughput (390.62~MOps/s net liquid) with concurrent Greek extraction while consuming strictly Zero BRAM blocks. On Alveo U50, throughput reaches 1.00~GOps/s with 0.91~$\mu$s (227 cycles) cold latency, providing 8.3$\times$ the reported throughput of Wang et al.~\cite{wang2022fpga} while eliminating block memory usage.
+Table~\ref{tab:prior_art} compares this work against prior FPGA accelerators~\cite{omahony2024role}. Prior implementations~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} focus on forward pricing or multi-section methods with heavy Block RAM consumption, compromising SmartNIC composability. In contrast, our engine achieves 400~MOps/s peak (390.62~MOps/s net liquid) with concurrent Greeks while consuming strictly Zero BRAM blocks. On Alveo U50, throughput reaches 1.00~GOps/s with 0.91~$\mu$s (227 cycles) cold latency, delivering 8.3$\times$ the throughput of Wang et al.~\cite{wang2022fpga} while eliminating block memory usage.
 
 % -------------------------------------------------------------------------
 \section{Conclusion}
