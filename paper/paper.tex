@@ -54,8 +54,8 @@
 \let\endoldthebibliography\endthebibliography
 \renewenvironment{thebibliography}[1]{%
   \begin{oldthebibliography}{#1}%
-    \scriptsize
-    \setlength{\itemsep}{0.2pt plus 0.2pt minus 0.1pt}%
+    \fontsize{6.8pt}{7.8pt}\selectfont
+    \setlength{\itemsep}{0.0pt plus 0.2pt}%
     \setlength{\parskip}{0pt}%
     \setlength{\parsep}{0pt}%
 }{%
@@ -106,7 +106,7 @@ FPGA Acceleration, Implied Volatility, Fixed-Point Arithmetic, Deterministic Pip
 % -------------------------------------------------------------------------
 \begin{figure*}[t]
 \centering
-\includefigfile[width=0.38\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
+\includefigfile[width=0.33\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
 \caption{Microarchitecture of the 4-Core Pipelined Implied Volatility and Greeks Engine, illustrating scale-invariance normalization, Brenner-Subrahmanyam analytical guess generator with shared $\sqrt{T}$ path, pipelined datapath, Zero-BRAM distributed context store, and 128-bit egress bus.}
 \label{fig:arch}
 \end{figure*}
@@ -200,7 +200,7 @@ The complete design was synthesized, placed, and routed using AMD Vivado 2025.2 
 \label{tab:util}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.78}%
+\renewcommand{\arraystretch}{0.72}%
 \begin{tabular}{lrrrr}
 \toprule
 \textbf{Signoff Metric} & \multicolumn{2}{c}{\textbf{Artix-7 200T}} & \multicolumn{2}{c}{\textbf{Alveo U50}} \\
@@ -245,7 +245,7 @@ Vivado post-route vectorless power analysis yields an estimated total power diss
 
 \begin{figure}[t]
 \centering
-\includefigfile[width=0.58\columnwidth]{fig2_error_distribution.pdf}{fig1_error_distribution.pdf}
+\includefigfile[width=0.50\columnwidth]{fig2_error_distribution.pdf}{fig1_error_distribution.pdf}
 \caption{(a) Probability density error distribution and (b) cumulative accuracy curve across 10,000 synthetic contracts evaluated via DPI-C co-simulation.}
 \label{fig:accuracy}
 \end{figure}
@@ -259,7 +259,7 @@ Under liquid sampling ($K/S \in [0.90, 1.10]$), the RTL achieves an IV \textbf{M
 \label{tab:greek_accuracy}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.78}%
+\renewcommand{\arraystretch}{0.72}%
 \begin{tabular}{lrrrrrr}
 \toprule
 \textbf{Output Metric} & \multicolumn{3}{c}{\textbf{Liquid Regime ($0.85 \le S/K \le 1.15$, $N{=}4{,}394$)}} & \multicolumn{3}{c}{\textbf{Extended Domain ($0.70 \le K/S \le 1.40$, $N{=}10{,}000$)}} \\
@@ -292,7 +292,7 @@ Fig.~\ref{fig:ablation} compares analytical guess seeding against an unseeded Ne
 \label{tab:submodule}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.78}%
+\renewcommand{\arraystretch}{0.72}%
 \begin{tabular}{lrrl}
 \toprule
 \textbf{Sub-Module} & \textbf{LUTs} & \textbf{DSPs} & \textbf{Functional Implementation} \\
@@ -311,7 +311,7 @@ AXI4-Stream Interface \& FIFOs   & 2,748 &  0 & 256-bit ingress \& 128-bit packe
 \end{tabular}%
 }
 \vskip 1pt\raggedright
-\scriptsize{\textsuperscript{*}Per core, 451 SRL32s buffer context in the store; the remaining 1,713 SRLs/core (6,852 across 4 cores) are distributed across datapath submodules for pipeline delay matching, totaling the 8,656 SRLs in Table~\ref{tab:util}.}
+\tiny{\textsuperscript{*}Per core, 451 SRL32s buffer context in the store; the remaining 1,713 SRLs/core (6,852 across 4 cores) are distributed across datapath submodules for pipeline delay matching, totaling the 8,656 SRLs in Table~\ref{tab:util}.}
 \end{table}
 
 \subsection{Sub-Module Hardware Resource Breakdown}
@@ -323,7 +323,7 @@ Table~\ref{tab:submodule} summarizes post-implementation resource distribution p
 \label{tab:comparison}
 \centering
 \resizebox{\textwidth}{!}{%
-\renewcommand{\arraystretch}{0.76}%
+\renewcommand{\arraystretch}{0.70}%
 \begin{tabular}{lrrrr}
 \toprule
 \textbf{Architectural Metric} & \textbf{Host CPU\textsuperscript{1}} & \textbf{High-End GPU\textsuperscript{2}} & \textbf{Proposed Artix-7 200T} & \textbf{Proposed Alveo U50} \\
@@ -349,12 +349,12 @@ On-Chip BRAM / URAM & N/A & N/A & \textbf{0 BRAM} & \textbf{0 BRAM, 0 URAM} \\
 \end{tabular}%
 }
 \vskip 1pt\raggedright
-\scriptsize{\textsuperscript{1} Measured via OpenMP/AVX2 on i5-12500H across 2,000,000 contracts (representative companion edge host). \textsuperscript{2} The GPU result is from the NVIDIA CUDA SDK Black-Scholes benchmark sample~\cite{cuda2023samples} and is not directly comparable to the proposed workload because it reports forward pricing only; it is included solely as contextual hardware information. \textsuperscript{3} Extended net sustained throughput evaluates the measured 43.94\% liquid (4,394) / 56.06\% deep-wing (5,606) population ($\bar{P}=1.627$ slots/contract). \textsuperscript{\ddag} Unimplemented linear scaling estimate: a projected 32-core configuration on Alveo U50 reaches 8.00~GOps/s (scaling to 562.6$\times$ vs. CPU under estimated 65~W board power); not an independently synthesized implementation.}
+\tiny{\textsuperscript{1} Measured via OpenMP/AVX2 on i5-12500H across 2,000,000 contracts (representative companion edge host). \textsuperscript{2} The GPU result is from the NVIDIA CUDA SDK Black-Scholes benchmark sample~\cite{cuda2023samples} and is not directly comparable to the proposed workload because it reports forward pricing only; it is included solely as contextual hardware information. \textsuperscript{3} Extended net sustained throughput evaluates the measured 43.94\% liquid (4,394) / 56.06\% deep-wing (5,606) population ($\bar{P}=1.627$ slots/contract). \textsuperscript{\ddag} Unimplemented linear scaling estimate: a projected 32-core configuration on Alveo U50 reaches 8.00~GOps/s (scaling to 562.6$\times$ vs. CPU under estimated 65~W board power); not an independently synthesized implementation.}
 \end{table*}
 
 \begin{figure}[t]
 \centering
-\includefigfile[width=0.82\columnwidth]{fig3_iteration_ablation.pdf}{figures/fig3_iteration_ablation.pdf}
+\includefigfile[width=0.72\columnwidth]{fig3_iteration_ablation.pdf}{figures/fig3_iteration_ablation.pdf}
 \caption{Algorithmic ablation of analytical guess seeding versus unseeded Newton-Raphson ($\sigma_0 = 0.20$): (a) iteration count distribution across 10,000 contracts; (b) cumulative convergence CDF, showing 97.6\% 1-pass convergence and a 79\% reduction in average iteration count.}
 \label{fig:ablation}
 \end{figure}
@@ -377,7 +377,7 @@ Deployment spans two tiers: (1)~\textit{Tier-1 Inline Filtering} ($<$25~W PCIe m
 \label{tab:prior_art}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.78}%
+\renewcommand{\arraystretch}{0.72}%
 \begin{tabular}{lcccccc}
 \toprule
 \textbf{Design} & \textbf{Target Device} & \textbf{Task / Method} & \textbf{Clock} & \textbf{Throughput} & \textbf{Latency} & \textbf{BRAM / DSP} \\
@@ -393,7 +393,7 @@ Tse et al.~\cite{tse2010customising} (2010) & Virtex-4 FX100 & BS / Forward Pass
 \end{tabular}%
 }
 \vskip 1pt\raggedright
-\scriptsize{\textsuperscript{\dag} 390.62~MOps/s net sustained liquid (245.8~MOps/s under the measured 43.94\% liquid / 56.06\% deep-wing population). \textsuperscript{\ddag} Linear projection based on available DSP slices.}
+\tiny{\textsuperscript{\dag} 390.62~MOps/s net sustained liquid (245.8~MOps/s under the measured 43.94\% liquid / 56.06\% deep-wing population). \textsuperscript{\ddag} Linear projection based on available DSP slices.}
 \end{table}
 
 Table~\ref{tab:prior_art} compares this work against prior FPGA option accelerators~\cite{omahony2024role}. Prior implementations~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} focus on forward pricing or multi-section root finding with heavy Block RAM consumption. In contrast, our engine achieves 400~MOps/s peak (390.62~MOps/s net liquid) with concurrent Greeks while consuming strictly zero BRAM blocks. On Alveo U50, throughput reaches 1.00~GOps/s with 0.91~$\mu$s (227 cycles) cold latency, delivering 8.3$\times$ the reported throughput of Wang et al.~\cite{wang2022fpga} (across differing workloads) with zero block memory usage.
@@ -439,7 +439,7 @@ T.~Becker, Q.~Jin, W.~Luk, and S.~Weston, ``Dynamic constant reconfiguration for
 Q.~Jin, T.~Becker, W.~Luk, and D.~B. Thomas, ``Optimising explicit finite difference option pricing for dynamic constant reconfiguration,'' in \emph{Proc. FPL}, 2012, pp. 165--172.
 
 \bibitem{tse2010customising}
-A.~H.~T. Tse, D.~B. Thomas, and W.~Luk, ``Customising option pricing: A reconfigurable core,'' in \emph{Proc. ARC}, ser. LNCS, vol. 5992, Springer, 2010, pp. 24--35.
+A.~H.~T. Tse, D.~B. Thomas, and W.~Luk, ``Customising option pricing: A reconfigurable core,'' in \emph{Proc. ARC}, Springer, 2010, pp. 24--35.
 
 \end{thebibliography}
 
