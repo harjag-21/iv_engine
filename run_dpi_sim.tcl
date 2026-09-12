@@ -46,9 +46,9 @@ puts "  [STEP 1/4] Compiling DPI-C C sources with xsc..."
 
 # xsc compiles C sources to a shared library for DPI import
 set xsc_cmd "xsc dpi_c/iv_dpi_golden.c dpi_c/iv_dpi_model.c \
-    --output dpi_c/iv_dpi \
-    --additional_option {-I./dpi_c} \
-    --additional_option {-O2}"
+    -o dpi_c/iv_dpi \
+    --gcc_compile_options {-I./dpi_c} \
+    --gcc_compile_options {-O2}"
 
 puts "  CMD: $xsc_cmd"
 

@@ -91,7 +91,7 @@ FPGA Acceleration, Implied Volatility, Fixed-Point Arithmetic, Deterministic Pip
 \label{fig:arch}
 \end{figure*}
 
-Iterative root-finding algorithms are notoriously difficult to pipeline on FPGAs: the number of loop iterations is data-dependent, transcendental function units are deeply pipelined (33--64 cycles), and in-flight intermediate results must be preserved across variable-length feedback paths. Black-Scholes implied volatility (IV) inversion is a canonical instance of this class. Given market price $C_\text{mkt}$ and contract parameters $\{S, K, T, r\}$, the IV solver inverts $C_\text{BS}(\sigma) = C_\text{mkt}$ via Newton-Raphson (NR), with each pass requiring evaluation of $\sqrt{T}$, $\ln(S/K)$, the CDF, and a division—all sharing deep pipeline resources across a variable number of feedback iterations~\cite{black1973pricing}. Options exchanges require IV and risk sensitivities (Delta $\Delta$, Gamma $\Gamma$, Vega $\nu$) on every price tick across thousands of strikes and expiries~\cite{omahony2024role,cboe2023specs}. Conventional NR implementations face two hardware obstacles: (1)~\textit{Numerical sensitivity}—when Vega $\nu \to 0$ (short maturities or deep wings), unseeded iterations overshoot or diverge; and (2)~\textit{Non-deterministic latency}—CPU and GPU runtimes incur OS scheduling and PCIe queuing jitter that prevents cycle-deterministic streaming execution. To overcome these challenges, we present a deterministic, zero-block-RAM FPGA engine for streaming IV solving with concurrent Greeks extraction.
+Iterative root-finding algorithms are notoriously difficult to pipeline on FPGAs~\cite{omahony2024role}: the number of loop iterations is data-dependent, transcendental function units are deeply pipelined (33--64 cycles), and in-flight intermediate results must be preserved across variable-length feedback paths. Black-Scholes implied volatility (IV) inversion is a canonical instance of this class~\cite{black1973pricing}. Given market price $C_\text{mkt}$ and contract parameters $\{S, K, T, r\}$, the IV solver inverts $C_\text{BS}(\sigma) = C_\text{mkt}$ via Newton-Raphson (NR), with each pass requiring evaluation of $\sqrt{T}$, $\ln(S/K)$, the CDF, and a division—all sharing deep pipeline resources across a variable number of feedback iterations. Options exchanges require IV and risk sensitivities (Delta $\Delta$, Gamma $\Gamma$, Vega $\nu$) on every price tick across thousands of strikes and expiries~\cite{cboe2023specs}. Conventional NR implementations face two hardware obstacles: (1)~\textit{Numerical sensitivity}—when Vega $\nu \to 0$ (short maturities or deep wings), unseeded iterations overshoot or diverge; and (2)~\textit{Non-deterministic latency}—CPU and GPU runtimes incur OS scheduling and PCIe queuing jitter that prevents cycle-deterministic streaming execution. To overcome these challenges, we present a deterministic, zero-block-RAM FPGA engine for streaming IV solving with concurrent Greeks extraction.
 
 \subsection{Key Contributions}
 \begin{itemize}
@@ -243,11 +243,34 @@ Vivado post-route vectorless power analysis yields an estimated total power diss
 \label{fig:accuracy}
 \end{figure}
 
-Synthetic contract parameters $\{S, K/S, T, r, \sigma^*\}$ are generated via uniform, independent pseudo-random sampling across the liquid near-the-money regime ($S \in [20, 80]$, $K/S \in [0.90, 1.10]$, $T \in [0.10, 1.5]$~yr, $r \in [0.02, 0.06]$, $\sigma^* \in [0.15, 0.55]$), spanning 10,000 contracts with random seed 42. The placed-and-routed RTL was co-simulated against an IEEE-754 double-precision golden model via SystemVerilog DPI-C (Fig.~\ref{fig:accuracy}).
+Synthetic contract parameters $\{S, K/S, T, r, \sigma^*\}$ are generated via uniform pseudo-random sampling ($S \in [20, 80]$, $T \in [0.10, 1.5]$~yr, $r \in [0.02, 0.06]$, $\sigma^* \in [0.15, 0.55]$, seed 42) across both liquid near-the-money ($K/S \in [0.90, 1.10]$) and extended wide-moneyness ($K/S \in [0.70, 1.40]$) regimes, evaluated against an IEEE-754 double-precision golden model via DPI-C (Fig.~\ref{fig:accuracy}).
 
-The RTL achieves a \textbf{mean absolute error (MAE) of $1.57 \times 10^{-4}$ absolute volatility} ($0.0157$ percentage points, 1.57 vol-bps), with \textbf{99.9\% of contracts converging within 1.0 percentage point absolute volatility error} ($|\Delta\sigma| \le 0.0100$, 100.0\% within 10 percentage points) and 97.6\% converging in exactly one Newton-Raphson pass (99.9\% within two passes). The $K/S \in [0.90, 1.10]$ sampling corresponds to $S/K \in [0.909, 1.111]$, placing all contracts within the liquid near-the-money regime where the Pad\'{e} logarithm approximation holds tightest.
+Under liquid sampling ($K/S \in [0.90, 1.10]$), the RTL achieves an IV \textbf{MAE of $1.57 \times 10^{-4}$ absolute volatility} (1.57 vol-bps), with \textbf{99.9\% of contracts within 1.0 percentage point error} ($|\Delta\sigma| \le 0.0100$) and 97.6\% converging in exactly one pass (99.9\% within two passes).
 
-To evaluate extreme dynamic range, a second 10,000-contract DPI-C co-simulation was executed over the extended domain $K/S \in [0.70, 1.40]$. In the liquid portion ($0.85 \le S/K \le 1.15$, 4,394 contracts / 43.9\%), the engine achieves MAE of $8.80 \times 10^{-4}$ ($0.088\%$ vol, median $0.94$ vol-bps), with 98.8\% converging within 1.0 percentage point error. Across the 5,606 deep-wing contracts ($S/K < 0.85$ or $S/K > 1.15$, 56.1\%), where Vega diminishes and the 18-cycle CORDIC fallback engages, MAE is $0.0225$ (median $0.126\%$ vol), yielding an empirical blended MAE of $0.439(8.80 \times 10^{-4}) + 0.561(0.0225) = \mathbf{0.0130}$ ($1.30\%$ vol) with a global median error of $1.50$ vol-bps and strictly zero arithmetic overflow or divergence.
+\begin{table}[t]
+\caption{Multi-Output Numerical Accuracy (10,000-Contract DPI-C Co-Simulation, $K/S \in [0.70, 1.40]$)}
+\label{tab:greek_accuracy}
+\centering
+\resizebox{\columnwidth}{!}{%
+\renewcommand{\arraystretch}{0.84}%
+\begin{tabular}{lrrrrrr}
+\toprule
+\textbf{Output Metric} & \multicolumn{3}{c}{\textbf{Liquid Regime ($0.85 \le S/K \le 1.15$)}} & \multicolumn{3}{c}{\textbf{Extended Domain ($0.70 \le K/S \le 1.40$)}} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+& \textbf{MAE} & \textbf{Median} & \textbf{95th Pct} & \textbf{MAE} & \textbf{Median} & \textbf{95th Pct} \\
+\midrule
+Implied Volatility ($\sigma$) & $8.80\times 10^{-4}$ & $9.4\times 10^{-5}$ & $1.79\times 10^{-3}$ & $0.0130$ & $1.50\times 10^{-4}$ & $0.0876$ \\
+Delta ($\Delta = N(d_1)$) & $4.38\times 10^{-3}$ & $1.87\times 10^{-4}$ & $0.0280$ & $0.0119$ & $1.54\times 10^{-3}$ & $0.0582$ \\
+Vega ($\nu = S\sqrt{T}N'(d_1)$) & $0.0963$ & $1.88\times 10^{-3}$ & $0.5637$ & $0.6399$ & $0.0345$ & $2.7921$ \\
+Gamma ($\Gamma = \frac{N'(d_1)}{S\sigma\sqrt{T}}$) & $2.39\times 10^{-4}$ & $1.20\times 10^{-5}$ & $9.03\times 10^{-4}$ & $3.40\times 10^{-3}$ & $5.50\times 10^{-5}$ & $6.35\times 10^{-3}$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\textbf{Extended Domain and Greeks Evaluation:} Over the extended domain $K/S \in [0.70, 1.40]$, Table~\ref{tab:greek_accuracy} details the numerical accuracy of IV and all three concurrent Greeks extracted from the 128-bit egress bus:
+(1)~\textit{Liquid Regime ($0.85 \le S/K \le 1.15$, 43.9\%)}: IV MAE is $8.80 \times 10^{-4}$ (median $0.94$ vol-bps, 98.8\% within 1.0\% vol). Concurrently extracted Delta achieves an MAE of $4.38 \times 10^{-3}$ (median $1.87 \times 10^{-4}$, 98.8\% within $0.05$); Vega achieves an MAE of $0.0963$ (median $1.88 \times 10^{-3}$, 94.2\% within $0.50$); and Gamma achieves an MAE of $2.39 \times 10^{-4}$ (median $1.20 \times 10^{-5}$, 99.0\% within $0.005$).
+(2)~\textit{Deep Wings ($S/K < 0.85$ or $> 1.15$, 56.1\%)}: Where Vega diminishes and the 18-cycle CORDIC fallback engages, IV MAE is $0.0225$ (median $0.126\%$ vol), yielding an empirical blended IV MAE of $0.439(8.80 \times 10^{-4}) + 0.561(0.0225) = \mathbf{0.0130}$ ($1.30\%$ vol, global median $1.50$ vol-bps). Gamma retains an MAE of $3.40 \times 10^{-3}$ (median $5.50 \times 10^{-5}$) across the entire 10,000 contracts with zero overflow.
 
 \textbf{Empirical SPX Market-Data Replay:} To evaluate numerical precision on high-notional strikes under market pricing distributions, we replayed 1,382 active CBOE European SPX contracts (spot $S = \$7{,}591.70$, September 11, 2026; 15 expiries, $T \in [0.015, 1.0]$~yr, strikes \$5{,}000--\$8{,}000) using quote midpoints. This serves as a fixed-point dynamic-range stress test against double-precision SciPy \texttt{brentq} ($xtol=10^{-8}$) on the identical canonical Black-Scholes model. Input vectors were streamed through the RTL DPI-C path with bit-accurate fixed-point arithmetic matching silicon. Across 989 liquid quotes ($0.95 \le S/K \le 1.05$), the engine achieves a median absolute error of \textbf{$1.64 \times 10^{-4}$ absolute volatility (1.64 vol-bps)}, with 54.3\% within 10 vol-bps ($<1.0 \times 10^{-3}$) and 66.3\% within 1.0 percentage point ($|\Delta\sigma| \le 0.0100$). Across all 1,382 quotes up to \$8,000 strike, zero arithmetic overflow occurred, confirming native Q8.24 scale normalization ($\tilde{S}=S/K, \tilde{C}=C/K$) on \$7,500+ spot prices, with hardware clamping maintaining 100\% stability. A 5-case corner suite ($T=0.001$~yr, $r=0, \sigma=150\%$) verified safe clamping.
 

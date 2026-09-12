@@ -19,7 +19,7 @@
  *         [165:160] = tid        (6-bit transaction ID)
  *         [255:166] = 0          (reserved/zero-padded)
  *
- *   sv_push_result_128(word_hi[63:0], word_lo[63:0])
+ *   sv_push_result_128(word_lo[63:0], word_hi[63:0])
  *       Called by the SV AXI-Stream monitor when m_axis_tvalid fires.
  *       Receives full 128-bit m_axis_tdata split into two 64-bit words:
  *         word_lo = m_axis_tdata[63:0]:
@@ -36,16 +36,17 @@
  * =========================================================
  */
 
+#include <svdpi.h>
 #include "iv_dpi_golden.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
 /* -------------------------------------------------------
- * TID queue: maps 6-bit TID → tick_index in test vector array
+ * TID queue: maps 6-bit TID -> tick_index in test vector array
  * Allows out-of-order result matching without a global counter.
  * ------------------------------------------------------- */
-#define TID_QUEUE_SIZE 64
+#define TID_QUEUE_SIZE 4096
 static int g_tid_queue[64][TID_QUEUE_SIZE];
 static int g_tid_head[64];
 static int g_tid_tail[64];
@@ -83,7 +84,7 @@ int sv_get_next_tick(svBitVecVal *tdata) {
     tdata[4] = tick.T_fixed;            /* [159:128]*/
     tdata[5] = (uint32_t)(tick.tid & 0x3F); /* [165:160] */
 
-    /* Record TID → tick_index mapping */
+    /* Record TID -> tick_index mapping */
     int tid = tick.tid & 0x3F;
     g_tid_queue[tid][g_tid_tail[tid] % TID_QUEUE_SIZE] = g_total_sent;
     g_tid_tail[tid]++;
@@ -114,14 +115,14 @@ void sv_push_result_128(uint64_t word_lo, uint64_t word_hi) {
     int32_t  delta_q824 = (int32_t)((word_lo >> 32) & 0xFFFFFFFFULL);
     int32_t  vega_q824  = (int32_t)(word_hi & 0xFFFFFFFFULL);
 
-    /* gamma is 26-bit signed at [121:96] → bits [57:32] of word_hi
+    /* gamma is 26-bit signed at [121:96] -> bits [57:32] of word_hi
        Sign-extend from bit 25 to int32_t */
     uint32_t gamma_raw  = (uint32_t)((word_hi >> 32) & 0x3FFFFFFULL); /* 26 bits */
     int32_t  gamma_q824 = (gamma_raw & 0x2000000U)
                           ? (int32_t)(gamma_raw | 0xFC000000U)   /* sign extend */
                           : (int32_t)gamma_raw;
 
-    /* TID is at bits [63:58] of word_hi → [127:122] of full 128-bit word */
+    /* TID is at bits [63:58] of word_hi -> [127:122] of full 128-bit word */
     uint8_t tid = (uint8_t)((word_hi >> 58) & 0x3FULL);
 
     /* Look up tick index from TID queue */
