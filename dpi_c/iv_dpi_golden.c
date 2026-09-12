@@ -31,21 +31,36 @@
 
 static IvGoldenTick  g_ticks[MAX_TRANSACTIONS];   /* generated test vectors    */
 static double        g_ref_iv[MAX_TRANSACTIONS];   /* reference IV per tick     */
+static double        g_ref_delta[MAX_TRANSACTIONS];/* reference Delta per tick  */
+static double        g_ref_vega[MAX_TRANSACTIONS]; /* reference Vega per tick   */
+static double        g_ref_gamma[MAX_TRANSACTIONS];/* reference Gamma per tick  */
 static int           g_num_ticks   = 0;            /* total transactions loaded */
 static int           g_tick_rd_ptr = 0;            /* read cursor (SV driver)   */
 static int           g_result_cnt  = 0;            /* results received from SV  */
 
-/* Error accumulators */
+/* Error accumulators — IV */
 static double g_sum_abs_err  = 0.0;
 static double g_sum_sq_err   = 0.0;
 static double g_sum_rel_err  = 0.0;
 static int    g_pass_1pct    = 0;   /* |err| < 0.01 */
 static int    g_pass_10pct   = 0;   /* |err| < 0.10 */
 
+/* Error accumulators — Greeks */
+static double g_delta_sum_abs = 0.0;
+static double g_delta_sum_sq  = 0.0;
+static double g_vega_sum_abs  = 0.0;
+static double g_vega_sum_sq   = 0.0;
+static double g_gamma_sum_abs = 0.0;
+static double g_gamma_sum_sq  = 0.0;
+static int    g_greek_cnt     = 0;  /* results with full Greek data */
+
 static double g_all_abs_err[MAX_TRANSACTIONS];
 static double g_liq_abs_err[MAX_TRANSACTIONS];
 static double g_wing_abs_err[MAX_TRANSACTIONS];
 static double g_fpga_iv[MAX_TRANSACTIONS];
+static double g_fpga_delta[MAX_TRANSACTIONS];
+static double g_fpga_vega[MAX_TRANSACTIONS];
+static double g_fpga_gamma[MAX_TRANSACTIONS];
 static int    g_liq_cnt  = 0;
 static int    g_wing_cnt = 0;
 
@@ -100,6 +115,29 @@ double bs_vega(double S, double K, double r, double T, double sigma) {
     double d1 = (log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * sqrt_T);
 
     return S * sqrt_T * phi(d1);
+}
+
+/* -------------------------------------------------------
+ * Black-Scholes Delta: Delta = N(d1)
+ * ------------------------------------------------------- */
+double bs_delta(double S, double K, double r, double T, double sigma) {
+    if (sigma <= 1e-8 || T <= 1e-8) return (S >= K) ? 1.0 : 0.0;
+
+    double sqrt_T = sqrt(T);
+    double d1 = (log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * sqrt_T);
+    return norm_cdf(d1);
+}
+
+/* -------------------------------------------------------
+ * Black-Scholes Gamma: Gamma = phi(d1) / (S * sigma * sqrt(T))
+ * ------------------------------------------------------- */
+double bs_gamma(double S, double K, double r, double T, double sigma) {
+    if (sigma <= 1e-8 || T <= 1e-8 || S <= 1e-8) return 0.0;
+
+    double sqrt_T = sqrt(T);
+    double d1 = (log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * sqrt_T);
+    double denom = S * sigma * sqrt_T;
+    return (denom > 1e-10) ? phi(d1) / denom : 0.0;
 }
 
 /* -------------------------------------------------------
@@ -168,6 +206,11 @@ void golden_init_test_vectors(int num_ticks) {
     g_pass_10pct  = 0;
     g_liq_cnt     = 0;
     g_wing_cnt    = 0;
+    /* Reset Greek accumulators */
+    g_delta_sum_abs = 0.0; g_delta_sum_sq = 0.0;
+    g_vega_sum_abs  = 0.0; g_vega_sum_sq  = 0.0;
+    g_gamma_sum_abs = 0.0; g_gamma_sum_sq = 0.0;
+    g_greek_cnt     = 0;
 
     /* Seed for reproducibility — same pattern as benchmark_accuracy.py */
     srand(42);
@@ -203,6 +246,11 @@ void golden_init_test_vectors(int num_ticks) {
 
         /* Store true reference IV (exact ground truth) */
         g_ref_iv[i] = true_iv;
+
+        /* Pre-compute reference Greeks at the true IV */
+        g_ref_delta[i] = bs_delta(S, K, r, T, true_iv);
+        g_ref_vega[i]  = bs_vega(S, K, r, T, true_iv);
+        g_ref_gamma[i] = bs_gamma(S, K, r, T, true_iv);
     }
 
     printf("[GOLDEN] Initialized %d test vectors with K/S in [0.70, 1.40] (seed=42).\n", num_ticks);
@@ -252,6 +300,44 @@ void golden_push_result(uint32_t result_sigma_q824, int tick_index) {
     }
 
     g_result_cnt++;
+}
+
+/* -------------------------------------------------------
+ * Public API: Push full 128-bit FPGA result (IV + Greeks)
+ * Signed Q8.24 for delta, vega, gamma (sign-extended from RTL).
+ * gamma_q824 is sign-extended from the 26-bit RTL field.
+ * ------------------------------------------------------- */
+void golden_push_result_full(uint32_t result_sigma_q824,
+                              int32_t  result_delta_q824,
+                              int32_t  result_vega_q824,
+                              int32_t  result_gamma_q824,
+                              int      tick_index) {
+    /* First do the IV accounting (identical to golden_push_result) */
+    golden_push_result(result_sigma_q824, tick_index);
+
+    if (tick_index < 0 || tick_index >= g_num_ticks) return;
+
+    /* Convert Q8.24 Greek fields to double */
+    double fpga_delta = (double)result_delta_q824 / 16777216.0;
+    double fpga_vega  = (double)result_vega_q824  / 16777216.0;
+    double fpga_gamma = (double)result_gamma_q824 / 16777216.0;
+
+    double ref_delta = g_ref_delta[tick_index];
+    double ref_vega  = g_ref_vega[tick_index];
+    double ref_gamma = g_ref_gamma[tick_index];
+
+    double d_err = fabs(fpga_delta - ref_delta);
+    double v_err = fabs(fpga_vega  - ref_vega);
+    double g_err = fabs(fpga_gamma - ref_gamma);
+
+    g_delta_sum_abs += d_err;  g_delta_sum_sq += d_err * d_err;
+    g_vega_sum_abs  += v_err;  g_vega_sum_sq  += v_err * v_err;
+    g_gamma_sum_abs += g_err;  g_gamma_sum_sq += g_err * g_err;
+
+    g_fpga_delta[tick_index] = fpga_delta;
+    g_fpga_vega[tick_index]  = fpga_vega;
+    g_fpga_gamma[tick_index] = fpga_gamma;
+    g_greek_cnt++;
 }
 
 /* -------------------------------------------------------
@@ -344,10 +430,32 @@ void golden_print_report(void) {
            mae < 0.005 ? "*** PASS ***" : "!!! FAIL !!!");
     printf("=================================================================\n");
 
+    /* Greek accuracy summary */
+    if (g_greek_cnt > 0) {
+        double n = (double)g_greek_cnt;
+        printf("\n");
+        printf("=================================================================\n");
+        printf("  Greeks Accuracy Summary (%d contracts with full RTL output)\n", g_greek_cnt);
+        printf("-----------------------------------------------------------------\n");
+        printf("  Delta  MAE : %.6f   RMSE: %.6f\n",
+               g_delta_sum_abs / n, sqrt(g_delta_sum_sq / n));
+        printf("  Vega   MAE : %.6f   RMSE: %.6f\n",
+               g_vega_sum_abs  / n, sqrt(g_vega_sum_sq  / n));
+        printf("  Gamma  MAE : %.6f   RMSE: %.6f\n",
+               g_gamma_sum_abs / n, sqrt(g_gamma_sum_sq / n));
+        printf("=================================================================\n");
+    }
+
     /* Export full results to CSV */
     FILE *fcsv = fopen("sim_results/dpi_10k_results.csv", "w");
     if (fcsv) {
-        fprintf(fcsv, "tick,S,K,moneyness_SK,moneyness_KS,T,r,true_iv,fpga_iv,abs_err,is_liquid\n");
+        /* Header — IV + Greek columns */
+        fprintf(fcsv, "tick,S,K,moneyness_SK,moneyness_KS,T,r,"
+                      "true_iv,fpga_iv,abs_err,"
+                      "true_delta,fpga_delta,delta_err,"
+                      "true_vega,fpga_vega,vega_err,"
+                      "true_gamma,fpga_gamma,gamma_err,"
+                      "is_liquid\n");
         for (int i = 0; i < g_result_cnt; i++) {
             double s = g_ticks[i].S;
             double k = g_ticks[i].K;
@@ -357,13 +465,32 @@ void golden_print_report(void) {
             double r = g_ticks[i].r;
             double t_iv = g_ref_iv[i];
             double f_iv = g_fpga_iv[i];
-            double err = fabs(f_iv - t_iv);
-            int is_liq = (sk >= 0.85 && sk <= 1.15) ? 1 : 0;
-            fprintf(fcsv, "%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.6f,%.6f,%.6f,%d\n",
-                    i, s, k, sk, ks, t, r, t_iv, f_iv, err, is_liq);
+            double err  = fabs(f_iv - t_iv);
+            int is_liq  = (sk >= 0.85 && sk <= 1.15) ? 1 : 0;
+
+            /* Greek values (0 if not captured by full-result path) */
+            double t_delta = g_ref_delta[i];
+            double f_delta = g_fpga_delta[i];
+            double t_vega  = g_ref_vega[i];
+            double f_vega  = g_fpga_vega[i];
+            double t_gamma = g_ref_gamma[i];
+            double f_gamma = g_fpga_gamma[i];
+
+            fprintf(fcsv, "%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,"
+                          "%.6f,%.6f,%.6f,"
+                          "%.6f,%.6f,%.6f,"
+                          "%.6f,%.6f,%.6f,"
+                          "%.6f,%.6f,%.6f,"
+                          "%d\n",
+                    i, s, k, sk, ks, t, r,
+                    t_iv, f_iv, err,
+                    t_delta, f_delta, fabs(f_delta - t_delta),
+                    t_vega,  f_vega,  fabs(f_vega  - t_vega),
+                    t_gamma, f_gamma, fabs(f_gamma - t_gamma),
+                    is_liq);
         }
         fclose(fcsv);
-        printf("[GOLDEN] Exported full tick results to sim_results/dpi_10k_results.csv\n");
+        printf("[GOLDEN] Exported full tick results (+Greeks) to sim_results/dpi_10k_results.csv\n");
     }
     fflush(stdout);
 }

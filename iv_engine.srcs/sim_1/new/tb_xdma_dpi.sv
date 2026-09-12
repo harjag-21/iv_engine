@@ -29,7 +29,13 @@ import "DPI-C" function void sv_init_test_vectors(input int num_ticks);
 import "DPI-C" function int sv_get_next_tick(
     output bit [255:0] tdata
 );
-import "DPI-C" function void sv_push_result(input longint unsigned result_data);
+// sv_push_result_128: receives full 128-bit egress bus as two 64-bit halves
+// word_lo = m_axis_tdata[63:0]  {delta[31:0], sigma[31:0]}
+// word_hi = m_axis_tdata[127:64] {tid[5:0], gamma[25:0], vega[31:0]}
+import "DPI-C" function void sv_push_result_128(
+    input longint unsigned word_lo,
+    input longint unsigned word_hi
+);
 import "DPI-C" function void sv_print_report();
 
 module tb_xdma_dpi;
@@ -186,8 +192,13 @@ module tb_xdma_dpi;
     // -------------------------------------------------------
     always @(posedge aclk) begin
         if (aresetn && m_axis_tvalid && m_axis_tready) begin
-            // Forward 64-bit result {26'b0, tid[5:0], sigma[31:0]} to C golden model
-            sv_push_result({26'b0, m_axis_tdata[127:122], m_axis_tdata[31:0]});
+            // Forward full 128-bit result bus to C golden model:
+            //   word_lo = m_axis_tdata[63:0]   {delta[31:0], sigma[31:0]}
+            //   word_hi = m_axis_tdata[127:64]  {tid[5:0], gamma[25:0], vega[31:0]}
+            sv_push_result_128(
+                longint'(m_axis_tdata[63:0]),
+                longint'(m_axis_tdata[127:64])
+            );
             results_rcvd <= results_rcvd + 1;
 
             if ((results_rcvd + 1) % 100 == 0)
