@@ -14,28 +14,28 @@
 \usepackage{url}
 
 % Micro-spacing adjustments for strict 6-page IEEE conference budget
-\setlength{\textfloatsep}{3.0pt plus 1.0pt minus 1.0pt}
-\setlength{\floatsep}{3.0pt plus 1.0pt minus 1.0pt}
-\setlength{\intextsep}{3.0pt plus 1.0pt minus 1.0pt}
-\setlength{\dbltextfloatsep}{3.5pt plus 1.0pt minus 1.0pt}
-\setlength{\dblfloatsep}{3.5pt plus 1.0pt minus 1.0pt}
-\setlength{\abovecaptionskip}{2.0pt plus 1.0pt minus 1.0pt}
-\setlength{\belowcaptionskip}{1.5pt plus 1.0pt minus 1.0pt}
-\setlength{\abovedisplayskip}{1.5pt plus 1.0pt minus 1.0pt}
-\setlength{\belowdisplayskip}{1.5pt plus 1.0pt minus 1.0pt}
-\setlength{\abovedisplayshortskip}{1.0pt plus 1.0pt minus 1.0pt}
-\setlength{\belowdisplayshortskip}{1.0pt plus 1.0pt minus 1.0pt}
+\setlength{\textfloatsep}{2.5pt plus 0.8pt minus 0.8pt}
+\setlength{\floatsep}{2.5pt plus 0.8pt minus 0.8pt}
+\setlength{\intextsep}{2.5pt plus 0.8pt minus 0.8pt}
+\setlength{\dbltextfloatsep}{2.8pt plus 0.8pt minus 0.8pt}
+\setlength{\dblfloatsep}{2.8pt plus 0.8pt minus 0.8pt}
+\setlength{\abovecaptionskip}{1.5pt plus 0.5pt minus 0.5pt}
+\setlength{\belowcaptionskip}{1.0pt plus 0.5pt minus 0.5pt}
+\setlength{\abovedisplayskip}{1.0pt plus 0.5pt minus 0.5pt}
+\setlength{\belowdisplayskip}{1.0pt plus 0.5pt minus 0.5pt}
+\setlength{\abovedisplayshortskip}{0.5pt plus 0.5pt minus 0.5pt}
+\setlength{\belowdisplayshortskip}{0.5pt plus 0.5pt minus 0.5pt}
 
 \setcounter{topnumber}{3}
 \setcounter{bottomnumber}{3}
 \setcounter{totalnumber}{6}
 \setcounter{dbltopnumber}{2}
-\renewcommand{\topfraction}{0.90}
-\renewcommand{\bottomfraction}{0.90}
-\renewcommand{\textfraction}{0.08}
-\renewcommand{\floatpagefraction}{0.80}
-\renewcommand{\dbltopfraction}{0.90}
-\renewcommand{\dblfloatpagefraction}{0.80}
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.92}
+\renewcommand{\textfraction}{0.06}
+\renewcommand{\floatpagefraction}{0.82}
+\renewcommand{\dbltopfraction}{0.92}
+\renewcommand{\dblfloatpagefraction}{0.82}
 
 \graphicspath{{figures/}{./}}
 
@@ -55,7 +55,7 @@
 \renewenvironment{thebibliography}[1]{%
   \begin{oldthebibliography}{#1}%
     \scriptsize
-    \setlength{\itemsep}{-3.2pt}%
+    \setlength{\itemsep}{-3.5pt}%
     \setlength{\parskip}{0pt}%
     \setlength{\parsep}{0pt}%
 }{%
@@ -251,24 +251,13 @@ The RTL achieves a \textbf{mean absolute error (MAE) of $1.57 \times 10^{-4}$ ab
 
 To evaluate extreme dynamic range, a second 10,000-contract DPI-C co-simulation was executed over the extended domain $K/S \in [0.70, 1.40]$. In the liquid portion ($0.85 \le S/K \le 1.15$, 4,394 contracts / 43.9\%), the engine achieves MAE of $8.80 \times 10^{-4}$ ($0.088\%$ vol, median $0.94$ vol-bps), with 98.8\% converging within 1.0 percentage point error. Across the 5,606 deep-wing contracts ($S/K < 0.85$ or $S/K > 1.15$, 56.1\%), where Vega diminishes and the 18-cycle CORDIC fallback engages, MAE is $0.0225$ (median $0.126\%$ vol), yielding an empirical blended MAE of $0.439(8.80 \times 10^{-4}) + 0.561(0.0225) = \mathbf{0.0130}$ ($1.30\%$ vol) with a global median error of $1.50$ vol-bps and strictly zero arithmetic overflow or divergence.
 
-\textbf{Empirical SPX Market-Data Replay:} To evaluate numerical precision on empirical SPX market-price distributions and high-notional strikes, we evaluated a captured market snapshot of 1,382 active CBOE European SPX contracts (spot $S = \$7{,}591.70$, captured September 11, 2026; 15 expiries with $T \in [0.015, 1.0]$~yr, strikes \$5{,}000--\$8{,}000). Market quotes $C_{\text{mkt}}$ use bid-ask midpoints filtering crossed or sub-intrinsic values. Because hardware implements the canonical Black-Scholes formulation, this replay serves as a fixed-point precision and dynamic-range stress test under empirical pricing rather than a production dividend-aware IV study; reference IVs were computed via double-precision SciPy \texttt{brentq} ($xtol=10^{-8}$) on the identical canonical model. Input vectors were streamed through the RTL DPI-C path with bit-accurate fixed-point arithmetic identical to synthesized silicon. Across 989 liquid quotes ($0.95 \le S/K \le 1.05$), the engine achieves a median absolute error of \textbf{$1.64 \times 10^{-4}$ absolute volatility (1.64 vol-bps)}, with 54.3\% within $1.0 \times 10^{-3}$ ($<10$ vol-bps) and 66.3\% within $0.0100$ (1.0 percentage point). Across all 1,382 quotes up to \$8,000 strike, zero arithmetic overflow occurred, confirming native Q8.24 scale normalization ($\tilde{S}=S/K, \tilde{C}=C/K$) on \$7,500+ spot prices, while hardware clamping ensured 100\% numerical stability with zero divergence. A 5-case corner testbench ($T=0.001$~yr, zero rate, $\sigma=150\%$) confirmed safe clamping.
+\textbf{Empirical SPX Market-Data Replay:} To evaluate numerical precision on high-notional strikes under market pricing distributions, we replayed 1,382 active CBOE European SPX contracts (spot $S = \$7{,}591.70$, September 11, 2026; 15 expiries, $T \in [0.015, 1.0]$~yr, strikes \$5{,}000--\$8{,}000) using quote midpoints. This serves as a fixed-point dynamic-range stress test against double-precision SciPy \texttt{brentq} ($xtol=10^{-8}$) on the identical canonical Black-Scholes model. Input vectors were streamed through the RTL DPI-C path with bit-accurate fixed-point arithmetic matching silicon. Across 989 liquid quotes ($0.95 \le S/K \le 1.05$), the engine achieves a median absolute error of \textbf{$1.64 \times 10^{-4}$ absolute volatility (1.64 vol-bps)}, with 54.3\% within 10 vol-bps ($<1.0 \times 10^{-3}$) and 66.3\% within 1.0 percentage point ($|\Delta\sigma| \le 0.0100$). Across all 1,382 quotes up to \$8,000 strike, zero arithmetic overflow occurred, confirming native Q8.24 scale normalization ($\tilde{S}=S/K, \tilde{C}=C/K$) on \$7,500+ spot prices, with hardware clamping maintaining 100\% stability. A 5-case corner suite ($T=0.001$~yr, $r=0, \sigma=150\%$) verified safe clamping.
 
 \subsection{First-Order Error-Budget Sanity Check}
-The observed MAE of $1.57 \times 10^{-4}$ absolute volatility ($0.0157$ percentage points) is verified via a first-order error budget linking hardware approximations to volatility perturbation ($\Delta\sigma \approx \Delta C / \nu$):
-\begin{itemize}
-    \item \textbf{Pad\'{e} Logarithm ($\Delta_{\ln}$):} For $x = S/K = 1+u$, [1/1] Pad\'{e} error is $\Delta_{\ln} \approx u^3/12 \le 3.6 \times 10^{-4}$ ($|u| \le 0.15$), inducing $\Delta\sigma_{\text{Pad\'{e}}} \approx 4.5 \times 10^{-5}$ ($0.0045\%$ vol).
-    \item \textbf{Hyperbolic CORDIC ($e^{-rT}, e^{-d_1^2/2}$):} 16-stage CORDIC precision ($2^{-16}$) induces price error $\Delta C \approx 7.6 \times 10^{-6} K$. Dividing by typical Vega $\nu \approx 0.35 K$ yields $\Delta\sigma_{\text{CORDIC}} \approx 2.8 \times 10^{-5}$ ($0.0028\%$ vol).
-    \item \textbf{CDF \& Quantization:} 5th-order Horner CDF ($|\epsilon| \le 7.5 \times 10^{-8}$) yields $\Delta\sigma_{\text{Horner}} \approx 1.2 \times 10^{-6}$ ($0.00012\%$), while Q8.24 roundoff contributes RMS uncertainty $\approx 2.5 \times 10^{-6}$.
-    \item \textbf{Price Convergence Termination:} With mean $S = \$50$ and $\bar{T} = 0.8$ ($\bar{\nu} \approx \$17.35$), mean termination error $\overline{|\Delta C|} \approx \$0.0025$ yields $\Delta\sigma_{\text{stop}} \approx \frac{\$0.0025}{\$17.35} \approx 1.45 \times 10^{-4}$ ($0.0145\%$ vol).
-\end{itemize}
-Root-sum-square of these components yields $\approx 1.5 \times 10^{-4}$ ($0.015\%$ vol), providing an order-of-magnitude sanity check consistent with the empirical DPI-C simulation MAE of $1.57 \times 10^{-4}$ across 10,000 contracts against double precision (non-independent error sources).
+The observed MAE of $1.57 \times 10^{-4}$ ($0.0157\%$ vol) is verified via a first-order perturbation budget ($\Delta\sigma \approx \Delta C / \nu$): (1)~\textit{Pad\'{e} Logarithm ($\Delta_{\ln}$)}: $|u| \le 0.15$ bounds error to $\le 3.6 \times 10^{-4}$, inducing $\Delta\sigma_{\text{Pad\'{e}}} \approx 4.5 \times 10^{-5}$ ($0.0045\%$ vol); (2)~\textit{Hyperbolic CORDIC ($e^{-rT}, e^{-d_1^2/2}$)}: 16-stage precision ($2^{-16}$) induces $\Delta C \approx 7.6 \times 10^{-6} K$, giving $\Delta\sigma_{\text{CORDIC}} \approx 2.8 \times 10^{-5}$ for $\nu \approx 0.35 K$; (3)~\textit{Horner CDF \& Quantization}: 5th-order Horner error ($|\epsilon| \le 7.5 \times 10^{-8}$) yields $\Delta\sigma_{\text{Horner}} \approx 1.2 \times 10^{-6}$ ($0.00012\%$), while Q8.24 roundoff contributes RMS uncertainty $\approx 2.5 \times 10^{-6}$; and (4)~\textit{Convergence Termination}: with mean $S=\$50, \bar{T}=0.8$ ($\bar{\nu} \approx \$17.35$), mean termination error $\overline{|\Delta C|} \approx \$0.0025$ yields $\Delta\sigma_{\text{stop}} \approx \frac{\$0.0025}{\$17.35} \approx 1.45 \times 10^{-4}$ ($0.0145\%$ vol). Root-sum-square yields $\approx 1.5 \times 10^{-4}$ ($0.015\%$ vol), providing an order-of-magnitude check consistent with the empirical DPI-C simulation MAE of $1.57 \times 10^{-4}$ across 10,000 contracts against double precision.
 
 \subsection{Algorithmic Ablation: Seeding vs. Unseeded Newton-Raphson}
-Fig.~\ref{fig:ablation} illustrates the impact of analytical guess seeding versus an unseeded Newton-Raphson baseline ($\sigma_0 = 0.20$):
-\begin{itemize}
-    \item \textbf{With Analytical Seeding:} 97.6\% of options converge in 1 iteration, and 99.9\% in $\le 2$ iterations. Zero divergence occurs. Sustained throughput is 390.62~MOps/s.
-    \item \textbf{Without Seeding ($\sigma_0 = 0.20$):} Contracts require an average of 4.8 iterations, and 4.2\% fail to converge or oscillate when $\nu < 0.02$. Seeding reduces average iteration count by 79\% (from 4.8 to 1.024 passes/contract).
-\end{itemize}
+Fig.~\ref{fig:ablation} compares analytical guess seeding against an unseeded Newton-Raphson baseline ($\sigma_0 = 0.20$): (1)~\textit{With Analytical Seeding}: 97.6\% of contracts converge in 1 iteration, and 99.9\% converge in $\le 2$ iterations with zero divergence, sustaining 390.62~MOps/s net throughput; and (2)~\textit{Without Seeding ($\sigma_0 = 0.20$)}: contracts require an average of 4.8 iterations, with 4.2\% failing to converge or oscillating when $\nu < 0.02$. Analytical seeding reduces average iteration count by 79\% (from 4.800 to 1.024 passes/contract).
 
 \begin{table}[b]
 \caption{Sub-Module Resource Breakdown (Per Core Signoff)}
@@ -304,7 +293,7 @@ Table~\ref{tab:submodule} summarizes post-implementation resource distribution p
 \label{tab:comparison}
 \centering
 \resizebox{\textwidth}{!}{%
-\renewcommand{\arraystretch}{0.88}%
+\renewcommand{\arraystretch}{0.84}%
 \begin{tabular}{lrrrr}
 \toprule
 \textbf{Architectural Metric} & \textbf{Host CPU\textsuperscript{1}} & \textbf{High-End GPU\textsuperscript{2}} & \textbf{Proposed Artix-7 200T} & \textbf{Proposed Alveo U50} \\
@@ -343,18 +332,14 @@ On-Chip BRAM / URAM & N/A & N/A & \textbf{0 BRAM} & \textbf{0 BRAM, 0 URAM} \\
 Table~\ref{tab:comparison} summarizes comparative performance against CPU and GPU baselines, while Fig.~\ref{fig:ablation} illustrates the algorithmic ablation. An empirical benchmark on a companion host CPU (Intel Core i5-12500H, 12 cores/16 threads, 45~W TDP, AVX2) over 2,000,000 contracts reaches 14.22~MOps/s (316~kOps/W), serving as a representative edge-host software baseline.
 
 The 4-core FPGA engine achieves 400.00~MOps/s peak (390.62~MOps/s net liquid) at 4.258~W on Artix-7, and 1,000.00~MOps/s (1.00~GOps/s) at 9.560~W on Alveo U50:
-\begin{itemize}
-    \item \textbf{Throughput Speedup:} 28.1$\times$ higher peak throughput than the companion AVX2 CPU benchmark (27.5$\times$ net) on Artix-7 and 70.3$\times$ on Alveo U50 (scaling to 562.6$\times$\textsuperscript{\ddag} at 32 cores).
-    \item \textbf{Energy Efficiency:} 93,940~kOps/W peak (91,738~kOps/W net) on Artix-7 and 104,602~kOps/W on Alveo U50, demonstrating 297$\times$--331$\times$ efficiency gains over CPU under post-route models.
-    \item \textbf{Deterministic Accelerator Latency:} The CPU baseline provides a software throughput reference, but thread scheduling and cache state cause latency jitter. In contrast, our FPGA accelerator exposes a fixed-cycle hardware datapath with \textbf{no software scheduling overhead}: 97.6\% of liquid quotes complete on the cold path in exactly 227 cycles (2.27~$\mu$s on Artix-7, \textbf{0.91~$\mu$s} on Alveo U50). For the 2.4\% requiring a second pass, loopback adds 159 cycles (386 cycles total; 3.86~$\mu$s / 1.54~$\mu$s) while consuming only one additional ingress scheduling opportunity (1.024 slots/contract liquid average, 1.628 blended extended domain). This achieves sub-microsecond accelerator ingress-to-egress datapath latency (external network PHY, MAC framing, feed handling, and host transfers are outside the accelerator boundary).
-\end{itemize}
+(1)~\textbf{Throughput Speedup:} 28.1$\times$ higher peak throughput than the companion AVX2 CPU benchmark (27.5$\times$ net) on Artix-7 and 70.3$\times$ on Alveo U50 (scaling to 562.6$\times$\textsuperscript{\ddag} at 32 cores);
+(2)~\textbf{Energy Efficiency:} 93,940~kOps/W peak (91,738~kOps/W net) on Artix-7 and 104,602~kOps/W on Alveo U50, demonstrating 297$\times$--331$\times$ efficiency gains over CPU under post-route models; and
+(3)~\textbf{Deterministic Accelerator Latency:} 97.6\% of liquid quotes complete on the cold path in exactly 227 cycles (2.27~$\mu$s on Artix-7, \textbf{0.91~$\mu$s} on Alveo U50). For the 2.4\% requiring a second pass, loopback adds 159 cycles (386 cycles total; 3.86~$\mu$s / 1.54~$\mu$s) while consuming only one additional ingress scheduling opportunity (1.024 slots/contract liquid average, 1.628 blended extended domain), achieving sub-microsecond datapath latency with zero software scheduling jitter (external network PHY/MAC framing and host PCIe transfers are outside the accelerator boundary).
 
 \noindent\textbf{Architectural Positioning vs. GPUs:} While GPUs excel at batched forward pricing across millions of synthetic paths in offline risk analysis, inline streaming options processing demands low-latency tick evaluation. The A100 result is therefore included only as a contextual forward-pricing reference rather than an equivalent IV+Greeks benchmark. The FPGA avoids host-device transfers and kernel-batching mechanisms while maintaining deterministic hardware control flow.
 
 \subsection{Deployment Considerations and Scaling Projection}
-Deployment spans two tiers: (1)~\textit{Tier-1 Inline SmartNIC Filtering} ($<25$~W PCIe mezzanine), where our Artix-7 design consumes 4.258~W post-route estimated power (17\% of a 25~W budget) alongside 10GbE MACs with low thermal burden; and (2)~\textit{Tier-2 Centralized Co-Processing} (75--225~W datacenter accelerators).
-
-To verify datacenter scalability, the 4-core engine was placed and routed on an AMD Alveo U50 card (\texttt{xcu50-fsvh2104-2-e}), closing timing at 250.00~MHz ($WNS = +0.073\text{ ns}$) and delivering 1.00~GOps/s at 9.560~W with strictly 0 BRAM and 0 URAM (occupying 12.13\% LUTs and 576 DSPs). Linear scaling projections indicate that 32 parallel cores on U50 would consume 4,608 DSPs (77.4\%) for a \textbf{projected 8.00~GOps/s} within an estimated $\sim$65~W board power (scaling dynamic power linearly while retaining static overhead, under the 75~W PCIe ceiling). On a VU9P (6,840 DSPs), 44 cores project to \textbf{11.00~GOps/s}. Crucially, on-chip BRAM/URAM blocks remain completely available for external 100GbE FIFOs and order-book tracking.
+Deployment spans two tiers: (1)~\textit{Tier-1 Inline SmartNIC Filtering} ($<25$~W PCIe mezzanine), where our Artix-7 design consumes 4.258~W post-route estimated power (17\% of a 25~W budget) alongside 10GbE MACs with low thermal burden; and (2)~\textit{Tier-2 Centralized Co-Processing} (75--225~W datacenter accelerators). On AMD Alveo U50, the 4-core engine closed timing at 250.00~MHz ($WNS = +0.073\text{ ns}$), delivering 1.00~GOps/s at 9.560~W with strictly 0 BRAM and 0 URAM (12.13\% LUTs, 576 DSPs). Linear scaling projections indicate that 32 parallel cores on U50 would consume 4,608 DSPs (77.4\%) for a \textbf{projected 8.00~GOps/s} within $\sim$65~W board power (scaling dynamic power linearly while retaining static overhead, under the 75~W PCIe ceiling), while 44 cores on VU9P project to \textbf{11.00~GOps/s}. Crucially, on-chip BRAM/URAM blocks remain completely available for external 100GbE FIFOs and order-book tracking.
 
 \subsection{Comparison with Prior FPGA Accelerators}
 \begin{table}[t]
@@ -362,7 +347,7 @@ To verify datacenter scalability, the 4-core engine was placed and routed on an 
 \label{tab:prior_art}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.88}%
+\renewcommand{\arraystretch}{0.84}%
 \begin{tabular}{lcccccc}
 \toprule
 \textbf{Design} & \textbf{Target Device} & \textbf{Task / Method} & \textbf{Clock} & \textbf{Throughput} & \textbf{Latency} & \textbf{BRAM / DSP} \\
@@ -383,12 +368,12 @@ Tse et al.~\cite{tse2010customising} (2010) & Virtex-4 FX100 & BS / Forward Pass
 \scriptsize{\textsuperscript{\dag} 390.62~MOps/s net sustained liquid (245.8~MOps/s under the measured 43.9\% liquid / 56.1\% deep-wing population). \textsuperscript{\ddag} Linear projection based on available DSP slices.}
 \end{table}
 
-Table~\ref{tab:prior_art} compares this work against prior FPGA accelerators~\cite{omahony2024role}. Prior implementations~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} focus on forward pricing or multi-section methods with heavy Block RAM consumption. In contrast, our engine achieves 400~MOps/s peak (390.62~MOps/s net liquid) with concurrent Greeks while consuming strictly Zero BRAM blocks. On Alveo U50, throughput reaches 1.00~GOps/s with 0.91~$\mu$s (227 cycles) cold latency, delivering 8.3$\times$ the reported throughput of Wang et al.~\cite{wang2022fpga} (although target devices and algorithmic workloads differ) with zero block memory usage.
+Table~\ref{tab:prior_art} compares this work against prior FPGA option accelerators~\cite{omahony2024role}. Prior implementations~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} focus on forward pricing or multi-section root finding with heavy Block RAM consumption. In contrast, our engine achieves 400~MOps/s peak (390.62~MOps/s net liquid) with concurrent Greeks while consuming strictly zero BRAM blocks. On Alveo U50, throughput reaches 1.00~GOps/s with 0.91~$\mu$s (227 cycles) cold latency, delivering 8.3$\times$ the reported throughput of Wang et al.~\cite{wang2022fpga} (across differing workloads) with zero block memory usage.
 
 % -------------------------------------------------------------------------
 \section{Conclusion}
 % -------------------------------------------------------------------------
-We presented a four-core FPGA acceleration engine for real-time option implied volatility and concurrent Greeks ($\Delta, \nu, \Gamma$) calculation. Synergizing Brenner-Subrahmanyam guess seeding, Q8.24 scale-invariance normalization, and a zero-BRAM microarchitecture, the engine achieves physical timing closure at 100~MHz on Artix-7 200T (400~MOps/s, 4.258~W post-route power estimate) and 250~MHz on Alveo U50 (1.00~GOps/s, 9.560~W post-route estimate) with strictly 0 BRAM and 0 URAM. DPI-C co-simulation confirms high accuracy ($MAE = 1.57 \times 10^{-4}$ absolute volatility) with 99.9\% of contracts within 1.0 percentage point error. Delivering a peak throughput of 400~MOps/s, corresponding to 28.1$\times$ the companion AVX2 CPU throughput, the design demonstrates a viable, resource-efficient FPGA architecture for latency-sensitive streaming option pricing.
+We presented a four-core FPGA acceleration engine for real-time option implied volatility and concurrent Greeks ($\Delta, \nu, \Gamma$). Synergizing Brenner-Subrahmanyam guess seeding, Q8.24 scale normalization, and a zero-BRAM microarchitecture, the engine achieves timing signoff at 100~MHz on Artix-7 200T (400~MOps/s, 4.258~W) and 250~MHz on Alveo U50 (1.00~GOps/s, 9.560~W) with strictly 0 BRAM/URAM. DPI-C co-simulation confirms high accuracy ($MAE = 1.57 \times 10^{-4}$) with 99.9\% of contracts within 1.0 percentage point error and 0.91~$\mu$s cold latency, demonstrating 28.1$\times$ higher throughput and 297$\times$ higher energy efficiency than a 16-thread AVX2 host CPU.
 
 \begin{thebibliography}{12}
 
@@ -396,37 +381,37 @@ We presented a four-core FPGA acceleration engine for real-time option implied v
 A.~O'Mahony, B.~Hanzon, and E.~Popovici, ``The role of {FPGAs} in modern option pricing techniques: A survey,'' \emph{Electronics}, vol.~13, no.~16, p. 3186, 2024.
 
 \bibitem{black1973pricing}
-F.~Black and M.~Scholes, ``The pricing of options and corporate liabilities,'' \emph{Journal of Political Economy}, vol.~81, no.~3, pp. 637--654, 1973.
+F.~Black and M.~Scholes, ``The pricing of options and corporate liabilities,'' \emph{J. Polit. Econ.}, vol.~81, no.~3, pp. 637--654, 1973.
 
 \bibitem{cboe2023specs}
-{Chicago Board Options Exchange}, ``{CBOE} options exchange fee schedule and minimum price variations,'' \url{https://www.cboe.com}, 2023.
+{CBOE}, ``Fee schedule and minimum price variations,'' \url{https://www.cboe.com}, 2023.
 
 \bibitem{brenner1988simple}
-M.~Brenner and M.~G. Subrahmanyam, ``A simple formula to compute the implied standard deviation,'' \emph{Financial Analysts Journal}, vol.~44, no.~5, pp. 80--83, 1988.
+M.~Brenner and M.~G. Subrahmanyam, ``A simple formula to compute the implied standard deviation,'' \emph{Financ. Anal. J.}, vol.~44, no.~5, pp. 80--83, 1988.
 
 \bibitem{corrado1996improved}
-C.~J. Corrado and T.~W. Miller, ``A simple and accurate formula to compute implied standard deviations,'' \emph{Journal of Banking \& Finance}, vol.~20, no.~3, pp. 595--603, 1996.
+C.~J. Corrado and T.~W. Miller, ``A simple and accurate formula to compute implied standard deviations,'' \emph{J. Bank. Finance}, vol.~20, no.~3, pp. 595--603, 1996.
 
 \bibitem{jackel2015lets}
-P.~J{\"a}ckel, ``Let's be rational,'' \emph{Wilmott Magazine}, vol. 2015, no.~75, pp. 40--53, 2015.
+P.~J{\"a}ckel, ``Let's be rational,'' \emph{Wilmott Mag.}, vol. 2015, no.~75, pp. 40--53, 2015.
 
 \bibitem{abramowitz1964handbook}
-M.~Abramowitz and I.~A. Stegun, \emph{Handbook of Mathematical Functions with Formulas, Graphs, and Mathematical Tables}. National Bureau of Standards, 1964.
+M.~Abramowitz and I.~A. Stegun, \emph{Handbook of Mathematical Functions}. NBS, 1964.
 
 \bibitem{cuda2023samples}
-{NVIDIA Corporation}, ``{CUDA} samples: {Black-Scholes} option pricing,'' \url{https://github.com/NVIDIA/cuda-samples}, 2023.
+{NVIDIA}, ``{CUDA} samples: {Black-Scholes},'' \url{https://github.com/NVIDIA/cuda-samples}, 2023.
 
 \bibitem{wang2022fpga}
-S.~Wang, H.~Huan, S.~F. Wong, and J.~Yen, ``{FPGA} based implied volatility calculation with multi-section method,'' in \emph{Proc. IEEE 20th Int. Conf. Industrial Informatics (INDIN)}, 2022, pp. 507--514.
+S.~Wang, H.~Huan, S.~F. Wong, and J.~Yen, ``{FPGA} based implied volatility calculation with multi-section method,'' in \emph{Proc. IEEE INDIN}, 2022, pp. 507--514.
 
 \bibitem{becker2011dynamic}
-T.~Becker, Q.~Jin, W.~Luk, and S.~Weston, ``Dynamic constant reconfiguration for explicit finite difference option pricing,'' in \emph{Proc. Int. Conf. Reconfigurable Computing and FPGAs (ReConFig)}, 2011, pp. 176--181.
+T.~Becker, Q.~Jin, W.~Luk, and S.~Weston, ``Dynamic constant reconfiguration for explicit finite difference option pricing,'' in \emph{Proc. ReConFig}, 2011, pp. 176--181.
 
 \bibitem{jin2012optimising}
-Q.~Jin, T.~Becker, W.~Luk, and D.~B. Thomas, ``Optimising explicit finite difference option pricing for dynamic constant reconfiguration,'' in \emph{Proc. 22nd Int. Conf. Field Programmable Logic and Applications (FPL)}, 2012, pp. 165--172.
+Q.~Jin, T.~Becker, W.~Luk, and D.~B. Thomas, ``Optimising explicit finite difference option pricing for dynamic constant reconfiguration,'' in \emph{Proc. FPL}, 2012, pp. 165--172.
 
 \bibitem{tse2010customising}
-A.~H.~T. Tse, D.~B. Thomas, and W.~Luk, ``Customising option pricing: A reconfigurable core,'' in \emph{Proc. 6th Int. Symp. Applied Reconfigurable Computing (ARC)}, ser. LNCS, vol. 5992, Springer, 2010, pp. 24--35.
+A.~H.~T. Tse, D.~B. Thomas, and W.~Luk, ``Customising option pricing: A reconfigurable core,'' in \emph{Proc. ARC}, ser. LNCS, vol. 5992, Springer, 2010, pp. 24--35.
 
 \end{thebibliography}
 
