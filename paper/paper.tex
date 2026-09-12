@@ -105,7 +105,7 @@ Here, 1 Operation (Op) evaluates a single contract: IV root inversion and concur
 % -------------------------------------------------------------------------
 \section{Mathematical Formulation}
 % -------------------------------------------------------------------------
-\subsection{Black-Scholes Model and Higher-Order Greeks}
+\subsection{Black-Scholes Model and Option Greeks}
 For a European call option with spot price $S$, strike $K$, maturity $T$, and risk-free rate $r$, the Black-Scholes price $C_{\text{BS}}$ is:
 \begin{equation}
 C_{\text{BS}}(S, K, T, r, \sigma) = S N(d_1) - K e^{-rT} N(d_2)
@@ -157,7 +157,7 @@ The core datapath is a 126-cycle fully unrolled feedforward pipeline with Initia
 Conventional designs map FIFOs to Block RAMs (RAMB18/36), which are critical for 10GbE MAC and PCIe DMA rings. Our engine implements all context memories ($64 \times 32$-bit) exclusively using distributed LUTRAM (\texttt{ram\_style = "distributed"}) and SRL32 registers, consuming strictly \textbf{zero} BRAMs and \textbf{zero} UltraRAMs. Feedforward pipeline state flows through SRL32s ($II=1$), while distributed context stores retain static parameters $\{S, K, C_{\text{mkt}}, r, T\}$ across transaction lifetimes (227 cycles cold, 386 loopback) solely to reinject market data for NR updates. A context slot remains allocated from ingress until egress retirement. Each core maintains an independent 64-slot store ($4 \times 64 = 256$ slots), governed by an active \texttt{in\_flight\_count} counter asserting ingress backpressure at 63 transactions to provably prevent TID overflow. On Artix-7, this consumes 1,256 LUTRAM and 8,656 SRLs; on 16nm Alveo U50, it occupies merely 0.28\% of LUT capacity, leaving dedicated BRAM/URAM blocks completely available for external 100GbE packet buffers and host DMA rings.
 
 \subsection{Stage 4: Newton-Raphson Update Step \& Greek Dividers (33 Cycles)}
-Following Stage 3, each core checks convergence $|C_{\text{BS}} - C_{\text{mkt}}| \le \epsilon$, where $\epsilon = 32'd167772 \approx \$0.0100$ in Q8.24, chosen as a representative \$0.01 price-residual hardware convergence criterion. If $|C_{\text{BS}} - C_{\text{mkt}}| > \epsilon$, the update $\Delta\sigma = (C_{\text{BS}} - C_{\text{mkt}})/\nu$ is evaluated by a dedicated 33-cycle divider (\texttt{u\_nr\_divider}), concurrently with the 33-cycle Gamma divider (\texttt{u\_gamma\_divider}). To prevent numerical oscillation and divergence as Vega $\nu \to 0$, the core incorporates hardware clamping: the NR step is bounded by $|\Delta\sigma| \le 0.25$ (\texttt{MAX\_STEP\_Q24}), volatility is clamped to $[0.01, 5.00]$, the seeder output is clamped to $[0.05, 3.00]$, and \texttt{u\_nr\_divider} saturates safely upon zero denominator. Updated $\sigma_{n+1} = \sigma_n - \Delta\sigma$ loops back with priority via an active TID scoreboard.
+Following Stage 3, each core checks convergence $|C_{\text{BS}} - C_{\text{mkt}}| \le \epsilon$, where $\epsilon = 32'd167772 \approx \$0.0100$ in Q8.24, chosen as a representative \$0.01 price-residual hardware convergence criterion. Note that this price-residual stopping criterion is a standard exchange quoting convention rather than a uniform implied-volatility accuracy guarantee, because the mapping from price error to volatility error scales inversely with Vega ($\Delta\sigma \approx \Delta C / \nu$). The reported volatility-error statistics therefore represent empirical measurements of the complete fixed-point solver, rather than a formal bound implied solely by the price residual threshold. If $|C_{\text{BS}} - C_{\text{mkt}}| > \epsilon$, the update $\Delta\sigma = (C_{\text{BS}} - C_{\text{mkt}})/\nu$ is evaluated by a dedicated 33-cycle divider (\texttt{u\_nr\_divider}), concurrently with the 33-cycle Gamma divider (\texttt{u\_gamma\_divider}). To prevent numerical oscillation and divergence as Vega $\nu \to 0$, the core incorporates hardware clamping: the NR step is bounded by $|\Delta\sigma| \le 0.25$ (\texttt{MAX\_STEP\_Q24}), volatility is clamped to $[0.01, 5.00]$, the seeder output is clamped to $[0.05, 3.00]$, and \texttt{u\_nr\_divider} saturates safely upon zero denominator. Updated $\sigma_{n+1} = \sigma_n - \Delta\sigma$ loops back with priority via an active TID scoreboard.
 
 \subsection{Stage 5: Multi-Core Arbitration \& 128-Bit Egress (2 Cycles)}
 Upon convergence, results are packed into a 128-bit streaming word: $\text{Egress}[127:0] = \{ \text{TID}[5:0],\, \Gamma[25:0],\, \nu[31:0],\, \Delta[31:0],\, \sigma[31:0] \}$. $\Gamma$ is allocated 26 bits by truncating 6 redundant high-order sign bits from Q8.24 (maximum observed Gamma across all 10,000 synthetic and 1,382 SPX contracts was 0.2357, safely within the $[-2.0, +1.999]$ representation range with zero saturation), preserving full 24-bit fractional resolution while achieving single-flit packing. A 4-way arbiter drains output FIFOs with zero handshake stalls in 2 cycles. Because loopbacks complete asynchronously, retiring results are matched via the embedded 6-bit TID tag at the downstream network interface, completely avoiding the latency and resource penalty of a hardware reorder buffer.
@@ -263,6 +263,7 @@ The observed MAE of $1.57 \times 10^{-4}$ absolute volatility ($0.0157$ percenta
 Root-sum-square of these components yields $\approx 1.5 \times 10^{-4}$ ($0.015\%$ vol), providing an order-of-magnitude sanity check consistent with the empirical DPI-C simulation MAE of $1.57 \times 10^{-4}$ across 10,000 contracts against double precision (non-independent error sources).
 
 \subsection{Algorithmic Ablation: Seeding vs. Unseeded Newton-Raphson}
+Fig.~\ref{fig:ablation} illustrates the impact of analytical guess seeding versus an unseeded Newton-Raphson baseline ($\sigma_0 = 0.20$):
 \begin{itemize}
     \item \textbf{With Analytical Seeding:} 97.6\% of options converge in 1 iteration, and 99.9\% in $\le 2$ iterations. Zero divergence occurs. Sustained throughput is 390.62~MOps/s.
     \item \textbf{Without Seeding ($\sigma_0 = 0.20$):} Contracts require an average of 4.8 iterations, and 4.2\% fail to converge or oscillate when $\nu < 0.02$. Seeding reduces average iteration count by 79\% (from 4.8 to 1.024 passes/contract).
@@ -310,10 +311,10 @@ Active Parallelism & 16 Threads (AVX2) & 6,912 CUDA Cores & 4 Pipelined Cores & 
 Evaluation Target & Iterative IV (Newton-Raphson) & Forward Pricing Only\textsuperscript{2} & \textbf{Iterative IV + Greeks ($\Delta, \nu, \Gamma$)} & \textbf{Iterative IV + Greeks ($\Delta, \nu, \Gamma$)} \\
 Clock Frequency & 4.50 GHz (Turbo) & 1.41 GHz & 100.00 MHz ($T_{\text{clk}}=10.0$ ns) & 250.00 MHz ($T_{\text{clk}}=4.0$ ns) \\
 \midrule
-Peak Throughput (Speedup vs. CPU\textsuperscript{1}) & 14.22 MOps/s ($1.0\times$) & $\sim$3,000 MOps/s & \textbf{400.00 MOps/s (28.1$\times$)} & \textbf{1,000.00 MOps/s (70.3$\times$ / 562.6$\times$\textsuperscript{\ddag} @ 32c)} \\
+Peak Throughput (Speedup vs. CPU\textsuperscript{1}) & 14.22 MOps/s ($1.0\times$) & $\sim$3,000 MOps/s & \textbf{400.00 MOps/s (28.1$\times$)} & \textbf{1,000.00 MOps/s (70.3$\times$\textsuperscript{\ddag})} \\
 Net Sustained Throughput\textsuperscript{3} & 14.22 MOps/s & --- & \textbf{390.62 (Liquid) / 245.8 (Extended)} & \textbf{976.56 (Liquid) / 614.4 (Extended)} \\
 Total Device Power & 45.0 W (TDP) & 400.0 W (TDP) & \textbf{4.258 W (Vivado Post-Route)} & \textbf{9.560 W (Vivado Post-Route)} \\
-Energy Efficiency (Gain vs. CPU) & 316 kOps/W ($1.0\times$) & $\sim$7,500 kOps/W ($23.7\times$) & \textbf{93,940 kOps/W (297$\times$ pk / 290$\times$ net)} & \textbf{104,602 kOps/W (331$\times$ 4c / 389$\times$ 32c)} \\
+Energy Efficiency (Gain vs. CPU) & 316 kOps/W ($1.0\times$) & $\sim$7,500 kOps/W ($23.7\times$) & \textbf{93,940 kOps/W (297$\times$ pk / 290$\times$ net)} & \textbf{104,602 kOps/W (331$\times$\textsuperscript{\ddag})} \\
 Energy per Operation & 3,164.5 nJ / op & $\sim$133.3 nJ / op & \textbf{10.65 nJ / op} & \textbf{9.56 nJ / op} \\
 \midrule
 Latency: Cold (Ingress-Egress) / Core & Variable (OS / cache-dependent) & $\gg$1 $\mu$s (host-device PCIe) & \textbf{2.27 $\mu$s (227 cyc) / 1.26 $\mu$s (126 cyc)} & \textbf{0.91 $\mu$s (227 cyc) / 0.50 $\mu$s (126 cyc)} \\
@@ -325,23 +326,23 @@ On-Chip BRAM / URAM & N/A & N/A & \textbf{0 BRAM} & \textbf{0 BRAM, 0 URAM} \\
 \vspace{0.1ex}
 
 \raggedright
-\scriptsize{\textsuperscript{1} Measured via OpenMP/AVX2 on i5-12500H across 2,000,000 contracts (representative companion edge host). \textsuperscript{2} GPU baseline denotes single-pass forward pricing from NVIDIA CUDA SDK Black-Scholes benchmark sample~\cite{cuda2023samples}; iterative IV inversion is not benchmarked with matching methodology. \textsuperscript{3} Extended net sustained throughput evaluates the measured 43.9\% liquid / 56.1\% deep-wing population ($\bar{P}=1.628$ slots/contract).}
+\scriptsize{\textsuperscript{1} Measured via OpenMP/AVX2 on i5-12500H across 2,000,000 contracts (representative companion edge host). \textsuperscript{2} GPU baseline denotes single-pass forward pricing from NVIDIA CUDA SDK Black-Scholes benchmark sample~\cite{cuda2023samples}; iterative IV inversion is not benchmarked with matching methodology. \textsuperscript{3} Extended net sustained throughput evaluates the measured 43.9\% liquid / 56.1\% deep-wing population ($\bar{P}=1.628$ slots/contract). \textsuperscript{\ddag} Linear projection of 32 cores on Alveo U50 reaches 8.00~GOps/s (562.6$\times$ speedup vs. CPU, 389$\times$ energy efficiency gain) under 65~W projected board power.}
 \end{table*}
 
 \begin{figure}[t]
 \centering
-\includefigfile[width=0.66\columnwidth]{fig3_comparative_benchmark.pdf}{fig2_comparative_benchmark.pdf}
-\caption{Comparative evaluation of (a) Throughput (MOps/s), (b) Power Dissipation (Watts), and (c) Energy Efficiency (kOps/W) across Host CPU, GPU baseline, and our 4-Core FPGA engine.}
-\label{fig:benchmark}
+\includefigfile[width=0.98\columnwidth]{fig3_iteration_ablation.pdf}{fig3_comparative_benchmark.pdf}
+\caption{Algorithmic ablation of analytical guess seeding versus unseeded Newton-Raphson ($\sigma_0 = 0.20$): (a) iteration count distribution across 10,000 contracts; (b) cumulative convergence CDF, showing 97.6\% 1-pass convergence and a 79\% reduction in average iteration count.}
+\label{fig:ablation}
 \end{figure}
 
-Table~\ref{tab:comparison} and Fig.~\ref{fig:benchmark} summarize comparative performance. An empirical benchmark on a companion host CPU (Intel Core i5-12500H, 12 cores/16 threads, 45~W TDP, AVX2) over 2,000,000 contracts reaches 14.22~MOps/s (316~kOps/W), serving as a representative edge-host software baseline.
+Table~\ref{tab:comparison} summarizes comparative performance against CPU and GPU baselines, while Fig.~\ref{fig:ablation} illustrates the algorithmic ablation. An empirical benchmark on a companion host CPU (Intel Core i5-12500H, 12 cores/16 threads, 45~W TDP, AVX2) over 2,000,000 contracts reaches 14.22~MOps/s (316~kOps/W), serving as a representative edge-host software baseline.
 
 The 4-core FPGA engine achieves 400.00~MOps/s peak (390.62~MOps/s net liquid) at 4.258~W on Artix-7, and 1,000.00~MOps/s (1.00~GOps/s) at 9.560~W on Alveo U50:
 \begin{itemize}
     \item \textbf{Throughput Speedup:} 28.1$\times$ higher peak throughput than the companion AVX2 CPU benchmark (27.5$\times$ net) on Artix-7 and 70.3$\times$ on Alveo U50 (scaling to 562.6$\times$\textsuperscript{\ddag} at 32 cores).
     \item \textbf{Energy Efficiency:} 93,940~kOps/W peak (91,738~kOps/W net) on Artix-7 and 104,602~kOps/W on Alveo U50, demonstrating 297$\times$--331$\times$ efficiency gains over CPU under post-route models.
-    \item \textbf{Deterministic Accelerator Latency:} The CPU baseline provides a software throughput reference, but thread scheduling and cache state cause latency jitter. In contrast, our FPGA accelerator exposes a fixed-cycle hardware datapath with \textbf{no software scheduling overhead}: 97.6\% of liquid quotes complete in a single 2.27~$\mu$s pass on Artix-7 and \textbf{0.91~$\mu$s} on Alveo U50 (227 cycles cold, 159 loopback), achieving sub-microsecond accelerator ingress-to-egress datapath latency (external network PHY, MAC framing, feed handling, and host transfers are outside the accelerator boundary).
+    \item \textbf{Deterministic Accelerator Latency:} The CPU baseline provides a software throughput reference, but thread scheduling and cache state cause latency jitter. In contrast, our FPGA accelerator exposes a fixed-cycle hardware datapath with \textbf{no software scheduling overhead}: 97.6\% of liquid quotes complete on the cold path in exactly 227 cycles (2.27~$\mu$s on Artix-7, \textbf{0.91~$\mu$s} on Alveo U50). For the 2.4\% requiring a second pass, loopback adds 159 cycles (386 cycles total; 3.86~$\mu$s / 1.54~$\mu$s) while consuming only one additional ingress scheduling opportunity (1.024 slots/contract liquid average, 1.628 blended extended domain). This achieves sub-microsecond accelerator ingress-to-egress datapath latency (external network PHY, MAC framing, feed handling, and host transfers are outside the accelerator boundary).
 \end{itemize}
 
 \noindent\textbf{Architectural Positioning vs. GPUs:} While GPUs excel at batched forward pricing across millions of synthetic paths in offline risk analysis, inline streaming options processing demands low-latency tick evaluation. The A100 result is therefore included only as a contextual forward-pricing reference rather than an equivalent IV+Greeks benchmark. The FPGA avoids host-device transfers and kernel-batching mechanisms while maintaining deterministic hardware control flow.
