@@ -229,7 +229,7 @@ ax.text(58, 44.5,
         '\u2022 Shared Digit-Recurrence ' + r'$\sqrt{T}$' + ' (29 Cyc)\n'
         '\u2022 Forwards ' + r'$\sqrt{T}$' + ' Directly to Stage 3\n'
         '\u2022 Internal Non-Restoring Divider (33 Cyc)\n'
-        '\u2022 Bounds Init Error: ' + r'$|\sigma_0 - \sigma^*| \leq 0.08$',
+        '\u2022 Obs. Init Error: ' + r'$|\sigma_0 - \sigma^*| < 0.08$',
         ha='center', va='center', fontsize=7.2, linespacing=1.32)
 
 # --- Stage 3: Core BS Datapath (x=38, bottom row) ---

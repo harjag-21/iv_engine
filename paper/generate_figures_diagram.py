@@ -67,7 +67,7 @@ ax.text(58, 62.8, 'Stage 2: Analytical Seeder\n(Brenner-Subrahmanyam, 64 Cyc)',
         ha='center', va='center', fontsize=9.2, fontweight='bold', color='#7a3c04')
 ax.text(58, 52.8, r'$\sigma_0 = \frac{2.5066}{\sqrt{T}} \cdot \frac{C_{\mathrm{mkt}}}{(S+K)/2}$',
         ha='center', va='center', fontsize=9.2)
-ax.text(58, 44.8, '\u2022 Shared Digit-Recurrence ' + r'$\sqrt{T}$' + ' (29 Cyc)\n\u2022 Forwards ' + r'$\sqrt{T}$' + ' Directly to Stage 3\n\u2022 Non-Restoring Divider (33 Cyc)\n\u2022 Liquid Error: ' + r'$|\sigma_0 - \sigma^*| / \sigma^* \leq 0.5\%$' + '\n  ' + r'($\leq 0.08$ vol in wings)',
+ax.text(58, 44.8, '\u2022 Shared Digit-Recurrence ' + r'$\sqrt{T}$' + ' (29 Cyc)\n\u2022 Forwards ' + r'$\sqrt{T}$' + ' Directly to Stage 3\n\u2022 Non-Restoring Divider (33 Cyc)\n\u2022 Obs. Liquid Error: ' + r'$|\sigma_0 - \sigma^*| / \sigma^* < 0.5\%$' + '\n  ' + r'(obs. $< 0.08$ vol in wings)',
         ha='center', va='center', fontsize=7.2, linespacing=1.35)
 
 # Stage 3: Core Black-Scholes Datapath (126 Cycles, II = 1)
