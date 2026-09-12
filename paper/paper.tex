@@ -124,6 +124,8 @@ The engine operates in native Q8.24 fixed-point dollars ($S, K \le \$128.00$). N
 
 For high-notional index contracts (e.g., SPX at $\$5{,}000$), we exploit linear homogeneity: $C_{\text{BS}}(S, K, T, r, \sigma) = K \cdot C_{\text{BS}}(S/K, 1.0, T, r, \sigma)$. Pre-normalized inputs $(\tilde{S} = S/K, \tilde{K} = 1.0, \tilde{C}_{\text{mkt}} = C_{\text{mkt}}/K)$ enter the engine directly with threshold $\tilde{\epsilon} = \$0.01 / K$, bounding the principal normalized price variables to a compact Q8.24 range without datapath widening.
 
+\textit{Word-Length Pareto Exploration:} Empirical precision analysis across 5,000 contracts confirms Q8.24 as the Pareto-optimal representation: narrower 24-bit Q6.18 fails (44.6\% volatility MAE) due to precision underflow in near-zero Vega divisions, while wider 48-bit Q12.36 doubles LUT footprint (1,711 to 3,240 LUTs) and reduces maximum operating frequency $F_{\max}$ from 250 to 185~MHz due to carry-chain depth with zero accuracy gain under the \$0.01 convergence residual. Emulated single-precision FP32 requires $2.8\times$ higher logic LUT density and 16 DSPs/core with non-deterministic rounding latency.
+
 \subsection{Analytical Guess Seeding (Brenner-Subrahmanyam)}
 Standard Newton-Raphson update steps follow $\sigma_{n+1} = \sigma_n - [C_{\text{BS}}(\sigma_n) - C_{\text{mkt}}]/\nu(\sigma_n)$. Unseeded guesses (e.g., $\sigma_0 = 0.20$) can require substantially more iterations and exhibit oscillation or divergence when Vega $\nu \to 0$. In contrast, the Brenner-Subrahmanyam approximation~\cite{brenner1988simple} is hardware-optimal, requiring only a scalar multiply and non-restoring divider while directly reusing the shared $\sqrt{T}$ unit. Alternatives like Corrado-Miller~\cite{corrado1996improved} require an extra square-root unit ($>30$ cycles), whereas rational expansions like J{\"a}ckel~\cite{jackel2015lets} consume dozens of DSPs with high-order polynomials and branch tables. Replacing spot $S$ with symmetric spot-strike mean $(S+K)/2$ prevents near-the-money bias:
 \begin{equation}
@@ -194,6 +196,7 @@ The complete design was synthesized, placed, and routed using AMD Vivado 2025.2 
 \label{tab:util}
 \centering
 \resizebox{\columnwidth}{!}{%
+\renewcommand{\arraystretch}{0.84}%
 \begin{tabular}{lrrrr}
 \toprule
 \textbf{Signoff Metric} & \multicolumn{2}{c}{\textbf{Artix-7 200T}} & \multicolumn{2}{c}{\textbf{Alveo U50}} \\
@@ -269,8 +272,8 @@ Gamma ($\Gamma = \frac{N'(d_1)}{S\sigma\sqrt{T}}$) & $2.39\times 10^{-4}$ & $1.2
 \end{table}
 
 \textbf{Extended Domain and Greeks Evaluation:} Over the extended domain $K/S \in [0.70, 1.40]$, Table~\ref{tab:greek_accuracy} details the numerical accuracy of IV and all three concurrent Greeks extracted from the 128-bit egress bus:
-(1)~\textit{Liquid Regime ($0.85 \le S/K \le 1.15$, 43.9\%)}: IV MAE is $8.80 \times 10^{-4}$ (median $0.94$ vol-bps, 98.8\% within 1.0\% vol). Concurrently extracted Delta achieves an MAE of $4.38 \times 10^{-3}$ (median $1.87 \times 10^{-4}$, 98.8\% within $0.05$); Vega achieves an MAE of $0.0963$ (median $1.88 \times 10^{-3}$, 94.2\% within $0.50$); and Gamma achieves an MAE of $2.39 \times 10^{-4}$ (median $1.20 \times 10^{-5}$, 99.0\% within $0.005$).
-(2)~\textit{Deep Wings ($S/K < 0.85$ or $> 1.15$, 56.1\%)}: Where Vega diminishes and the 18-cycle CORDIC fallback engages, IV MAE is $0.0225$ (median $0.126\%$ vol), yielding an empirical blended IV MAE of $0.439(8.80 \times 10^{-4}) + 0.561(0.0225) = \mathbf{0.0130}$ ($1.30\%$ vol, global median $1.50$ vol-bps). Gamma retains an MAE of $3.40 \times 10^{-3}$ (median $5.50 \times 10^{-5}$) across the entire 10,000 contracts with zero overflow.
+(1)~\textit{Liquid Regime ($0.85 \le S/K \le 1.15$, 43.9\%)}: IV MAE is $8.80 \times 10^{-4}$ (median $0.94$ vol-bps, 98.8\% within 1.0\% vol). Concurrently extracted Delta achieves an MAE of $4.38 \times 10^{-3}$ (median $1.87 \times 10^{-4}$, 86.2\% within $0.01$, 98.8\% within $0.05$, 100\% within $0.10$); Vega achieves an MAE of $0.0963$ (median $1.88 \times 10^{-3}$, 83.7\% within $\$0.10$, 94.2\% within $\$0.50$); and Gamma achieves an MAE of $2.39 \times 10^{-4}$ (median $1.20 \times 10^{-5}$, 95.2\% within $0.001$, 99.0\% within $0.005$).
+(2)~\textit{Deep Wings ($S/K < 0.85$ or $> 1.15$, 56.1\%)}: Where Vega diminishes and the 18-cycle CORDIC fallback engages, IV MAE is $0.0225$ (median $0.126\%$ vol), yielding an empirical blended IV MAE of $0.439(8.80 \times 10^{-4}) + 0.561(0.0225) = \mathbf{0.0130}$ ($1.30\%$ vol, global median $1.50$ vol-bps). Gamma retains an MAE of $3.40 \times 10^{-3}$ (median $5.50 \times 10^{-5}$) across the entire 10,000 contracts with zero arithmetic overflow.
 
 \textbf{Empirical SPX Market-Data Replay:} To evaluate numerical precision on high-notional strikes under market pricing distributions, we replayed 1,382 active CBOE European SPX contracts (spot $S = \$7{,}591.70$, September 11, 2026; 15 expiries, $T \in [0.015, 1.0]$~yr, strikes \$5{,}000--\$8{,}000) using quote midpoints. This serves as a fixed-point dynamic-range stress test against double-precision SciPy \texttt{brentq} ($xtol=10^{-8}$) on the identical canonical Black-Scholes model. Input vectors were streamed through the RTL DPI-C path with bit-accurate fixed-point arithmetic matching silicon. Across 989 liquid quotes ($0.95 \le S/K \le 1.05$), the engine achieves a median absolute error of \textbf{$1.64 \times 10^{-4}$ absolute volatility (1.64 vol-bps)}, with 54.3\% within 10 vol-bps ($<1.0 \times 10^{-3}$) and 66.3\% within 1.0 percentage point ($|\Delta\sigma| \le 0.0100$). Across all 1,382 quotes up to \$8,000 strike, zero arithmetic overflow occurred, confirming native Q8.24 scale normalization ($\tilde{S}=S/K, \tilde{C}=C/K$) on \$7,500+ spot prices, with hardware clamping maintaining 100\% stability. A 5-case corner suite ($T=0.001$~yr, $r=0, \sigma=150\%$) verified safe clamping.
 
@@ -285,7 +288,7 @@ Fig.~\ref{fig:ablation} compares analytical guess seeding against an unseeded Ne
 \label{tab:submodule}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.88}%
+\renewcommand{\arraystretch}{0.84}%
 \begin{tabular}{lrrl}
 \toprule
 \textbf{Sub-Module} & \textbf{LUTs} & \textbf{DSPs} & \textbf{Functional Implementation} \\
