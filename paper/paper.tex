@@ -55,8 +55,9 @@
 \renewenvironment{thebibliography}[1]{%
   \begin{oldthebibliography}{#1}%
     \scriptsize
-    \setlength{\itemsep}{-2.5pt}%
+    \setlength{\itemsep}{-3.2pt}%
     \setlength{\parskip}{0pt}%
+    \setlength{\parsep}{0pt}%
 }{%
   \end{oldthebibliography}%
 }
@@ -98,8 +99,8 @@ Here, 1 Operation (Op) evaluates a single contract: IV root inversion and concur
 \begin{itemize}
     \item \textbf{Analytical Guess Engine:} Brenner-Subrahmanyam seeder is tailored for low relative error in the liquid near-the-money regime, enabling 97.6\% 1-pass convergence while forwarding shared $\sqrt{T}$.
     \item \textbf{Scale-Invariant Normalization:} Exploiting Black-Scholes linear homogeneity ($\tilde{S} = S/K, \tilde{K} = 1.0, \tilde{C} = C/K$) bounds dynamic range strictly within Q8.24, supporting high-notional contracts without multi-precision arithmetic.
-    \item \textbf{Zero-BRAM Microarchitecture:} Context buffers map to distributed LUTRAM/SRL32 registers (\texttt{ram\_style = \"distributed\"}), consuming 0 BRAMs and leaving dedicated on-chip block RAMs completely available for external packet and DMA buffers.
-    \item \textbf{Dual-Platform Timing Signoff:} Implemented on Artix-7 200T at 100~MHz (400~MOps/s, 4.258~W post-route power estimate, $WNS=+0.005\text{ ns}$) and Alveo U50 at 250~MHz (1.00~GOps/s, 9.56~W post-route estimate, $WNS=+0.073\text{ ns}$) with 0 BRAM/URAM. DPI-C co-simulation confirms $1.57 \times 10^{-4}$ absolute volatility MAE, yielding a peak throughput of 400~MOps/s (28.1$\times$ the companion AVX2 CPU throughput).
+    \item \textbf{Zero-BRAM Microarchitecture:} Context buffers map to distributed LUTRAM/SRL32 registers (\texttt{ram\_style = "distributed"}), consuming 0 BRAMs and leaving dedicated on-chip block RAMs completely available for external packet and DMA buffers.
+    \item \textbf{Dual-Platform Timing Signoff:} Implemented on Artix-7 200T at 100~MHz (400~MOps/s, 4.258~W post-route power estimate, $WNS=+0.005\text{ ns}$) and Alveo U50 at 250~MHz (1.00~GOps/s, 9.560~W post-route estimate, $WNS=+0.073\text{ ns}$) with 0 BRAM/URAM. DPI-C co-simulation confirms $1.57 \times 10^{-4}$ absolute volatility MAE, yielding a peak throughput of 400~MOps/s (28.1$\times$ the companion AVX2 CPU throughput).
 \end{itemize}
 
 % -------------------------------------------------------------------------
@@ -126,7 +127,7 @@ The engine operates in native Q8.24 fixed-point dollars ($S, K \le \$128.00$). N
 For high-notional index contracts (e.g., SPX at $\$5{,}000$), we exploit linear homogeneity: $C_{\text{BS}}(S, K, T, r, \sigma) = K \cdot C_{\text{BS}}(S/K, 1.0, T, r, \sigma)$. Pre-normalized inputs $(\tilde{S} = S/K, \tilde{K} = 1.0, \tilde{C}_{\text{mkt}} = C_{\text{mkt}}/K)$ enter the engine directly with threshold $\tilde{\epsilon} = \$0.01 / K$, bounding the principal normalized price variables to a compact Q8.24 range without datapath widening.
 
 \subsection{Analytical Guess Seeding (Brenner-Subrahmanyam)}
-Standard Newton-Raphson update steps follow $\sigma_{n+1} = \sigma_n - [C_{\text{BS}}(\sigma_n) - C_{\text{mkt}}]/\nu(\sigma_n)$. Unseeded guesses (e.g., $\sigma_0 = 0.20$) can require substantially more iterations and exhibit oscillation or divergence when Vega $\nu \to 0$. While expansions like J{\"a}ckel~\cite{jackel2015lets} offer wider coverage, they require high-order rational polynomials and branch tables consuming dozens of DSPs; Corrado-Miller~\cite{corrado1996improved} requires an extra square-root unit ($>30$ cycles). In contrast, the Brenner-Subrahmanyam approximation~\cite{brenner1988simple} is hardware-optimal, requiring only a scalar multiply and non-restoring divider while directly reusing the shared $\sqrt{T}$ unit. Replacing spot $S$ with symmetric spot-strike mean $(S+K)/2$ prevents near-the-money bias:
+Standard Newton-Raphson update steps follow $\sigma_{n+1} = \sigma_n - [C_{\text{BS}}(\sigma_n) - C_{\text{mkt}}]/\nu(\sigma_n)$. Unseeded guesses (e.g., $\sigma_0 = 0.20$) can require substantially more iterations and exhibit oscillation or divergence when Vega $\nu \to 0$. In contrast, the Brenner-Subrahmanyam approximation~\cite{brenner1988simple} is hardware-optimal, requiring only a scalar multiply and non-restoring divider while directly reusing the shared $\sqrt{T}$ unit. Alternatives like Corrado-Miller~\cite{corrado1996improved} require an extra square-root unit ($>30$ cycles), whereas rational expansions like J{\"a}ckel~\cite{jackel2015lets} consume dozens of DSPs with high-order polynomials and branch tables. Replacing spot $S$ with symmetric spot-strike mean $(S+K)/2$ prevents near-the-money bias:
 \begin{equation}
 \sigma_0 = \frac{\sqrt{2\pi}}{\sqrt{T}} \cdot \frac{C_{\text{mkt}}}{(S + K)/2} \approx \frac{2.5066}{\sqrt{T}} \cdot \frac{C_{\text{mkt}}}{(S + K)/2}
 \end{equation}
@@ -274,7 +275,7 @@ Fig.~\ref{fig:ablation} illustrates the impact of analytical guess seeding versu
 \label{tab:submodule}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.92}%
+\renewcommand{\arraystretch}{0.88}%
 \begin{tabular}{lrrl}
 \toprule
 \textbf{Sub-Module} & \textbf{LUTs} & \textbf{DSPs} & \textbf{Functional Implementation} \\
@@ -294,13 +295,16 @@ AXI4-Stream Interface \& FIFOs   & 2,748 &  0 & 256-bit ingress \& 128-bit packe
 }
 \end{table}
 
+\subsection{Sub-Module Hardware Resource Breakdown}
+Table~\ref{tab:submodule} summarizes post-implementation resource distribution per core. The seven pipelined non-restoring dividers—computing guess ratio, Pad\'{e} ratio, $d_1$ normal deviate, CDF polynomial terms, NR step $\Delta\sigma$, and Gamma quotient—are implemented in distributed slice logic, consuming 0 DSPs. The 608 DSPs are distributed across the Horner normal CDF MAC chains (384), Black-Scholes datapath multipliers (176), the square-root/seeder unit (32), and CORDIC scaling stages (16). Sub-module logic scales symmetrically across cores ($\approx 26.6\text{k}$ LUTs and 152 DSPs/core), bringing total chip utilization to 106,298 Slice LUTs (79.45\%) and 608 DSPs (82.16\%) as reported in Table~\ref{tab:util}.
+
 \subsection{Comparative Benchmark: CPU, GPU, and FPGA}
 \begin{table*}[t]
 \caption{Contextual Hardware Comparison (Host CPU, GPU Baseline, and Proposed FPGA Engines)}
 \label{tab:comparison}
 \centering
 \resizebox{\textwidth}{!}{%
-\renewcommand{\arraystretch}{0.92}%
+\renewcommand{\arraystretch}{0.88}%
 \begin{tabular}{lrrrr}
 \toprule
 \textbf{Architectural Metric} & \textbf{Host CPU\textsuperscript{1}} & \textbf{High-End GPU\textsuperscript{2}} & \textbf{Proposed Artix-7 200T} & \textbf{Proposed Alveo U50} \\
@@ -323,7 +327,7 @@ On-Chip BRAM / URAM & N/A & N/A & \textbf{0 BRAM} & \textbf{0 BRAM, 0 URAM} \\
 \bottomrule
 \end{tabular}%
 }
-\vspace{0.1ex}
+\vspace{0.0ex}
 
 \raggedright
 \scriptsize{\textsuperscript{1} Measured via OpenMP/AVX2 on i5-12500H across 2,000,000 contracts (representative companion edge host). \textsuperscript{2} GPU baseline denotes single-pass forward pricing from NVIDIA CUDA SDK Black-Scholes benchmark sample~\cite{cuda2023samples}; iterative IV inversion is not benchmarked with matching methodology. \textsuperscript{3} Extended net sustained throughput evaluates the measured 43.9\% liquid / 56.1\% deep-wing population ($\bar{P}=1.628$ slots/contract). \textsuperscript{\ddag} Linear projection of 32 cores on Alveo U50 reaches 8.00~GOps/s (562.6$\times$ speedup vs. CPU, 389$\times$ energy efficiency gain) under 65~W projected board power.}
@@ -331,7 +335,7 @@ On-Chip BRAM / URAM & N/A & N/A & \textbf{0 BRAM} & \textbf{0 BRAM, 0 URAM} \\
 
 \begin{figure}[t]
 \centering
-\includefigfile[width=0.98\columnwidth]{fig3_iteration_ablation.pdf}{fig3_comparative_benchmark.pdf}
+\includefigfile[width=0.98\columnwidth]{fig3_iteration_ablation.pdf}{figures/fig3_iteration_ablation.pdf}
 \caption{Algorithmic ablation of analytical guess seeding versus unseeded Newton-Raphson ($\sigma_0 = 0.20$): (a) iteration count distribution across 10,000 contracts; (b) cumulative convergence CDF, showing 97.6\% 1-pass convergence and a 79\% reduction in average iteration count.}
 \label{fig:ablation}
 \end{figure}
@@ -347,9 +351,6 @@ The 4-core FPGA engine achieves 400.00~MOps/s peak (390.62~MOps/s net liquid) at
 
 \noindent\textbf{Architectural Positioning vs. GPUs:} While GPUs excel at batched forward pricing across millions of synthetic paths in offline risk analysis, inline streaming options processing demands low-latency tick evaluation. The A100 result is therefore included only as a contextual forward-pricing reference rather than an equivalent IV+Greeks benchmark. The FPGA avoids host-device transfers and kernel-batching mechanisms while maintaining deterministic hardware control flow.
 
-\subsection{Sub-Module Hardware Resource Breakdown}
-Table~\ref{tab:submodule} summarizes post-implementation resource distribution per core. The seven pipelined non-restoring dividers—computing guess ratio, Pad\'{e} ratio, $d_1$ normal deviate, CDF polynomial terms, NR step $\Delta\sigma$, and Gamma quotient—are implemented in distributed slice logic, consuming 0 DSPs. The 608 DSPs are distributed across the Horner normal CDF MAC chains (384), Black-Scholes datapath multipliers (176), the square-root/seeder unit (32), and CORDIC scaling stages (16). Sub-module logic scales symmetrically across cores ($\approx 26.6\text{k}$ LUTs and 152 DSPs/core), bringing total chip utilization to 106,298 Slice LUTs (79.45\%) and 608 DSPs (82.16\%) as reported in Table~\ref{tab:util}.
-
 \subsection{Deployment Considerations and Scaling Projection}
 Deployment spans two tiers: (1)~\textit{Tier-1 Inline SmartNIC Filtering} ($<25$~W PCIe mezzanine), where our Artix-7 design consumes 4.258~W post-route estimated power (17\% of a 25~W budget) alongside 10GbE MACs with low thermal burden; and (2)~\textit{Tier-2 Centralized Co-Processing} (75--225~W datacenter accelerators).
 
@@ -361,7 +362,7 @@ To verify datacenter scalability, the 4-core engine was placed and routed on an 
 \label{tab:prior_art}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.92}%
+\renewcommand{\arraystretch}{0.88}%
 \begin{tabular}{lcccccc}
 \toprule
 \textbf{Design} & \textbf{Target Device} & \textbf{Task / Method} & \textbf{Clock} & \textbf{Throughput} & \textbf{Latency} & \textbf{BRAM / DSP} \\
@@ -387,7 +388,7 @@ Table~\ref{tab:prior_art} compares this work against prior FPGA accelerators~\ci
 % -------------------------------------------------------------------------
 \section{Conclusion}
 % -------------------------------------------------------------------------
-We presented a four-core FPGA acceleration engine for real-time option implied volatility and concurrent Greeks ($\Delta, \nu, \Gamma$) calculation. Synergizing Brenner-Subrahmanyam guess seeding, Q8.24 scale-invariance normalization, and a zero-BRAM microarchitecture, the engine achieves physical timing closure at 100~MHz on Artix-7 200T (400~MOps/s, 4.258~W post-route power estimate) and 250~MHz on Alveo U50 (1.00~GOps/s, 9.56~W post-route estimate) with strictly 0 BRAM and 0 URAM. DPI-C co-simulation confirms high accuracy ($MAE = 1.57 \times 10^{-4}$ absolute volatility) with 99.9\% of contracts within 1.0 percentage point error. Delivering a peak throughput of 400~MOps/s, corresponding to 28.1$\times$ the companion AVX2 CPU throughput, the design demonstrates a viable, resource-efficient FPGA architecture for latency-sensitive streaming option pricing.
+We presented a four-core FPGA acceleration engine for real-time option implied volatility and concurrent Greeks ($\Delta, \nu, \Gamma$) calculation. Synergizing Brenner-Subrahmanyam guess seeding, Q8.24 scale-invariance normalization, and a zero-BRAM microarchitecture, the engine achieves physical timing closure at 100~MHz on Artix-7 200T (400~MOps/s, 4.258~W post-route power estimate) and 250~MHz on Alveo U50 (1.00~GOps/s, 9.560~W post-route estimate) with strictly 0 BRAM and 0 URAM. DPI-C co-simulation confirms high accuracy ($MAE = 1.57 \times 10^{-4}$ absolute volatility) with 99.9\% of contracts within 1.0 percentage point error. Delivering a peak throughput of 400~MOps/s, corresponding to 28.1$\times$ the companion AVX2 CPU throughput, the design demonstrates a viable, resource-efficient FPGA architecture for latency-sensitive streaming option pricing.
 
 \begin{thebibliography}{12}
 
@@ -396,6 +397,9 @@ A.~O'Mahony, B.~Hanzon, and E.~Popovici, ``The role of {FPGAs} in modern option 
 
 \bibitem{black1973pricing}
 F.~Black and M.~Scholes, ``The pricing of options and corporate liabilities,'' \emph{Journal of Political Economy}, vol.~81, no.~3, pp. 637--654, 1973.
+
+\bibitem{cboe2023specs}
+{Chicago Board Options Exchange}, ``{CBOE} options exchange fee schedule and minimum price variations,'' \url{https://www.cboe.com}, 2023.
 
 \bibitem{brenner1988simple}
 M.~Brenner and M.~G. Subrahmanyam, ``A simple formula to compute the implied standard deviation,'' \emph{Financial Analysts Journal}, vol.~44, no.~5, pp. 80--83, 1988.
@@ -406,6 +410,12 @@ C.~J. Corrado and T.~W. Miller, ``A simple and accurate formula to compute impli
 \bibitem{jackel2015lets}
 P.~J{\"a}ckel, ``Let's be rational,'' \emph{Wilmott Magazine}, vol. 2015, no.~75, pp. 40--53, 2015.
 
+\bibitem{abramowitz1964handbook}
+M.~Abramowitz and I.~A. Stegun, \emph{Handbook of Mathematical Functions with Formulas, Graphs, and Mathematical Tables}. National Bureau of Standards, 1964.
+
+\bibitem{cuda2023samples}
+{NVIDIA Corporation}, ``{CUDA} samples: {Black-Scholes} option pricing,'' \url{https://github.com/NVIDIA/cuda-samples}, 2023.
+
 \bibitem{wang2022fpga}
 S.~Wang, H.~Huan, S.~F. Wong, and J.~Yen, ``{FPGA} based implied volatility calculation with multi-section method,'' in \emph{Proc. IEEE 20th Int. Conf. Industrial Informatics (INDIN)}, 2022, pp. 507--514.
 
@@ -415,17 +425,8 @@ T.~Becker, Q.~Jin, W.~Luk, and S.~Weston, ``Dynamic constant reconfiguration for
 \bibitem{jin2012optimising}
 Q.~Jin, T.~Becker, W.~Luk, and D.~B. Thomas, ``Optimising explicit finite difference option pricing for dynamic constant reconfiguration,'' in \emph{Proc. 22nd Int. Conf. Field Programmable Logic and Applications (FPL)}, 2012, pp. 165--172.
 
-\bibitem{abramowitz1964handbook}
-M.~Abramowitz and I.~A. Stegun, \emph{Handbook of Mathematical Functions with Formulas, Graphs, and Mathematical Tables}. National Bureau of Standards, 1964.
-
 \bibitem{tse2010customising}
 A.~H.~T. Tse, D.~B. Thomas, and W.~Luk, ``Customising option pricing: A reconfigurable core,'' in \emph{Proc. 6th Int. Symp. Applied Reconfigurable Computing (ARC)}, ser. LNCS, vol. 5992, Springer, 2010, pp. 24--35.
-
-\bibitem{cboe2023specs}
-{Chicago Board Options Exchange}, ``{CBOE} options exchange fee schedule and minimum price variations,'' \url{https://www.cboe.com}, 2023.
-
-\bibitem{cuda2023samples}
-{NVIDIA Corporation}, ``{CUDA} samples: {Black-Scholes} option pricing,'' \url{https://github.com/NVIDIA/cuda-samples}, 2023.
 
 \end{thebibliography}
 
