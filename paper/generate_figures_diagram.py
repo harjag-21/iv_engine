@@ -53,7 +53,7 @@ s_mem = patches.FancyBboxPatch((0, 6), 26, 28, boxstyle='round,pad=0.8,rounding_
 ax.add_patch(s_mem)
 ax.text(13, 28.5, 'Zero-BRAM Context Store',
         ha='center', va='center', fontsize=9.0, fontweight='bold', color='#4a2468')
-ax.text(13, 16.5, '\u2022 64 x 32-bit Distributed LUTRAM\n\u2022 SRL32 Delay Shift Registers\n\u2022 0 Block RAMs (Zero-BRAM)\n\u2022 Preserves 100% RAMB36/18 for\n  10GbE MAC & PCIe DMA Subsystems',
+ax.text(13, 16.5, '\u2022 64 x 32-bit Distributed LUTRAM\n\u2022 SRL32 Delay Shift Registers\n\u2022 0 Block RAMs / UltraRAMs\n\u2022 Leaves on-chip block memory\n  for external packet & DMA buffering',
         ha='center', va='center', fontsize=7.4, linespacing=1.35)
 
 # =========================================================================
@@ -65,7 +65,7 @@ s2 = patches.FancyBboxPatch((38, 40), 40, 28, boxstyle='round,pad=0.8,rounding_s
 ax.add_patch(s2)
 ax.text(58, 62.8, 'Stage 2: Analytical Seeder\n(Brenner-Subrahmanyam, 64 Cyc)',
         ha='center', va='center', fontsize=9.2, fontweight='bold', color='#7a3c04')
-ax.text(58, 52.8, r'$\sigma_0 = \frac{2.5066}{\sqrt{T}} \cdot \frac{C_{\mathrm{mkt}}}{(S+K)/2}$',
+ax.text(58, 52.8, r'$\sigma_0 \approx \frac{2.5066 \, C_{\mathrm{mkt}}}{\sqrt{T} \, (S+K)/2}$',
         ha='center', va='center', fontsize=9.2)
 ax.text(58, 44.8, '\u2022 Shared Digit-Recurrence ' + r'$\sqrt{T}$' + ' (29 Cyc)\n\u2022 Forwards ' + r'$\sqrt{T}$' + ' Directly to Stage 3\n\u2022 Non-Restoring Divider (33 Cyc)\n\u2022 Obs. Liquid Error: ' + r'$|\sigma_0 - \sigma^*| / \sigma^* < 0.5\%$' + '\n  ' + r'(obs. $< 0.08$ vol in wings)',
         ha='center', va='center', fontsize=7.2, linespacing=1.35)

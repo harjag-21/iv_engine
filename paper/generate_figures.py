@@ -53,7 +53,7 @@ ax1.axvline(x=1.0, color='#d62728', linestyle='--', linewidth=1.8, label='Target
 ax1.axvline(x=mae_val, color='#2ca02c', linestyle='-', linewidth=2.0, label=f'Mean Abs Error ({mae_val:.4f}% vol)')
 ax1.set_xlabel(r'Absolute Volatility Error |$\Delta \sigma$| (%)')
 ax1.set_ylabel('Probability Density')
-ax1.set_title('(a) Error Distribution (10,000 Contracts)')
+ax1.set_title(r'(a) Error Distribution ($K/S \in [0.90, 1.10]$)')
 ax1.grid(True)
 ax1.legend(loc='upper right')
 
