@@ -14,17 +14,17 @@
 \usepackage{url}
 
 % Micro-spacing adjustments for strict 6-page IEEE conference budget
-\setlength{\textfloatsep}{2.0pt plus 0.5pt minus 0.5pt}
-\setlength{\floatsep}{2.0pt plus 0.5pt minus 0.5pt}
-\setlength{\intextsep}{2.0pt plus 0.5pt minus 0.5pt}
-\setlength{\dbltextfloatsep}{2.0pt plus 0.5pt minus 0.5pt}
-\setlength{\dblfloatsep}{2.0pt plus 0.5pt minus 0.5pt}
-\setlength{\abovecaptionskip}{1.0pt plus 0.4pt minus 0.4pt}
-\setlength{\belowcaptionskip}{0.5pt plus 0.3pt minus 0.3pt}
-\setlength{\abovedisplayskip}{0.8pt plus 0.3pt minus 0.3pt}
-\setlength{\belowdisplayskip}{0.8pt plus 0.3pt minus 0.3pt}
-\setlength{\abovedisplayshortskip}{0.4pt plus 0.2pt minus 0.2pt}
-\setlength{\belowdisplayshortskip}{0.4pt plus 0.2pt minus 0.2pt}
+\setlength{\textfloatsep}{1.5pt plus 0.5pt minus 0.5pt}
+\setlength{\floatsep}{1.5pt plus 0.5pt minus 0.5pt}
+\setlength{\intextsep}{1.5pt plus 0.5pt minus 0.5pt}
+\setlength{\dbltextfloatsep}{1.5pt plus 0.5pt minus 0.5pt}
+\setlength{\dblfloatsep}{1.5pt plus 0.5pt minus 0.5pt}
+\setlength{\abovecaptionskip}{0.8pt plus 0.3pt minus 0.3pt}
+\setlength{\belowcaptionskip}{0.4pt plus 0.2pt minus 0.2pt}
+\setlength{\abovedisplayskip}{0.6pt plus 0.2pt minus 0.2pt}
+\setlength{\belowdisplayskip}{0.6pt plus 0.2pt minus 0.2pt}
+\setlength{\abovedisplayshortskip}{0.3pt plus 0.2pt minus 0.2pt}
+\setlength{\belowdisplayshortskip}{0.3pt plus 0.2pt minus 0.2pt}
 
 \setcounter{topnumber}{3}
 \setcounter{bottomnumber}{3}
@@ -54,8 +54,8 @@
 \let\endoldthebibliography\endthebibliography
 \renewenvironment{thebibliography}[1]{%
   \begin{oldthebibliography}{#1}%
-    \fontsize{5.8pt}{6.6pt}\selectfont
-    \setlength{\itemsep}{-1.0pt plus 0.2pt}%
+    \fontsize{5.0pt}{5.8pt}\selectfont
+    \setlength{\itemsep}{-1.8pt plus 0.2pt}%
     \setlength{\parskip}{0pt}%
     \setlength{\parsep}{0pt}%
 }{%
@@ -177,7 +177,7 @@ The seeder evaluates Eq.~(4): $\sigma_0 = \frac{2.5066\, C_{\text{mkt}}}{\sqrt{T
 The core Stage-3 datapath is a 126-cycle fully unrolled feedforward pipeline measured from input register to output register (including all delay-matching SRLs and CORDIC padding, verified in cycle-accurate RTL simulation), accepting one contract/cycle ($II = 1$). Sub-operations are partitioned across registered boundaries. For deep wings ($|S-K| > 0.15K$), the 18-cycle CORDIC logarithm is latency-matched via SRL15 to 33 cycles, maintaining a fixed 126-cycle latency for each Stage-3 pass.
 
 \subsection{Zero-BRAM Context Memory Architecture}
-Conventional designs map FIFOs to Block RAMs (RAMB18/36). Our engine implements all context stores ($64 \times 32$-bit) exclusively via distributed LUTRAM (\texttt{ram\_style = "distributed"}) and SRL32s, consuming 0 BRAMs/URAMs in the accelerator core. Feedforward state flows through SRL32s ($II=1$), while distributed stores retain static parameters $\{S, K, C_{\text{mkt}}, r, T\}$ across transaction lifetimes (227 cycles cold, 386 loopback) to reinject data for NR updates. Each core provisions 64 physical context slots ($4 \times 64 = 256$ slots total), tracked by an \texttt{in\_flight\_count} counter and 64-bit scoreboard (\texttt{tid\_busy\_mask}) asserting backpressure when in-flight contracts reach $\ge 60$ slots ($\ge 4$ headroom slots) or the requested TID is active. Under this four-slot headroom admission policy, the four-core array admits up to $4 \times 60 = 240$ active in-flight transactions simultaneously. Because loopback retains its pre-allocated slot with strict priority over new ingress, re-entry cannot be blocked by slot reclamation, preventing deadlock; new-ingress fairness is preserved by the 4-slot headroom policy. On Artix-7, this consumes 1,256 LUTRAM and 1,804 SRL32s within context stores (314 LUTRAM, 451 SRL32 per core), with 6,852 SRLs across the datapath for delay matching (8,656 total SRLs, 18.74\%); on Alveo U50, it occupies 0.28\% of LUTs, leaving all BRAM/URAM blocks unconstrained for external system buffering (PHY/MAC/PCIe outside boundary).
+Conventional designs map FIFOs to Block RAMs (RAMB18/36). Our engine implements all context stores ($64 \times 32$-bit) exclusively via distributed LUTRAM (\texttt{ram\_style = "distributed"}) and SRL32s, consuming 0 BRAMs/URAMs in the accelerator core. Feedforward state flows through SRL32s ($II=1$), while distributed stores retain static parameters $\{S, K, C_{\text{mkt}}, r, T\}$ across transaction lifetimes (227 cycles cold, 386 loopback) to reinject data for NR updates. Each core provisions 64 physical context slots (256 slots total), tracked by \texttt{in\_flight\_count} and a 64-bit scoreboard (\texttt{tid\_busy\_mask}) asserting backpressure when in-flight contracts reach $\ge 60$ slots ($\ge 4$ headroom slots) or the requested local TID is active. Under this four-slot headroom admission policy, the four-core array admits up to $4 \times 60 = 240$ active in-flight transactions simultaneously. Because loopback retains its pre-allocated slot with strict priority over new ingress, re-entry cannot be blocked, preventing deadlock; new-ingress fairness is preserved by the 4-slot headroom policy. On Artix-7, this consumes 1,256 LUTRAM and 1,804 SRL32s within context stores (314 LUTRAM, 451 SRL32 per core), with 6,852 SRLs across the datapath for delay matching (8,656 total SRLs, 18.74\%); on Alveo U50, it occupies 0.28\% of LUTs, leaving all BRAM/URAM blocks unconstrained for external system buffering (PHY/MAC/PCIe outside boundary).
 
 \subsection{Stage 4: Newton-Raphson Update Step \& Greek Dividers (33 Cycles)}
 Following Stage 3, each core checks convergence $|C_{\text{BS}} - C_{\text{mkt}}| \le \epsilon$, where $\epsilon = 32'd167772 \approx \$0.0100$ in Q8.24, chosen as a representative \$0.01 exchange convention (price error scales as $\Delta\sigma \approx \Delta C / \nu$). Stage-4 latency (33 cycles) is measured from the Stage-3 output register to the loopback/egress decision register. A contract is classified as converged strictly when satisfying $|C_{\text{BS}} - C_{\text{mkt}}| \le \epsilon$; reaching the 8-pass ceiling without meeting this residual would be registered as a non-convergence failure. If $|C_{\text{BS}} - C_{\text{mkt}}| > \epsilon$, update $\Delta\sigma = (C_{\text{BS}} - C_{\text{mkt}})/\nu$ is evaluated by a 33-cycle divider (\texttt{u\_nr\_divider}) concurrently with the 33-cycle Gamma divider (\texttt{u\_gamma\_divider}). Hardware clamping prevents oscillation as $\nu \to 0$: NR step bounded by $|\Delta\sigma| \le 0.25$ (\texttt{MAX\_STEP\_Q24}), volatility clamped to $[0.01, 5.00]$, seed clamped to $[0.05, 3.00]$, and \texttt{u\_nr\_divider} saturates upon zero denominator. Refined $\sigma_{n+1}$ loops back with priority via the active TID scoreboard. Because Greeks are registered to egress solely upon convergence, two-pass contracts re-evaluate $\Delta, \nu, \Gamma$ at $\sigma_{n+1}$, ensuring exported sensitivities strictly match final converged IV.
@@ -186,7 +186,7 @@ Following Stage 3, each core checks convergence $|C_{\text{BS}} - C_{\text{mkt}}
 Upon convergence, results are packed into a 128-bit data payload: $\text{Egress}[127:0] = \{ \text{TID}[5:0],\, \Gamma[25:0],\, \nu[31:0],\, \Delta[31:0],\, \sigma[31:0] \}$, carrying the 6-bit local TID, 26-bit Gamma, 32-bit Vega, 32-bit Delta, and 32-bit IV ($6+26+32+32+32=128$ bits). The 2-bit originating core ID (\texttt{active\_rd[1:0]} in \texttt{iv\_multi\_engine\_top.sv}) is retained at egress as an interface sideband/metadata signal. The array-wide composite global tag is $\{\text{Core}[1:0], \text{TID}[5:0]\}$ (8 bits), uniquely distinguishing up to 240 admitted in-flight transactions across the 256 provisioned slots without a reorder buffer. Egress words are emitted in work-conserving arbitration order. Each core enforces local TID uniqueness across its 64 slots via \texttt{tid\_busy\_mask[63:0]}. $\Gamma$ occupies 26 bits (signed Q2.24, $[-2.0, +1.999]$) by truncating 6 redundant sign bits from Q8.24; while bounded by $\Gamma \le 1/(S\sigma\sqrt{2\pi T})$, this packing is empirically confirmed without saturation across all 11,382 evaluated contracts (max: 0.2357; formal range safety across all theoretically conceivable $\{S,T,\sigma\}$ is not claimed). Extreme inputs are protected by hardware clamping at the divider output to prevent arithmetic wraparound. A 4-way arbiter drains output FIFOs in 2 cycles.
 
 \subsection{Pipeline Latency and Sustained Throughput Reconciliation}
-We distinguish between four operational terms: a \textbf{contract} denotes one input option quote; a \textbf{pass} denotes one evaluation through the Stage-3/Stage-4 datapath; an \textbf{iteration} denotes an unseeded Newton-Raphson feedback cycle; and an \textbf{operation (Op)} denotes one fully converged contract producing final IV and all three Greeks ($\Delta, \nu, \Gamma$). Stage-3 $II=1$ describes feedforward datapath acceptance, while sustained operation throughput reflects completed contracts adjusted by the average number of passes per contract. Cold transaction latency from ingress to egress is $L_{\text{cold}} = 1\,(\text{Stg 1}) + 64\,(\text{Stg 2}) + 1\,(\text{Q}) + 126\,(\text{Stg 3}) + 33\,(\text{Stg 4}) + 2\,(\text{Stg 5}) = \mathbf{227\text{ cycles}}$ (2.27~$\mu$s on Artix-7 / 0.91~$\mu$s on U50; isolated Stage-3 core datapath is 126~cycles, 1.26~$\mu$s / 0.50~$\mu$s). Loopback bypasses Stages~1--2, requiring Stages~3--4 ($126 + 33 = \mathbf{159\text{ cycles}}$, 1.59~$\mu$s / 0.64~$\mu$s), yielding a 386-cycle two-pass total (3.86~$\mu$s / 1.54~$\mu$s). Loopback does not stall the Stage-3 $II=1$ datapath; however, each loopback consumes one ingress scheduling opportunity. During the 159-cycle loopback pass, the core processes 158 subsequent new contracts, with only one ingress slot displaced by contract $k$'s re-entry.
+We distinguish between four operational terms: a \textbf{contract} denotes one input quote; a \textbf{pass} denotes one evaluation through the Stage-3/Stage-4 datapath; an \textbf{iteration} denotes an unseeded Newton-Raphson feedback cycle; and an \textbf{operation (Op)} denotes one fully converged contract producing final IV and all three Greeks ($\Delta, \nu, \Gamma$). Stage-3 $II=1$ describes feedforward acceptance, while sustained operation throughput reflects completed contracts adjusted by average passes per contract. Cold transaction latency from ingress to egress is $L_{\text{cold}} = 1\,(\text{Stg 1}) + 64\,(\text{Stg 2}) + 1\,(\text{Q}) + 126\,(\text{Stg 3}) + 33\,(\text{Stg 4}) + 2\,(\text{Stg 5}) = \mathbf{227\text{ cycles}}$ (2.27~$\mu$s on Artix-7 / 0.91~$\mu$s on U50; isolated Stage-3 core datapath is 126~cycles, 1.26~$\mu$s / 0.50~$\mu$s). Loopback bypasses Stages~1--2, requiring Stages~3--4 ($126 + 33 = \mathbf{159\text{ cycles}}$, 1.59~$\mu$s / 0.64~$\mu$s), yielding 386 cycles for two passes (3.86~$\mu$s / 1.54~$\mu$s). Loopback does not stall the Stage-3 $II=1$ datapath; each loopback consumes one ingress scheduling opportunity. During the 159-cycle loopback pass, the core processes 158 subsequent new contracts, with only one ingress slot displaced by contract $k$'s re-entry.
 
 \textbf{Liquid Trading ($m \in [0.85, 1.15]$):} Across 4,394 liquid contracts, 4,289 (97.6\%) converge in 1 pass and 105 (2.4\%) require 2 passes (averaging 1.024 slots/contract; zero convergence failures under the $\$0.01$ residual criterion). Across 4 cores at 100~MHz, net sustained throughput is $T_{\text{net, liquid}} = \frac{400.00\text{ MOps/s}}{1.024} = \mathbf{390.62\text{ MOps/s}}$.
 
@@ -202,7 +202,7 @@ The complete design was synthesized, placed, and routed using AMD Vivado 2025.2 
 \label{tab:util}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.58}%
+\renewcommand{\arraystretch}{0.52}%
 \begin{tabular}{lrrrr}
 \toprule
 \textbf{Signoff Metric} & \multicolumn{2}{c}{\textbf{Artix-7 200T}} & \multicolumn{2}{c}{\textbf{Alveo U50}} \\
@@ -261,7 +261,7 @@ Under near-the-money sampling ($K/S \in [0.90, 1.10]$), the RTL achieves an IV \
 \label{tab:greek_accuracy}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.60}%
+\renewcommand{\arraystretch}{0.52}%
 \begin{tabular}{lrrrrrr}
 \toprule
 \textbf{Output Metric} & \multicolumn{3}{c}{\textbf{Liquid Regime ($0.85 \le S/K \le 1.15$, $N{=}4{,}394$)}} & \multicolumn{3}{c}{\textbf{Extended Domain ($0.70 \le K/S \le 1.40$, $N{=}10{,}000$)}} \\
@@ -277,24 +277,24 @@ Gamma ($\Gamma = \frac{N'(d_1)}{S\sigma\sqrt{T}}$) & $2.39\times 10^{-4}$ & $1.2
 }
 \end{table}
 
-\textbf{Extended Domain and Greeks Evaluation:} Over the extended domain $K/S \in [0.70, 1.40]$, Table~\ref{tab:greek_accuracy} details the numerical accuracy of IV and all three concurrent Greeks extracted from the 128-bit egress bus:
-(1)~\textit{Liquid Regime ($0.85 \le S/K \le 1.15$, 4,394 contracts, 43.94\%)}: IV MAE is $8.80 \times 10^{-4}$ (median $0.94$ vol-bps, 98.8\% within 1.0\% vol). Concurrently extracted Delta achieves MAE $4.38 \times 10^{-3}$ (median $1.87 \times 10^{-4}$, 86.2\% within $0.01$, 98.8\% within $0.05$, 100.0\% within $0.10$); Vega achieves MAE $0.0963$ (median $1.88 \times 10^{-3}$, 83.7\% within $\$0.10$, 94.2\% within $\$0.50$, 97.6\% within $\$1.00$); and Gamma achieves MAE $2.39 \times 10^{-4}$ (median $1.20 \times 10^{-5}$, 95.2\% within $0.001$, 99.0\% within $0.005$, 99.7\% within $0.010$).
-(2)~\textit{Deep Wings ($S/K < 0.85$ or $> 1.15$, 5,606 contracts, 56.06\%)}: With CORDIC fallback engaging and diminished Vega, IV MAE is $0.0225$ (median $0.126\%$ vol), yielding blended IV MAE $0.4394(8.80 \times 10^{-4}) + 0.5606(0.0225) = \mathbf{0.0130}$ ($1.30\%$ vol, median $1.50$ vol-bps). Across all 10,000 extended contracts, Delta achieves 72.4\% within 0.01 and 99.2\% within 0.10; Vega achieves 62.6\% within \$0.10 and 84.5\% within \$1.00; and Gamma achieves 80.1\% within 0.001 and 97.4\% within 0.010 (MAE $3.40 \times 10^{-3}$, zero overflow).
+\textbf{Extended Domain and Greeks Evaluation:} Over the extended domain $K/S \in [0.70, 1.40]$, Table~\ref{tab:greek_accuracy} details accuracy of IV and all three concurrent Greeks extracted from the 128-bit egress bus:
+(1)~\textit{Liquid Regime ($0.85 \le S/K \le 1.15$, 4,394 contracts, 43.94\%)}: IV MAE is $8.80 \times 10^{-4}$ (median $0.94$ vol-bps, 98.8\% within 1.0\% vol). Delta achieves MAE $4.38 \times 10^{-3}$ (median $1.87 \times 10^{-4}$, 86.2\% within $0.01$, 98.8\% within $0.05$, 100.0\% within $0.10$); Vega achieves MAE $0.0963$ (median $1.88 \times 10^{-3}$, 83.7\% within $\$0.10$, 94.2\% within $\$0.50$, 97.6\% within $\$1.00$); and Gamma achieves MAE $2.39 \times 10^{-4}$ (median $1.20 \times 10^{-5}$, 95.2\% within $0.001$, 99.0\% within $0.005$, 99.7\% within $0.010$).
+(2)~\textit{Deep Wings ($S/K < 0.85$ or $> 1.15$, 5,606 contracts, 56.06\%)}: With CORDIC fallback and diminished Vega, IV MAE is $0.0225$ (median $0.126\%$ vol), yielding blended IV MAE $0.4394(8.80 \times 10^{-4}) + 0.5606(0.0225) = \mathbf{0.0130}$ ($1.30\%$ vol, median $1.50$ vol-bps). Across all 10,000 extended contracts, Delta achieves 72.4\% within 0.01 and 99.2\% within 0.10; Vega achieves 62.6\% within \$0.10 and 84.5\% within \$1.00; and Gamma achieves 80.1\% within 0.001 and 97.4\% within 0.010 (MAE $3.40 \times 10^{-3}$, zero overflow).
 
 \textbf{Empirical SPX Market-Data Replay:} To stress-test dynamic range, 1,382 CBOE European SPX contracts (spot $S = \$7{,}591.70$, Sep 11, 2026; 15 expiries, $T \in [0.015, 1.0]$~yr, strikes \$5k--\$8k; quote midpoints) are replayed via DPI-C against double-precision SciPy \texttt{brentq} ($xtol=10^{-8}$) on canonical Black-Scholes, isolating digital arithmetic from market modeling assumptions. Across 989 liquid quotes ($0.95 \le S/K \le 1.05$): \textbf{median error $1.64 \times 10^{-4}$ volatility} (1.64 vol-bps), 54.3\% within 10 vol-bps, 66.3\% within 1.0 pp. Zero arithmetic overflow occurred across all 1,382 quotes, confirming Q8.24 normalization on \$7,500+ prices; a 5-case smoke-test corner suite ($T=0.001$~yr, $r=0, \sigma=150\%$; inputs listed in the repository artifact) executed without observed arithmetic overflow in the five selected corner cases.
 
 \subsection{Illustrative First-Order Error-Budget Analysis}
-The observed MAE of $1.57 \times 10^{-4}$ ($0.0157\%$ vol) is examined via an illustrative first-order perturbation budget ($\Delta\sigma \approx \Delta C / \nu$) classifying analytical bounds, modeled estimates, and empirical terms: (1)~\textit{Pad\'{e} Log} (analytical bound): $|u| \le 0.070$ bounds error to $\le 3.6 \times 10^{-4}$, inducing $\Delta\sigma_{\text{Pad\'{e}}} \approx 4.5 \times 10^{-5}$; (2)~\textit{CORDIC} (modeled estimate): 16-stage precision induces $\Delta C \approx 7.6 \times 10^{-6} K$, giving $\Delta\sigma_{\text{CORDIC}} \approx 2.8 \times 10^{-5}$ for $\nu \approx 0.35 K$; (3)~\textit{Horner CDF} (formula bound \& quantization): error ($|\epsilon| \le 7.5 \times 10^{-8}$) yields $\Delta\sigma_{\text{Horner}} \approx 1.2 \times 10^{-6}$, with Q8.24 roundoff $\approx 2.5 \times 10^{-6}$; and (4)~\textit{Termination} (representative measured): with mean $S=\$50, \bar{T}=0.8$ ($\bar{\nu} \approx \$17.35$), mean residual $\overline{|\Delta C|} \approx \$0.0025$ yields $\Delta\sigma_{\text{stop}} \approx \frac{\$0.0025}{\$17.35} \approx 1.45 \times 10^{-4}$. Root-sum-square yields $\approx 1.5 \times 10^{-4}$ ($0.015\%$ vol), aligning with measured DPI-C MAE. This perturbation calculation is an illustrative breakdown, not a formal worst-case bound.
+Observed MAE of $1.57 \times 10^{-4}$ ($0.0157\%$ vol) is examined via an illustrative first-order perturbation budget ($\Delta\sigma \approx \Delta C / \nu$) classifying analytical bounds, modeled estimates, and empirical terms: (1)~\textit{Pad\'{e} Log} (analytical bound): $|u| \le 0.070$ bounds error to $\le 3.6 \times 10^{-4}$, inducing $\Delta\sigma_{\text{Pad\'{e}}} \approx 4.5 \times 10^{-5}$; (2)~\textit{CORDIC} (modeled estimate): 16-stage precision induces $\Delta C \approx 7.6 \times 10^{-6} K$, giving $\Delta\sigma_{\text{CORDIC}} \approx 2.8 \times 10^{-5}$ for $\nu \approx 0.35 K$; (3)~\textit{Horner CDF} (formula bound \& quantization): error ($|\epsilon| \le 7.5 \times 10^{-8}$) yields $\Delta\sigma_{\text{Horner}} \approx 1.2 \times 10^{-6}$, with Q8.24 roundoff $\approx 2.5 \times 10^{-6}$; and (4)~\textit{Termination} (representative measured): with mean $S=\$50, \bar{T}=0.8$ ($\bar{\nu} \approx \$17.35$), mean residual $\overline{|\Delta C|} \approx \$0.0025$ yields $\Delta\sigma_{\text{stop}} \approx \frac{\$0.0025}{\$17.35} \approx 1.45 \times 10^{-4}$. Root-sum-square yields $\approx 1.5 \times 10^{-4}$ ($0.015\%$ vol), aligning with measured DPI-C MAE. This calculation is an illustrative breakdown, not a formal worst-case bound.
 
 \subsection{Algorithmic Ablation: Seeding vs. Unseeded Newton-Raphson}
-Fig.~\ref{fig:ablation} compares analytical guess seeding against an unseeded baseline ($\sigma_0 = 0.20$): (1)~\textit{With Seeding}: 97.6\% (4,289/4,394) liquid contracts converge in 1 pass and 2.4\% (105) in 2 passes, with zero divergence; (2)~\textit{Without Seeding}: contracts average 4.8 passes, with 4.2\% failing to reach $|C_{\text{BS}} - C_{\text{mkt}}| \le \$0.01$ when $\nu < 0.02$ (clamped at 8 passes). Analytical seeding reduces average solver passes by 79\% (4.800 $\to$ 1.024 passes/contract). Both variants execute on the identical RTL datapath with matching fixed-point rounding, clamping limits, $\$0.01$ threshold, and 8-pass ceiling; only the initial guess differs.
+Fig.~\ref{fig:ablation} compares analytical guess seeding against an unseeded baseline ($\sigma_0 = 0.20$): (1)~\textit{With Seeding}: 97.6\% (4,289/4,394) liquid contracts converge in 1 pass and 2.4\% (105) in 2 passes, with zero divergence; (2)~\textit{Without Seeding}: contracts average 4.8 passes, with 4.2\% failing to reach $|C_{\text{BS}} - C_{\text{mkt}}| \le \$0.01$ when $\nu < 0.02$ (clamped at 8 passes). Seeding reduces average solver passes by 79\% (4.800 $\to$ 1.024 passes/contract). Both variants execute on the identical RTL datapath with matching rounding, clamping limits, $\$0.01$ threshold, and 8-pass ceiling; only the initial guess differs.
 
 \begin{table}[b]
 \caption{Sub-Module Resource Breakdown (Per Core Signoff)}
 \label{tab:submodule}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.58}%
+\renewcommand{\arraystretch}{0.50}%
 \begin{tabular}{lrrl}
 \toprule
 \textbf{Sub-Module} & \textbf{LUTs} & \textbf{DSPs} & \textbf{Functional Implementation} \\
@@ -317,7 +317,7 @@ AXI4-Stream Interface \& FIFOs   & 2,748 &  0 & 256-bit ingress \& 128-bit packe
 \end{table}
 
 \subsection{Sub-Module Hardware Resource Breakdown}
-Table~\ref{tab:submodule} summarizes post-implementation resource distribution per core. The seven pipelined non-restoring 33-cycle Q8.24 dividers per core---comprising (1) analytical guess ratio $\frac{C_\text{mkt}}{(S+K)/2}$, (2) Pad\'{e} logarithm argument $\frac{S-K}{S+K}$, (3) $d_1$ normal deviate, (4) $N(d_1)$ CDF scale parameter $t_1 = 1/(1+p|d_1|)$, (5) $N(d_2)$ CDF scale parameter $t_2 = 1/(1+p|d_2|)$, (6) Newton-Raphson update step $\Delta\sigma = (C_{\text{BS}} - C_{\text{mkt}})/\nu$, and (7) Gamma quotient $\Gamma = N'(d_1)/(S\sigma\sqrt{T})$---are implemented in distributed slice logic, consuming 0 DSPs. The 608 DSPs are distributed across the Horner normal CDF MAC chains (384), Black-Scholes datapath multipliers (176), the square-root/seeder unit (32), and CORDIC scaling stages (16). Sub-module logic scales symmetrically across cores ($\approx 26.6\text{k}$ LUTs and 152 DSPs/core), with 2,164 total SRLs per core (451 in the context store and 1,713 for feedforward delay matching, summing to 8,656 SRLs across 4 cores), bringing total chip utilization to 106,298 Slice LUTs (79.45\%) and 608 DSPs (82.16\%) as reported in Table~\ref{tab:util}.
+Table~\ref{tab:submodule} summarizes post-implementation resource distribution per core. The seven pipelined non-restoring 33-cycle Q8.24 dividers per core---comprising (1) analytical guess ratio $\frac{C_\text{mkt}}{(S+K)/2}$, (2) Pad\'{e} logarithm argument $\frac{S-K}{S+K}$, (3) $d_1$ normal deviate, (4) $N(d_1)$ CDF scale parameter $t_1 = 1/(1+p|d_1|)$, (5) $N(d_2)$ CDF scale parameter $t_2 = 1/(1+p|d_2|)$, (6) Newton-Raphson update step $\Delta\sigma = (C_{\text{BS}} - C_{\text{mkt}})/\nu$, and (7) Gamma quotient $\Gamma = N'(d_1)/(S\sigma\sqrt{T})$---are implemented in distributed slice logic, consuming 0 DSPs. The 608 DSPs are distributed across the Horner normal CDF MAC chains (384), Black-Scholes datapath multipliers (176), the square-root/seeder unit (32), and CORDIC scaling stages (16). Sub-module logic scales symmetrically across cores ($\approx 26.6\text{k}$ LUTs and 152 DSPs/core), with 2,164 total SRLs per core (451 in context store, 1,713 for delay matching; 8,656 SRLs across 4 cores), bringing chip utilization to 106,298 Slice LUTs (79.45\%) and 608 DSPs (82.16\%) in Table~\ref{tab:util}.
 
 \subsection{Comparative Benchmark: CPU, GPU, and FPGA}
 \begin{table*}[t]
@@ -325,7 +325,7 @@ Table~\ref{tab:submodule} summarizes post-implementation resource distribution p
 \label{tab:comparison}
 \centering
 \resizebox{\textwidth}{!}{%
-\renewcommand{\arraystretch}{0.56}%
+\renewcommand{\arraystretch}{0.48}%
 \begin{tabular}{lrrrr}
 \toprule
 \textbf{Architectural Metric} & \textbf{Host CPU\textsuperscript{1}} & \textbf{Contextual GPU Ref.\textsuperscript{2}} & \textbf{Proposed Artix-7 200T} & \textbf{Proposed Alveo U50} \\
@@ -351,35 +351,35 @@ On-Chip BRAM / URAM & N/A & N/A & \textbf{0 BRAM} & \textbf{0 BRAM, 0 URAM} \\
 \end{tabular}%
 }
 \vskip 1pt\raggedright
-\tiny{\textsuperscript{1} Measured via C++ (GCC 13 \texttt{-O3 -mavx2 -fopenmp}, 16 threads, sustained 4.50~GHz Turbo) on i5-12500H across 2,000,000 contracts evaluating identical iterative IV convergence ($|\Delta C| \le \$0.01$, max 8 passes) and Greek output set ($\Delta, \nu, \Gamma$), compute loops only (file I/O and serialization excluded). \textsuperscript{2} The GPU result is from NVIDIA CUDA SDK Black-Scholes sample~\cite{cuda2023samples} and reports forward pricing only; included solely as contextual hardware background (speedup and ops/W comparisons are not applicable). \textsuperscript{3} Extended net sustained throughput evaluates the measured 43.94\% liquid / 56.06\% deep-wing population ($\bar{P}=1.627$ slots/contract).}
+\tiny{\textsuperscript{1} Measured via C++ (GCC 13 \texttt{-O3 -mavx2 -fopenmp}, 16 threads, sustained 4.50~GHz Turbo) on i5-12500H across 2M contracts evaluating identical iterative IV convergence ($|\Delta C| \le \$0.01$, max 8 passes) and Greek output set ($\Delta, \nu, \Gamma$), compute loops only (file I/O and serialization excluded). \textsuperscript{2} GPU result from NVIDIA CUDA SDK Black-Scholes sample~\cite{cuda2023samples} reports forward pricing only; included solely as contextual hardware background (speedup and ops/W comparisons are not applicable). \textsuperscript{3} Extended net sustained throughput evaluates measured 43.94\% liquid / 56.06\% deep-wing population ($\bar{P}=1.627$ slots/contract).}
 \end{table*}
 
-\begin{figure}[t]
+\begin{figure}[tb]
 \centering
-\includefigfile[width=0.52\columnwidth]{fig3_iteration_ablation.pdf}{figures/fig3_iteration_ablation.pdf}
+\includefigfile[width=0.38\columnwidth]{fig3_iteration_ablation.pdf}{figures/fig3_iteration_ablation.pdf}
 \caption{Algorithmic ablation of analytical guess seeding versus unseeded Newton-Raphson ($\sigma_0 = 0.20$) on the evaluated liquid subset ($N=4{,}394$): (a) pass-count distribution across 4,394 liquid contracts; (b) cumulative convergence CDF, showing 97.6\% 1-pass convergence and a 79\% reduction in average solver passes.}
 \label{fig:ablation}
 \end{figure}
 
-Table~\ref{tab:comparison} and Fig.~\ref{fig:ablation} compare performance against CPU/GPU baselines and show algorithmic ablation. A C++ benchmark (GCC 13 \texttt{-O3 -mavx2 -fopenmp}, 16 threads, sustained 4.50~GHz Turbo, 45~W TDP) evaluates identical iterative IV solving ($|\Delta C| \le \$0.01$, max 8 passes) and Greek extraction over 2M contracts (compute loops only, excluding file I/O and serialization; identical Black-Scholes parameters), yielding 14.22~MOps/s (316~kOps/W) as edge-host software baseline.
+Table~\ref{tab:comparison} and Fig.~\ref{fig:ablation} compare performance against CPU/GPU baselines and show algorithmic ablation. A C++ benchmark (GCC 13 \texttt{-O3 -mavx2 -fopenmp}, 16 threads, sustained 4.50~GHz Turbo, 45~W TDP) evaluates identical iterative IV solving ($|\Delta C| \le \$0.01$, max 8 passes) and Greek extraction over 2M contracts (compute loops only, excluding file I/O and serialization; identical BS parameters), yielding 14.22~MOps/s (316~kOps/W) as host baseline.
 
 The 4-core FPGA engine achieves 400.00~MOps/s peak (390.62~MOps/s net liquid) at 4.258~W on Artix-7, and 1,000.00~MOps/s (1.00~GOps/s) at 9.560~W on Alveo U50:
 (1)~\textbf{Throughput Speedup:} 28.1$\times$ higher peak throughput than the companion AVX2 CPU benchmark (27.5$\times$ net) on Artix-7 and 70.3$\times$ on Alveo U50;
 (2)~\textbf{Throughput-to-Power Ratio:} 93,940~kOps/W peak (91,738 net) on Artix-7 and 104,602~kOps/W on U50, an estimated 297$\times$--331$\times$ ratio of reported throughput to modeled device power relative to host CPU TDP under post-route power models (not a wall-plug measurement); and
-(3)~\textbf{Latency Characteristics:} 97.6\% of liquid quotes complete in 227 cycles (2.27~$\mu$s on Artix-7, 0.91~$\mu$s on U50); two-pass loopback adds 159 cycles (386 cycles total) for 2.4\% two-pass cases. Execution is cycle-deterministic per pass (126 cycles Stage-3 datapath), with pass-dependent total latency (PHY/MAC and PCIe excluded).
+(3)~\textbf{Latency Characteristics:} 97.6\% of liquid quotes complete in 227 cycles (2.27~$\mu$s on Artix-7, 0.91~$\mu$s on U50); two-pass loopback adds 159 cycles (386 cycles total) for 2.4\% two-pass cases. Execution is cycle-deterministic per pass (126 cycles Stage-3 datapath) with pass-dependent total latency (PHY/MAC and PCIe excluded).
 
-\noindent\textbf{Contextual GPU Reference (Non-Equivalent Workload):} While GPUs excel at batched forward pricing in offline risk analysis, streaming options processing demands low-latency tick evaluation. The A100 result is included solely as a contextual forward-pricing reference rather than an equivalent benchmark; the FPGA avoids PCIe batching latency while maintaining deterministic hardware control flow.
+\noindent\textbf{Contextual GPU Reference (Non-Equivalent Workload):} While GPUs excel at batched forward pricing in offline risk analysis, streaming options demand low-latency tick evaluation. The A100 result is included solely as a contextual forward-pricing reference rather than an equivalent benchmark; the FPGA avoids PCIe batching latency while maintaining deterministic control flow.
 
 \subsection{Deployment Considerations and Scaling Projection}
-Deployment spans two tiers: (1)~\textit{Tier-1 Inline Filtering} ($<$25~W PCIe mezzanine), where Artix-7 consumes 4.258~W (17\% of 25~W budget) leaving BRAM available for MAC/DMA; and (2)~\textit{Tier-2 Centralized Co-Processing} (75--225~W). On Alveo U50, the 4-core engine delivers 1.00~GOps/s at 9.560~W with 0 BRAM/URAM (12.13\% LUTs, 576 DSPs). A linear 32-core scaling projection (4,608 DSPs, 77.4\% for 8.00~GOps/s within $\sim$65~W) is provided only as future capacity analysis and is not included in the measured results. The zero-BRAM accelerator-core implementation leaves dedicated on-chip block memory available for potential future co-location of network buffering or order-book tracking; such system-level integration and physical host interfaces remain outside the core measurement boundary.
+Deployment spans two tiers: (1)~\textit{Tier-1 Inline Filtering} ($<$25~W mezzanine), where Artix-7 consumes 4.258~W (17\% of 25~W budget) leaving BRAM available for MAC/DMA; and (2)~\textit{Tier-2 Centralized Co-Processing} (75--225~W). On Alveo U50, the 4-core engine delivers 1.00~GOps/s at 9.560~W with 0 BRAM/URAM (12.13\% LUTs, 576 DSPs). A linear 32-core scaling projection (4,608 DSPs, 77.4\% for 8.00~GOps/s within $\sim$65~W) is provided only as future capacity analysis and is not included in the measured results. The zero-BRAM core leaves dedicated on-chip block memory available for future co-location of network buffering or order-book tracking; such system integration and physical host interfaces remain outside the core measurement boundary.
 
 \subsection{Comparison with Prior FPGA Accelerators}
-\begin{table}[t]
+\begin{table}[tb]
 \caption{Comparison with Prior FPGA Financial Accelerators}
 \label{tab:prior_art}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.58}%
+\renewcommand{\arraystretch}{0.48}%
 \begin{tabular}{lcccccc}
 \toprule
 \textbf{Design} & \textbf{Target Device} & \textbf{Task / Method} & \textbf{Clock} & \textbf{Throughput} & \textbf{Latency} & \textbf{BRAM / DSP} \\
@@ -403,9 +403,9 @@ Table~\ref{tab:prior_art} compares against prior FPGA accelerators~\cite{wang202
 % -------------------------------------------------------------------------
 \section{Conclusion}
 % -------------------------------------------------------------------------
-We presented a four-core FPGA accelerator for streaming Black-Scholes IV solving and concurrent Greeks ($\Delta, \nu, \Gamma$). Synergizing Brenner-Subrahmanyam seeding, Q8.24 scale-invariance normalization, and a zero-BRAM microarchitecture, the engine achieves nominal post-route timing closure at 100~MHz on Artix-7 200T (400~MOps/s, 4.258~W) and 250~MHz on Alveo U50 (1.00~GOps/s, 9.560~W) with 0 BRAM/URAM in the accelerator core. DPI-C co-simulation confirms an IV MAE of $1.57 \times 10^{-4}$ near-the-money ($8.80 \times 10^{-4}$ liquid) with 99.9\% of evaluated contracts within 1.0\% vol error. The design provides cycle-deterministic per-pass execution (0.91~$\mu$s cold path on U50; complete transaction latency is pass-dependent), achieving 28.1$\times$ higher peak throughput and a 297$\times$ ratio of reported throughput to modeled device power relative to the 16-thread AVX2 companion CPU baseline under post-route modeling assumptions (not a wall-plug measurement).
+We presented a four-core FPGA accelerator for streaming Black-Scholes IV solving and concurrent Greeks ($\Delta, \nu, \Gamma$). Synergizing Brenner-Subrahmanyam seeding, Q8.24 scale-invariance normalization, and a zero-BRAM microarchitecture, the engine achieves nominal post-route timing closure at 100~MHz on Artix-7 200T (400~MOps/s, 4.258~W) and 250~MHz on Alveo U50 (1.00~GOps/s, 9.560~W) with 0 BRAM/URAM in the accelerator core. DPI-C co-simulation confirms an IV MAE of $1.57 \times 10^{-4}$ near-the-money ($8.80 \times 10^{-4}$ liquid) with 99.9\% of evaluated contracts within 1.0\% vol error. The design provides cycle-deterministic per-pass execution (0.91~$\mu$s cold path on U50; complete transaction latency is pass-dependent), achieving 28.1$\times$ higher peak throughput and a 297$\times$ ratio of reported throughput to modeled device power relative to the 16-thread AVX2 companion CPU baseline under post-route models (not a wall-plug measurement).
 
-\noindent\textbf{Open-Source Artifact Reproducibility:} To support community reproducibility, the complete SystemVerilog RTL source code, Vivado implementation scripts for Artix-7 and Alveo U50, bit-accurate DPI-C co-simulation testbenches, and empirical CBOE SPX replay vectors are openly available at \url{https://github.com/harjag-21/iv_engine}.
+\noindent\textbf{Open-Source Artifact Reproducibility:} SystemVerilog RTL, Vivado implementation scripts for Artix-7 and Alveo U50, bit-accurate DPI-C co-simulation testbenches, and empirical CBOE SPX replay vectors are openly available at \url{https://github.com/harjag-21/iv_engine}.
 
 \begin{thebibliography}{12}
 \bibitem{omahony2024role}
