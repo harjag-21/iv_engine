@@ -1,0 +1,316 @@
+{
+  "metadata": {
+    "title": "Experiment 3: Priority-Loopback Scheduler Stress & Bounded Queueing",
+    "timestamp": "2026-09-19 01:31:49",
+    "target_clock_mhz": 100.0,
+    "num_cores": 4,
+    "peak_ingress_capacity_mops": 400.0,
+    "scoreboard_capacity_per_core": 64,
+    "headroom_reservation_slots": 4,
+    "pipeline_latencies": {
+      "cold_path_cycles": 227,
+      "loopback_cycles": 159,
+      "stage1_ingress": 1,
+      "stage2_seeder": 64,
+      "stage3_datapath": 126,
+      "stage4_divider": 33,
+      "stage5_egress": 2
+    }
+  },
+  "parametric_sweep": [
+    {
+      "loopback_probability_p": 0.0,
+      "theoretical_avg_passes": 1.0,
+      "simulated_avg_passes": 1.0,
+      "theoretical_throughput_mops": 400.0,
+      "simulated_throughput_mops": 400.0,
+      "simulated_steady_throughput_mops": 400.0,
+      "simulated_batch_throughput_mops": 376.081233546446,
+      "match_error_pct": 0.0,
+      "latency_cycles": {
+        "mean": 227.0,
+        "median": 227.0,
+        "p95": 227.0,
+        "p99": 227.0,
+        "max": 227,
+        "min": 227
+      }
+    },
+    {
+      "loopback_probability_p": 0.1,
+      "theoretical_avg_passes": 1.1,
+      "simulated_avg_passes": 1.0999,
+      "theoretical_throughput_mops": 363.6363636363636,
+      "simulated_throughput_mops": 363.41681574239715,
+      "simulated_steady_throughput_mops": 363.41681574239715,
+      "simulated_batch_throughput_mops": 327.65399737876805,
+      "match_error_pct": -0.060375670840781485,
+      "latency_cycles": {
+        "mean": 242.8841,
+        "median": 227.0,
+        "p95": 386.0,
+        "p99": 386.0,
+        "max": 386,
+        "min": 227
+      }
+    },
+    {
+      "loopback_probability_p": 0.25,
+      "theoretical_avg_passes": 1.25,
+      "simulated_avg_passes": 1.2465,
+      "theoretical_throughput_mops": 320.0,
+      "simulated_throughput_mops": 320.0,
+      "simulated_steady_throughput_mops": 320.0,
+      "simulated_batch_throughput_mops": 293.51335485764605,
+      "match_error_pct": 0.0,
+      "latency_cycles": {
+        "mean": 266.1935,
+        "median": 227.0,
+        "p95": 386.0,
+        "p99": 386.0,
+        "max": 386,
+        "min": 227
+      }
+    },
+    {
+      "loopback_probability_p": 0.5,
+      "theoretical_avg_passes": 1.5,
+      "simulated_avg_passes": 1.5,
+      "theoretical_throughput_mops": 266.6666666666667,
+      "simulated_throughput_mops": 266.2496090084454,
+      "simulated_steady_throughput_mops": 266.2496090084454,
+      "simulated_batch_throughput_mops": 249.1280518186348,
+      "match_error_pct": -0.1563966218329753,
+      "latency_cycles": {
+        "mean": 306.5,
+        "median": 306.5,
+        "p95": 386.0,
+        "p99": 386.0,
+        "max": 386,
+        "min": 227
+      }
+    },
+    {
+      "loopback_probability_p": 0.75,
+      "theoretical_avg_passes": 1.75,
+      "simulated_avg_passes": 1.7493,
+      "theoretical_throughput_mops": 228.57142857142858,
+      "simulated_throughput_mops": 227.25361366622863,
+      "simulated_steady_throughput_mops": 227.25361366622863,
+      "simulated_batch_throughput_mops": 216.40337589266392,
+      "match_error_pct": -0.5765440210249793,
+      "latency_cycles": {
+        "mean": 346.1387,
+        "median": 386.0,
+        "p95": 386.0,
+        "p99": 386.0,
+        "max": 386,
+        "min": 227
+      }
+    },
+    {
+      "loopback_probability_p": 0.9,
+      "theoretical_avg_passes": 1.9,
+      "simulated_avg_passes": 1.9017,
+      "theoretical_throughput_mops": 210.5263157894737,
+      "simulated_throughput_mops": 208.52898897939627,
+      "simulated_steady_throughput_mops": 208.52898897939627,
+      "simulated_batch_throughput_mops": 200.3606491685033,
+      "match_error_pct": -0.9487302347867768,
+      "latency_cycles": {
+        "mean": 370.3703,
+        "median": 386.0,
+        "p95": 386.0,
+        "p99": 386.0,
+        "max": 386,
+        "min": 227
+      }
+    },
+    {
+      "loopback_probability_p": 1.0,
+      "theoretical_avg_passes": 2.0,
+      "simulated_avg_passes": 2.0,
+      "theoretical_throughput_mops": 200.0,
+      "simulated_throughput_mops": 198.9968080255358,
+      "simulated_steady_throughput_mops": 198.9968080255358,
+      "simulated_batch_throughput_mops": 192.19680953296177,
+      "match_error_pct": -0.5015959872320934,
+      "latency_cycles": {
+        "mean": 386.0,
+        "median": 386.0,
+        "p95": 386.0,
+        "p99": 386.0,
+        "max": 386,
+        "min": 386
+      }
+    }
+  ],
+  "burst_stress": [
+    {
+      "burst_size": 16,
+      "peak_active_slots_per_core": 4,
+      "peak_ingress_queue_depth": 1,
+      "backpressure_cycles": 0,
+      "drain_cycles": 398,
+      "deadlock_free": true,
+      "latency_cycles": {
+        "mean": 384.0,
+        "median": 384.0,
+        "p95": 384.0,
+        "p99": 384.0,
+        "max": 384,
+        "min": 384
+      }
+    },
+    {
+      "burst_size": 32,
+      "peak_active_slots_per_core": 8,
+      "peak_ingress_queue_depth": 1,
+      "backpressure_cycles": 0,
+      "drain_cycles": 414,
+      "deadlock_free": true,
+      "latency_cycles": {
+        "mean": 384.0,
+        "median": 384.0,
+        "p95": 384.0,
+        "p99": 384.0,
+        "max": 384,
+        "min": 384
+      }
+    },
+    {
+      "burst_size": 48,
+      "peak_active_slots_per_core": 12,
+      "peak_ingress_queue_depth": 1,
+      "backpressure_cycles": 0,
+      "drain_cycles": 430,
+      "deadlock_free": true,
+      "latency_cycles": {
+        "mean": 384.0,
+        "median": 384.0,
+        "p95": 384.0,
+        "p99": 384.0,
+        "max": 384,
+        "min": 384
+      }
+    },
+    {
+      "burst_size": 60,
+      "peak_active_slots_per_core": 15,
+      "peak_ingress_queue_depth": 1,
+      "backpressure_cycles": 0,
+      "drain_cycles": 442,
+      "deadlock_free": true,
+      "latency_cycles": {
+        "mean": 384.0,
+        "median": 384.0,
+        "p95": 384.0,
+        "p99": 384.0,
+        "max": 384,
+        "min": 384
+      }
+    },
+    {
+      "burst_size": 80,
+      "peak_active_slots_per_core": 20,
+      "peak_ingress_queue_depth": 1,
+      "backpressure_cycles": 0,
+      "drain_cycles": 462,
+      "deadlock_free": true,
+      "latency_cycles": {
+        "mean": 384.0,
+        "median": 384.0,
+        "p95": 384.0,
+        "p99": 384.0,
+        "max": 384,
+        "min": 384
+      }
+    },
+    {
+      "burst_size": 128,
+      "peak_active_slots_per_core": 32,
+      "peak_ingress_queue_depth": 1,
+      "backpressure_cycles": 0,
+      "drain_cycles": 510,
+      "deadlock_free": true,
+      "latency_cycles": {
+        "mean": 384.0,
+        "median": 384.0,
+        "p95": 384.0,
+        "p99": 384.0,
+        "max": 384,
+        "min": 384
+      }
+    },
+    {
+      "burst_size": 256,
+      "peak_active_slots_per_core": 60,
+      "peak_ingress_queue_depth": 1,
+      "backpressure_cycles": 143,
+      "drain_cycles": 782,
+      "deadlock_free": true,
+      "latency_cycles": {
+        "mean": 384.0625,
+        "median": 384.0,
+        "p95": 385.0,
+        "p99": 385.0,
+        "max": 385,
+        "min": 384
+      }
+    }
+  ],
+  "empirical_market_workloads": {
+    "liquid_regime": {
+      "workload_regime": "liquid_regime",
+      "num_contracts": 50000,
+      "avg_passes": 2.6345,
+      "theoretical_throughput_mops": 151.83146707155058,
+      "simulated_throughput_mops": 151.83980672737408,
+      "simulated_steady_throughput_mops": 151.83980672737408,
+      "simulated_batch_throughput_mops": 146.89896289332196,
+      "match_error_pct": 0.0054927058167560825,
+      "latency_cycles": {
+        "mean": 486.8855,
+        "median": 386.0,
+        "p95": 704.0,
+        "p99": 863.0,
+        "max": 1340,
+        "min": 227
+      },
+      "latency_us": {
+        "mean": 4.868855,
+        "median": 3.86,
+        "p95": 7.04,
+        "p99": 8.63,
+        "max": 13.4,
+        "min": 2.27
+      }
+    },
+    "extended_domain": {
+      "workload_regime": "extended_domain",
+      "num_contracts": 50000,
+      "avg_passes": 3.65118,
+      "theoretical_throughput_mops": 109.55362375998992,
+      "simulated_throughput_mops": 109.55001113833816,
+      "simulated_steady_throughput_mops": 109.55001113833816,
+      "simulated_batch_throughput_mops": 107.17654119866243,
+      "match_error_pct": -0.003297582980613218,
+      "latency_cycles": {
+        "mean": 648.53762,
+        "median": 545.0,
+        "p95": 1340.0,
+        "p99": 1340.0,
+        "max": 1340,
+        "min": 227
+      },
+      "latency_us": {
+        "mean": 6.485376199999999,
+        "median": 5.45,
+        "p95": 13.4,
+        "p99": 13.4,
+        "max": 13.4,
+        "min": 2.27
+      }
+    }
+  }
+}
