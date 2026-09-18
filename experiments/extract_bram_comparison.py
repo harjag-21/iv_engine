@@ -91,10 +91,10 @@ def fmt_delta(val_prop, val_base, is_float=False, unit=""):
     sign = "+" if diff > 0 else ""
     if is_float:
         pct = (diff / val_base * 100.0) if val_base != 0 else 0.0
-        return f"{sign}{diff:.3f}{unit} ({sign}{pct:.2f}%)"
+        return f"{sign}{diff:.3f}{unit} ({pct:+.2f}%)"
     else:
         pct = (diff / val_base * 100.0) if val_base != 0 else 0.0
-        return f"{sign}{diff:,}{unit} ({sign}{pct:+.2f}%)" if val_base != 0 else f"{sign}{diff:,}{unit}"
+        return f"{sign}{diff:,}{unit} ({pct:+.2f}%)" if val_base != 0 else f"{sign}{diff:,}{unit}"
 
 def main():
     print("=" * 80)
