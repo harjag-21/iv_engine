@@ -1,0 +1,339 @@
+{
+  "metadata": {
+    "benchmark_dataset": "sim_results/dpi_10k_results.csv",
+    "total_contracts": 10000,
+    "liquid_contracts": 4394,
+    "timestamp": "2026-09-19 00:50:39",
+    "target_clock_mhz": 100.0,
+    "peak_pipeline_mops": 400.0,
+    "device_dsp_capacity_artix7": 740
+  },
+  "configurations": {
+    "fixed_1p": {
+      "label": "Fixed 1-Pass (Analytical Seed)",
+      "dsp_time_multiplexed": 608,
+      "dsp_unrolled_bound": 608,
+      "unrolled_feasible_on_artix7": true,
+      "liquid_domain": {
+        "count": 4394,
+        "avg_passes": 1.0,
+        "sustained_tput_mops": 400.0,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 176.35491461734313,
+          "rmse": 510.783519780697,
+          "median": 5.909434623718179,
+          "p95": 1071.757775222778,
+          "p99": 2367.6800251098566,
+          "max": 5525.604504737855,
+          "pct_within_10bps": 55.6440600819299,
+          "pct_within_50bps": 71.23350022758306,
+          "pct_within_100bps": 77.2189349112426
+        }
+      },
+      "extended_domain": {
+        "count": 10000,
+        "avg_passes": 1.0,
+        "sustained_tput_mops": 400.0,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 1128.6760303813628,
+          "rmse": 2446.579502874063,
+          "median": 275.5598439407347,
+          "p95": 5256.375657926547,
+          "p99": 10954.665326534277,
+          "max": 22263.566781730653,
+          "pct_within_10bps": 25.25,
+          "pct_within_50bps": 34.62,
+          "pct_within_100bps": 39.81
+        }
+      }
+    },
+    "fixed_2p": {
+      "label": "Fixed 2-Pass (Analytical Seed)",
+      "dsp_time_multiplexed": 608,
+      "dsp_unrolled_bound": 1216,
+      "unrolled_feasible_on_artix7": false,
+      "liquid_domain": {
+        "count": 4394,
+        "avg_passes": 2.0,
+        "sustained_tput_mops": 200.0,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 21.453110152536706,
+          "rmse": 136.83986142987774,
+          "median": 0.9638629531859289,
+          "p95": 69.2280997638701,
+          "p99": 457.94713012580195,
+          "max": 3025.6045047378543,
+          "pct_within_10bps": 87.82430587164315,
+          "pct_within_50bps": 93.94629039599454,
+          "pct_within_100bps": 96.15384615384616
+        }
+      },
+      "extended_domain": {
+        "count": 10000,
+        "avg_passes": 2.0,
+        "sustained_tput_mops": 200.0,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 521.8688096478156,
+          "rmse": 1685.8467709583101,
+          "median": 4.887854003906289,
+          "p95": 3138.477324831007,
+          "p99": 8454.665326534277,
+          "max": 19763.566781730653,
+          "pct_within_10bps": 53.86,
+          "pct_within_50bps": 65.25,
+          "pct_within_100bps": 71.33
+        }
+      }
+    },
+    "fixed_4p": {
+      "label": "Fixed 4-Pass (Analytical Seed)",
+      "dsp_time_multiplexed": 608,
+      "dsp_unrolled_bound": 2432,
+      "unrolled_feasible_on_artix7": false,
+      "liquid_domain": {
+        "count": 4394,
+        "avg_passes": 4.0,
+        "sustained_tput_mops": 100.0,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 4.594489033264523,
+          "rmse": 41.245157808473344,
+          "median": 0.40111181259155915,
+          "p95": 2.5796452274323682,
+          "p99": 85.07224830551117,
+          "max": 1092.6147121047975,
+          "pct_within_10bps": 97.08693673190714,
+          "pct_within_50bps": 98.63450159308147,
+          "pct_within_100bps": 99.11242603550295
+        }
+      },
+      "extended_domain": {
+        "count": 10000,
+        "avg_passes": 4.0,
+        "sustained_tput_mops": 100.0,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 171.33212768918992,
+          "rmse": 828.5956373171811,
+          "median": 1.0363889503478552,
+          "p95": 753.1096886024433,
+          "p99": 3832.883250545121,
+          "max": 14763.566781730653,
+          "pct_within_10bps": 75.64,
+          "pct_within_50bps": 82.89,
+          "pct_within_100bps": 85.71
+        }
+      }
+    },
+    "fixed_8p": {
+      "label": "Fixed 8-Pass (Analytical Seed)",
+      "dsp_time_multiplexed": 608,
+      "dsp_unrolled_bound": 4864,
+      "unrolled_feasible_on_artix7": false,
+      "liquid_domain": {
+        "count": 4394,
+        "avg_passes": 8.0,
+        "sustained_tput_mops": 50.0,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 4.498429438938703,
+          "rmse": 39.844913255920915,
+          "median": 0.40111181259155915,
+          "p95": 2.572758447647201,
+          "p99": 85.72580709152217,
+          "max": 1050.533236846924,
+          "pct_within_10bps": 97.10969503868913,
+          "pct_within_50bps": 98.68001820664543,
+          "pct_within_100bps": 99.13518434228493
+        }
+      },
+      "extended_domain": {
+        "count": 10000,
+        "avg_passes": 8.0,
+        "sustained_tput_mops": 50.0,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 112.42303985589218,
+          "rmse": 425.07281301944613,
+          "median": 1.0354248046876013,
+          "p95": 643.5502879676793,
+          "p99": 2245.475643228153,
+          "max": 4816.639880790711,
+          "pct_within_10bps": 75.78,
+          "pct_within_50bps": 83.34,
+          "pct_within_100bps": 86.11
+        }
+      }
+    },
+    "prop_dynamic": {
+      "label": "Proposed Dynamic Loopback (Analytical Seed)",
+      "dsp_time_multiplexed": 608,
+      "dsp_unrolled_bound": 608,
+      "unrolled_feasible_on_artix7": true,
+      "liquid_domain": {
+        "count": 4394,
+        "avg_passes": 2.6347291761492944,
+        "sustained_tput_mops": 151.8182603437851,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 4.795034485705398,
+          "rmse": 46.83802921965578,
+          "median": 0.40340902328489525,
+          "p95": 2.5738972663880664,
+          "p99": 83.83411697425746,
+          "max": 1476.9301192092896,
+          "pct_within_10bps": 97.13245334547109,
+          "pct_within_50bps": 98.63450159308147,
+          "pct_within_100bps": 99.11242603550295
+        }
+      },
+      "extended_domain": {
+        "count": 10000,
+        "avg_passes": 3.66,
+        "sustained_tput_mops": 109.2896174863388,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 99.8393356127243,
+          "rmse": 366.44301631264705,
+          "median": 1.0370062255860013,
+          "p95": 623.8340139026614,
+          "p99": 1779.5303579753881,
+          "max": 4816.639880790711,
+          "pct_within_10bps": 75.79,
+          "pct_within_50bps": 83.34,
+          "pct_within_100bps": 86.11
+        }
+      }
+    },
+    "static_1p": {
+      "label": "Fixed 1-Pass (Static 0.20 Seed)",
+      "dsp_time_multiplexed": 608,
+      "dsp_unrolled_bound": 608,
+      "unrolled_feasible_on_artix7": true,
+      "liquid_domain": {
+        "count": 4394,
+        "avg_passes": 1.0,
+        "sustained_tput_mops": 400.0,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 200.85603736411238,
+          "rmse": 370.3250824430243,
+          "median": 46.535587482452456,
+          "p95": 850.7516192092895,
+          "p99": 992.3955192092894,
+          "max": 4551.830095367432,
+          "pct_within_10bps": 31.52025489303596,
+          "pct_within_50bps": 51.183431952662716,
+          "pct_within_100bps": 60.12744651797907
+        }
+      },
+      "extended_domain": {
+        "count": 10000,
+        "avg_passes": 1.0,
+        "sustained_tput_mops": 400.0,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 467.65409280515286,
+          "rmse": 800.6549647836453,
+          "median": 229.78254301071172,
+          "p95": 1893.1643807907085,
+          "p99": 2882.933782936478,
+          "max": 5323.9500953674315,
+          "pct_within_10bps": 15.53,
+          "pct_within_50bps": 28.76,
+          "pct_within_100bps": 36.85
+        }
+      }
+    },
+    "static_dynamic": {
+      "label": "Dynamic Loopback (Static 0.20 Seed)",
+      "dsp_time_multiplexed": 608,
+      "dsp_unrolled_bound": 608,
+      "unrolled_feasible_on_artix7": true,
+      "liquid_domain": {
+        "count": 4394,
+        "avg_passes": 2.779472007282658,
+        "sustained_tput_mops": 143.91222467862113,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 5.563339793561643,
+          "rmse": 59.90105984301133,
+          "median": 0.40162088394163353,
+          "p95": 2.5706126804352856,
+          "p99": 88.38928492011988,
+          "max": 1805.0106185531617,
+          "pct_within_10bps": 97.13245334547109,
+          "pct_within_50bps": 98.65725989986345,
+          "pct_within_100bps": 99.11242603550295
+        }
+      },
+      "extended_domain": {
+        "count": 10000,
+        "avg_passes": 3.4344,
+        "sustained_tput_mops": 116.46866992778942,
+        "unrolled_tput_mops": 400.0,
+        "metrics": {
+          "mae": 109.06430430519865,
+          "rmse": 388.63995131791467,
+          "median": 1.0355858039856614,
+          "p95": 701.423473350525,
+          "p99": 2317.258180790711,
+          "max": 3215.99323677063,
+          "pct_within_10bps": 75.79,
+          "pct_within_50bps": 83.3,
+          "pct_within_100bps": 86.08
+        }
+      }
+    }
+  },
+  "pass_distribution": {
+    "extended_domain": {
+      "counts": {
+        "1": 118,
+        "2": 2229,
+        "3": 3213,
+        "4": 2657,
+        "5": 632,
+        "6": 255,
+        "7": 101,
+        "8": 795
+      },
+      "percentages": {
+        "1": 1.18,
+        "2": 22.29,
+        "3": 32.129999999999995,
+        "4": 26.57,
+        "5": 6.32,
+        "6": 2.55,
+        "7": 1.01,
+        "8": 7.95
+      }
+    },
+    "liquid_domain": {
+      "counts": {
+        "1": 17,
+        "2": 2176,
+        "3": 1706,
+        "4": 443,
+        "5": 31,
+        "6": 2,
+        "7": 1,
+        "8": 18
+      },
+      "percentages": {
+        "1": 0.38689121529358217,
+        "2": 49.52207555757852,
+        "3": 38.82567137005007,
+        "4": 10.081929904415112,
+        "5": 0.705507510241238,
+        "6": 0.04551661356395084,
+        "7": 0.02275830678197542,
+        "8": 0.40964952207555755
+      }
+    }
+  }
+}
