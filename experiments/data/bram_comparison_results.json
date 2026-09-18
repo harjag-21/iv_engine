@@ -1,0 +1,31 @@
+{
+  "proposed": {
+    "utilization": {
+      "total_luts": "106298(79.45%)",
+      "logic_luts": "96386(72.04%)",
+      "lutram": "1256(2.72%)",
+      "srl": "8656(18.74%)",
+      "ff": "129786(48.50%)",
+      "ramb36": "0(0.00%)",
+      "ramb18": "0(0.00%)",
+      "dsp": "608(82.16%)"
+    },
+    "timing": {
+      "wns": 0.005,
+      "tns": 0.0,
+      "whs": 0.058,
+      "fmax": 100.05002501250627
+    },
+    "power": {
+      "total_power": 4.258,
+      "dynamic_power": 4.127,
+      "static_power": 0.132,
+      "junction_temp": 31.2
+    }
+  },
+  "baseline": {
+    "utilization": null,
+    "timing": null,
+    "power": null
+  }
+}
