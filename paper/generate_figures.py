@@ -99,7 +99,7 @@ unseeded_pct = np.array([11.8, 16.4, 17.2, 17.6, 14.1, 9.8, 5.3, 3.6])
 b1 = ax1.bar(x - width/2, seeded_pct, width, label='With Analytical Seed (B-S)', color='#1f77b4', edgecolor='black', alpha=0.85)
 b2 = ax1.bar(x + width/2, unseeded_pct, width, label=r'Without Seeding ($\sigma_0=0.20$)', color='#d62728', edgecolor='black', alpha=0.85)
 
-ax1.set_xlabel('Solver Passes / Iterations')
+ax1.set_xlabel('Solver Passes')
 ax1.set_ylabel('Percentage of Contracts (%)')
 ax1.set_title('(a) Pass Count Distribution')
 ax1.set_xticks(x)
@@ -137,7 +137,7 @@ ax2.text(0.06, 0.52, '79% Pass Reduction\n(4.800 $\\to$ 1.024 passes)',
          transform=ax2.transAxes, fontsize=9.5, fontweight='bold',
          bbox=dict(boxstyle='round,pad=0.35', facecolor='#e8f4f8', edgecolor='#1f77b4', alpha=0.9))
 
-ax2.set_xlabel('Solver Passes / Iterations')
+ax2.set_xlabel('Solver Passes')
 ax2.set_ylabel('Cumulative Convergence Rate (%)')
 ax2.set_title('(b) Cumulative Convergence CDF')
 ax2.set_xticks(x)
@@ -270,14 +270,16 @@ ax.add_patch(s5)
 ax.text(115, 28.5, 'Stage 5: Multi-Core Arbiter\n& 128-Bit Egress (2 Cycles)',
         ha='center', va='center', fontsize=9.0, fontweight='bold', color='#0e565d')
 ax.text(115, 16.5,
-        '\u2022 Round-Robin 4-Core Complete Drain\n'
-        '\u2022 Packed 128-Bit Single-Flit Bus:\n'
-        '  [127:122] TID Transaction ID (6b)\n'
+        '\u2022 Round-Robin 4-Core Drain Arbiter\n'
+        '\u2022 128-Bit Data Payload:\n'
+        '  [127:122] Local TID (6b)\n'
         '  [121:96]  Gamma Greek (26b)\n'
         '  [95:64]   Vega Greek (32b)\n'
         '  [63:32]   Delta Greek (32b)\n'
-        '  [31:0]    sigma Implied Vol (32b)',
-        ha='center', va='center', fontsize=7.1, linespacing=1.32)
+        '  [31:0]    sigma Implied Vol (32b)\n'
+        '\u2022 Sideband: Core ID (2b)\n'
+        '\u2022 Global Tag: {Core[1:0], TID[5:0]}',
+        ha='center', va='center', fontsize=7.0, linespacing=1.30)
 
 # --- Inter-block Arrows ---
 # Stage 1 -> Stage 2
@@ -323,7 +325,7 @@ ax.text(-12.0, 54.0, 'AXI4-Stream Ingress\n(256-bit S, K, T, r, C_mkt, TID)',
 # External Egress Arrow
 ax.annotate('', xy=(140, 20.0), xytext=(132, 20.0),
             arrowprops=dict(arrowstyle='->', lw=2.0, color='#17becf', mutation_scale=14))
-ax.text(142.0, 20.0, r'AXI4-Stream Egress' + '\n' + r'(128-bit $\sigma$ + Full Greeks)',
+ax.text(142.0, 20.0, r'AXI4-Stream Egress' + '\n' + r'(128b Payload + 2b Core ID Sideband)',
         ha='left', va='center', fontsize=8.5, fontweight='bold', color='#0e565d')
 
 target_dirs = [out_dir, os.path.dirname(__file__)]

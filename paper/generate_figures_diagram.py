@@ -97,8 +97,8 @@ s5 = patches.FancyBboxPatch((98, 6), 34, 28, boxstyle='round,pad=0.8,rounding_si
 ax.add_patch(s5)
 ax.text(115, 28.5, 'Stage 5: Multi-Core Arbiter\n& 128-Bit Egress (2 Cycles)',
         ha='center', va='center', fontsize=9.2, fontweight='bold', color='#0e565d')
-ax.text(115, 16.5, '\u2022 Round-Robin 4-Core Complete Drain\n\u2022 Packed 128-Bit Single-Flit Bus:\n  [127:122] TID Transaction ID (6b)\n  [121:96]  Gamma Greek (26b)\n  [95:64]   Vega Greek (32b)\n  [63:32]   Delta Greek (32b)\n  [31:0]    sigma Implied Vol (32b)',
-        ha='center', va='center', fontsize=7.3, linespacing=1.35)
+ax.text(115, 16.5, '\u2022 Round-Robin 4-Core Drain Arbiter\n\u2022 128-Bit Data Payload:\n  [127:122] Local TID (6b)\n  [121:96]  Gamma Greek (26b)\n  [95:64]   Vega Greek (32b)\n  [63:32]   Delta Greek (32b)\n  [31:0]    sigma Implied Vol (32b)\n\u2022 Sideband: Core ID (2b)\n\u2022 Global Tag: {Core[1:0], TID[5:0]}',
+        ha='center', va='center', fontsize=7.0, linespacing=1.30)
 
 # =========================================================================
 # Inter-block Arrows & Orthogonal Routing
@@ -144,8 +144,8 @@ ax.text(-12.0, 54.0, 'AXI4-Stream Ingress\n(256-bit S, K, T, r, C_mkt, TID)',
 # External Egress Arrow
 ax.annotate('', xy=(140, 20.0), xytext=(132, 20.0),
             arrowprops=dict(arrowstyle='->', lw=2.0, color='#17becf', mutation_scale=14))
-ax.text(142.0, 20.0, r'AXI4-Stream Egress' + '\n' + r'(128-bit $\sigma$ + Full Greeks)',
-        ha='left', va='center', fontsize=8.8, fontweight='bold', color='#0e565d')
+ax.text(142.0, 20.0, r'AXI4-Stream Egress' + '\n' + r'(128b Payload + 2b Core ID Sideband)',
+        ha='left', va='center', fontsize=8.6, fontweight='bold', color='#0e565d')
 
 # Save to both paper/figures and paper/ root
 target_dirs = [out_dir, os.path.dirname(__file__)]
