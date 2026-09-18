@@ -99,9 +99,9 @@ unseeded_pct = np.array([11.8, 16.4, 17.2, 17.6, 14.1, 9.8, 5.3, 3.6])
 b1 = ax1.bar(x - width/2, seeded_pct, width, label='With Analytical Seed (B-S)', color='#1f77b4', edgecolor='black', alpha=0.85)
 b2 = ax1.bar(x + width/2, unseeded_pct, width, label=r'Without Seeding ($\sigma_0=0.20$)', color='#d62728', edgecolor='black', alpha=0.85)
 
-ax1.set_xlabel('Newton-Raphson Iterations')
+ax1.set_xlabel('Solver Passes / Iterations')
 ax1.set_ylabel('Percentage of Contracts (%)')
-ax1.set_title('(a) Iteration Count Distribution')
+ax1.set_title('(a) Pass Count Distribution')
 ax1.set_xticks(x)
 ax1.set_xticklabels(['1', '2', '3', '4', '5', '6', '7', '8+'])
 ax1.set_ylim([0, 115])
@@ -133,11 +133,11 @@ ax2.annotate('95.8% Capped\n(4.2% Fail Tail)', xy=(8, 95.8), xytext=(6.5, 48),
              fontweight='bold', color='#d62728', fontsize=9.5, ha='center')
 
 # Highlight box in clean open space
-ax2.text(0.06, 0.52, '79% Iteration Reduction\n(4.800 $\\to$ 1.024 passes)',
+ax2.text(0.06, 0.52, '79% Pass Reduction\n(4.800 $\\to$ 1.024 passes)',
          transform=ax2.transAxes, fontsize=9.5, fontweight='bold',
          bbox=dict(boxstyle='round,pad=0.35', facecolor='#e8f4f8', edgecolor='#1f77b4', alpha=0.9))
 
-ax2.set_xlabel('Newton-Raphson Iterations')
+ax2.set_xlabel('Solver Passes / Iterations')
 ax2.set_ylabel('Cumulative Convergence Rate (%)')
 ax2.set_title('(b) Cumulative Convergence CDF')
 ax2.set_xticks(x)
