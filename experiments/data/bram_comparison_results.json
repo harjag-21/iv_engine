@@ -24,8 +24,35 @@
     }
   },
   "baseline": {
-    "utilization": null,
-    "timing": null,
-    "power": null
+    "utilization": {
+      "total_luts": "105441(78.80%)",
+      "logic_luts": "96761(72.32%)",
+      "lutram": "24(0.05%)",
+      "srl": "8656(18.74%)",
+      "ff": "129883(48.54%)",
+      "ramb36": "0(0.00%)",
+      "ramb18": "28(3.84%)",
+      "dsp": "608(82.16%)"
+    },
+    "timing": {
+      "wns": -0.104,
+      "tns": -0.567,
+      "whs": 0.028,
+      "fmax": 98.97070467141727
+    },
+    "power": {
+      "total_power": 4.277,
+      "dynamic_power": 4.145,
+      "static_power": 0.132,
+      "junction_temp": 31.2
+    }
+  },
+  "deltas": {
+    "lut": "+857 (++0.81%)",
+    "lutram": "+1,232 (++5133.33%)",
+    "bram18": "-28 (-100.0%)",
+    "wns": "+0.109 ns (slack gained)",
+    "fmax": "+1.08 MHz (+1.09%)",
+    "power": "-0.019 W (-0.44%)"
   }
 }

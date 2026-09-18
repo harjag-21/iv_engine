@@ -1,0 +1,187 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version     : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
+| Date             : Fri Sep 18 22:24:09 2026
+| Host             : LAPTOP-EPHGQB72 running 64-bit major release  (build 9200)
+| Command          : report_power -file impl_results/artix7_4core_bram/artix7_bram_power.rpt -xpe impl_results/artix7_4core_bram/artix7_bram_power.xpe
+| Design           : iv_multi_engine_top_bram
+| Device           : xc7a200tffg1156-3
+| Design State     : routed
+| Grade            : extended
+| Process          : typical
+| Characterization : Production
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Power Report
+
+Table of Contents
+-----------------
+1. Summary
+1.1 On-Chip Components
+1.2 Power Supply Summary
+1.3 Confidence Level
+2. Settings
+2.1 Environment
+2.2 Clock Constraints
+3. Detailed Reports
+3.1 By Hierarchy
+
+1. Summary
+----------
+
++--------------------------+--------------+
+| Total On-Chip Power (W)  | 4.277        |
+| Design Power Budget (W)  | Unspecified* |
+| Power Budget Margin (W)  | NA           |
+| Dynamic (W)              | 4.145        |
+| Device Static (W)        | 0.132        |
+| Effective TJA (C/W)      | 1.5          |
+| Max Ambient (C)          | 93.8         |
+| Junction Temperature (C) | 31.2         |
+| Confidence Level         | Medium       |
+| Setting File             | ---          |
+| Simulation Activity File | ---          |
+| Design Nets Matched      | NA           |
++--------------------------+--------------+
+* Specify Design Power Budget using, set_operating_conditions -design_power_budget <value in Watts>
+
+
+1.1 On-Chip Components
+----------------------
+
++--------------------------+-----------+----------+-----------+-----------------+
+| On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
++--------------------------+-----------+----------+-----------+-----------------+
+| Clocks                   |     0.547 |        3 |       --- |             --- |
+| Slice Logic              |     1.421 |   296106 |       --- |             --- |
+|   LUT as Logic           |     1.164 |    96761 |    133800 |           72.32 |
+|   CARRY4                 |     0.105 |    17252 |     33450 |           51.58 |
+|   Register               |     0.095 |   129883 |    267600 |           48.54 |
+|   LUT as Shift Register  |     0.057 |     8656 |     46200 |           18.74 |
+|   F7/F8 Muxes            |     0.001 |     6384 |    133800 |            4.77 |
+|   LUT as Distributed RAM |    <0.001 |       24 |     46200 |            0.05 |
+|   Others                 |     0.000 |     1863 |       --- |             --- |
+|   BUFG                   |     0.000 |        1 |        32 |            3.13 |
+| Signals                  |     1.590 |   216519 |       --- |             --- |
+| Block RAM                |     0.049 |       14 |       365 |            3.84 |
+| DSPs                     |     0.537 |      608 |       740 |           82.16 |
+| Static Power             |     0.132 |          |           |                 |
+| Total                    |     4.277 |          |           |                 |
++--------------------------+-----------+----------+-----------+-----------------+
+
+
+1.2 Power Supply Summary
+------------------------
+
++-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
+| Source    | Voltage (V) | Total (A) | Dynamic (A) | Static (A) | Powerup (A) | Budget (A)  | Margin (A) |
++-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
+| Vccint    |       1.000 |     4.183 |       4.144 |      0.039 |       NA    | Unspecified | NA         |
+| Vccaux    |       1.800 |     0.031 |       0.000 |      0.031 |       NA    | Unspecified | NA         |
+| Vcco33    |       3.300 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco25    |       2.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco18    |       1.800 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco15    |       1.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco135   |       1.350 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco12    |       1.200 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vccaux_io |       1.800 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vccbram   |       1.000 |     0.002 |       0.001 |      0.001 |       NA    | Unspecified | NA         |
+| MGTAVcc   |       1.000 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| MGTAVtt   |       1.200 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vccadc    |       1.800 |     0.020 |       0.000 |      0.020 |       NA    | Unspecified | NA         |
++-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
+
+
+1.3 Confidence Level
+--------------------
+
++-----------------------------+------------+------------------------------------------------+------------------------------------------------------------------------------------------------------------+
+| User Input Data             | Confidence | Details                                        | Action                                                                                                     |
++-----------------------------+------------+------------------------------------------------+------------------------------------------------------------------------------------------------------------+
+| Design implementation state | High       | Design is routed                               |                                                                                                            |
+| Clock nodes activity        | High       | User specified more than 95% of clocks         |                                                                                                            |
+| I/O nodes activity          | High       | User specified more than 95% of inputs         |                                                                                                            |
+| Internal nodes activity     | Medium     | User specified less than 25% of internal nodes | Provide missing internal nodes activity with simulation results or by editing the "By Resource Type" views |
+| Device models               | High       | Device models are Production                   |                                                                                                            |
+|                             |            |                                                |                                                                                                            |
+| Overall confidence level    | Medium     |                                                |                                                                                                            |
++-----------------------------+------------+------------------------------------------------+------------------------------------------------------------------------------------------------------------+
+
+
+2. Settings
+-----------
+
+2.1 Environment
+---------------
+
++-----------------------+--------------------------+
+| Ambient Temp (C)      | 25.0                     |
+| ThetaJA (C/W)         | 1.5                      |
+| Airflow (LFM)         | 250                      |
+| Heat Sink             | medium (Medium Profile)  |
+| ThetaSA (C/W)         | 2.4                      |
+| Board Selection       | medium (10"x10")         |
+| # of Board Layers     | 12to15 (12 to 15 Layers) |
+| Board Temperature (C) | 25.0                     |
++-----------------------+--------------------------+
+
+
+2.2 Clock Constraints
+---------------------
+
++-------+--------+-----------------+
+| Clock | Domain | Constraint (ns) |
++-------+--------+-----------------+
+| aclk  | aclk   |            10.0 |
++-------+--------+-----------------+
+
+
+3. Detailed Reports
+-------------------
+
+3.1 By Hierarchy
+----------------
+
++-----------------------------------+-----------+
+| Name                              | Power (W) |
++-----------------------------------+-----------+
+| iv_multi_engine_top_bram          |     4.145 |
+|   core_inst_gen[0].u_engine_core  |     1.040 |
+|     u_iv_top                      |     0.989 |
+|       cordic_inst                 |     0.051 |
+|       gen_init_guess.u_init_guess |     0.150 |
+|       u_arb_fsm                   |     0.002 |
+|       u_bs_datapath               |     0.590 |
+|       u_gain_comp                 |     0.005 |
+|       u_gamma_divider             |     0.080 |
+|       u_nr_divider                |     0.082 |
+|   core_inst_gen[1].u_engine_core  |     1.034 |
+|     u_iv_top                      |     0.984 |
+|       cordic_inst                 |     0.049 |
+|       gen_init_guess.u_init_guess |     0.144 |
+|       u_arb_fsm                   |     0.002 |
+|       u_bs_datapath               |     0.594 |
+|       u_gain_comp                 |     0.005 |
+|       u_gamma_divider             |     0.078 |
+|       u_nr_divider                |     0.084 |
+|   core_inst_gen[2].u_engine_core  |     1.035 |
+|     u_iv_top                      |     0.984 |
+|       cordic_inst                 |     0.049 |
+|       gen_init_guess.u_init_guess |     0.141 |
+|       u_arb_fsm                   |     0.002 |
+|       u_bs_datapath               |     0.597 |
+|       u_gain_comp                 |     0.005 |
+|       u_gamma_divider             |     0.078 |
+|       u_nr_divider                |     0.084 |
+|   core_inst_gen[3].u_engine_core  |     1.034 |
+|     u_iv_top                      |     0.984 |
+|       cordic_inst                 |     0.049 |
+|       gen_init_guess.u_init_guess |     0.142 |
+|       u_arb_fsm                   |     0.002 |
+|       u_bs_datapath               |     0.598 |
+|       u_gain_comp                 |     0.005 |
+|       u_gamma_divider             |     0.078 |
+|       u_nr_divider                |     0.082 |
++-----------------------------------+-----------+
+
+
