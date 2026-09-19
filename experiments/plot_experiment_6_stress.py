@@ -142,14 +142,21 @@ ax2.annotate(f'Spot: \\${raw_spot:,.2f} $\\rightarrow \\tilde{{S}} = {norm_spot:
 
 # Save figure
 figures_dir = os.path.join(REPO_ROOT, "paper", "figures")
+paper_root = os.path.join(REPO_ROOT, "paper")
 os.makedirs(figures_dir, exist_ok=True)
 pdf_path = os.path.join(figures_dir, "fig5_boundary_stress_surface.pdf")
 png_path = os.path.join(figures_dir, "fig5_boundary_stress_surface.png")
+pdf_root_path = os.path.join(paper_root, "fig5_boundary_stress_surface.pdf")
+png_root_path = os.path.join(paper_root, "fig5_boundary_stress_surface.png")
 
 plt.savefig(pdf_path, bbox_inches='tight')
 plt.savefig(png_path, bbox_inches='tight')
+plt.savefig(pdf_root_path, bbox_inches='tight')
+plt.savefig(png_root_path, bbox_inches='tight')
 plt.close()
 
 print(f"Figure 5 successfully generated at:")
 print(f"  - {pdf_path}")
 print(f"  - {png_path}")
+print(f"  - {pdf_root_path}")
+print(f"  - {png_root_path}")
