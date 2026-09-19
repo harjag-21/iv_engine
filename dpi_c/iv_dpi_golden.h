@@ -1,10 +1,7 @@
 /*
  * =========================================================
- * DPI-C Golden Model Header
- * =========================================================
- * Shared types and function declarations used by:
- *   - iv_dpi_golden.c  (B-S reference implementation)
- *   - iv_dpi_model.c   (DPI-C SV import function glue)
+ * DPI-C Golden Model Header (Experiment 7 / Full Validation)
+ * Target Venue: ACM/SIGDA FPGA 2027
  * =========================================================
  */
 
@@ -13,13 +10,10 @@
 
 #include <stdint.h>
 
-/* -------------------------------------------------------
- * IvGoldenTick: One test vector entry
- * Holds double-precision parameters AND the Q8.24 packed
- * values that are sent to the RTL via AXI4-Stream.
- * ------------------------------------------------------- */
+#define MAX_TRANSACTIONS 131072
+
 typedef struct {
-    /* Double-precision originals (for reference computation) */
+    /* Double-precision originals */
     double   S, K, C, r, T;
     uint8_t  tid;
 
@@ -29,29 +23,34 @@ typedef struct {
     uint32_t C_fixed;
     uint32_t r_fixed;
     uint32_t T_fixed;
+
+    /* Ground truth double-precision reference */
+    double   ref_iv;
+    double   ref_delta;
+    double   ref_vega;
+    double   ref_gamma;
+    int      is_liquid;
 } IvGoldenTick;
 
-/* -------------------------------------------------------
- * Public API (called from iv_dpi_model.c via DPI-C bridge)
- * ------------------------------------------------------- */
-void golden_init_test_vectors(int num_ticks);
-int  golden_get_next_tick(IvGoldenTick *tick_out);
+/* Public API */
+int  golden_load_csv(const char *csv_path);
+void golden_init_test_vectors(int num_ticks, int dataset_mode);
+int  golden_get_next_tick(int core_id, IvGoldenTick *tick_out, uint64_t cycle);
+int  golden_get_total_ticks(void);
+int  golden_get_bp_pct(void);
 
-/* Original IV-only result push (still supported for backward compat) */
-void golden_push_result(uint32_t result_sigma_q824, int tick_index);
+void golden_record_accepted(int core_id, uint64_t cycle);
 
-/* Extended result push: IV + Delta + Vega + Gamma from 128-bit egress bus */
 void golden_push_result_full(uint32_t result_sigma_q824,
-                              int32_t  result_delta_q824,
-                              int32_t  result_vega_q824,
-                              int32_t  result_gamma_q824,
-                              int      tick_index);
+                             int32_t  result_delta_q824,
+                             int32_t  result_vega_q824,
+                             int32_t  result_gamma_q824,
+                             int      tid,
+                             uint64_t cycle);
 
-void golden_print_report(void);
+void golden_print_report(uint64_t total_cycles);
 
-/* -------------------------------------------------------
- * Exposed math utilities (used in accuracy benchmarks)
- * ------------------------------------------------------- */
+/* Exposed math utilities */
 double norm_cdf(double x);
 double bs_call_price(double S, double K, double r, double T, double sigma);
 double bs_vega(double S, double K, double r, double T, double sigma);

@@ -26,10 +26,10 @@
 \setlength{\abovedisplayshortskip}{0.3pt plus 0.2pt minus 0.2pt}
 \setlength{\belowdisplayshortskip}{0.3pt plus 0.2pt minus 0.2pt}
 
-\setcounter{topnumber}{3}
-\setcounter{bottomnumber}{3}
-\setcounter{totalnumber}{6}
-\setcounter{dbltopnumber}{2}
+\setcounter{topnumber}{4}
+\setcounter{bottomnumber}{4}
+\setcounter{totalnumber}{10}
+\setcounter{dbltopnumber}{3}
 \renewcommand{\topfraction}{0.92}
 \renewcommand{\bottomfraction}{0.92}
 \renewcommand{\textfraction}{0.06}
@@ -235,7 +235,7 @@ Estimated Energy Efficiency & \multicolumn{2}{c}{10.65 nJ / op} & \multicolumn{2
 On Artix-7 200T, timing closed at 100.00~MHz ($T_{\text{clk}} = 10.0\text{ ns}$) across 189,999 endpoints on the -3 speed grade at $T_j = 31.2\,^\circ\text{C}$. Multi-corner STA verifies both Slow ($WNS = +0.005\text{ ns}$, 0 fails) and Fast corners ($WHS = +0.058\text{ ns}$, 0 fails). Across multiple P\&R runs at 79.45\% LUT density, setup slack converges in $WNS \in [+0.002, +0.008]\text{ ns}$ (critical path 9.777~ns: 3.775~ns logic, 6.002~ns routing over 22 levels at Core~1 divider \texttt{SLICE\_X48Y87}). On Alveo U50, 16nm FinFET scaling reduces critical path delay to 3.910~ns, enabling closure at 250.00~MHz ($WNS = +0.073\text{ ns}$, zero failing, $F_{\max} = 254.65\text{ MHz}$). The Artix-7 result represents a nominal closure point with 5~ps setup margin; environmental variations were not experimentally evaluated.
 
 \subsection{Zero-BRAM Context Signoff Comparison}
-To quantify the benefit of the Zero-BRAM microarchitecture, we synthesized and implemented an identical four-core baseline using dedicated Block RAM primitives (28 RAMB18E1, equivalent to 14 BRAM36 blocks) for context storage. Under identical placement seeds and timing constraints (100~MHz, Artix-7 200T), the BRAM baseline violates timing with $WNS = -0.104\text{ ns}$ (14 failing endpoints, derived $F_{\max} = 98.97\text{ MHz}$) and incurs 2 additional cycles of cold latency (229 vs. 227 cycles) due to synchronous BRAM output registers. The BRAM-based implementation exhibits a routing-dominated critical path, with routing accounting for 59.2\% of the reported critical-path delay. The distributed implementation provides greater placement flexibility for the context storage and achieves timing closure at the 100~MHz target ($WNS = +0.005\text{ ns}$, derived $F_{\max} = 100.05\text{ MHz}$, MET, a $+0.109\text{ ns}$ WNS gain) at a minor cost of $+857$ Slice LUTs ($+0.81\%$, from 105,441 to 106,298 LUTs), while consuming 0 BRAM in the accelerator core and leaving all 365 BRAM36 blocks available for system buffering.
+To quantify the benefit of the Zero-BRAM microarchitecture, we synthesized and implemented an identical four-core baseline using dedicated Block RAM primitives (28 RAMB18E1, equivalent to 14 BRAM36 blocks) for context storage. Under identical placement seeds and timing constraints (100~MHz, Artix-7 200T), the BRAM baseline violates timing with $WNS = -0.104\text{ ns}$ (14 failing endpoints, derived $F_{\max} = 98.97\text{ MHz}$) and incurs 2 additional cycles of cold latency (229 vs. 227 cycles) due to synchronous BRAM output registers. The BRAM-based implementation exhibits a routing-dominated critical path, with routing accounting for 59.2\% of the reported critical-path delay. The distributed implementation provides greater placement flexibility for the context storage and achieves timing closure at the 100~MHz target ($WNS = +0.005\text{ ns}$, derived $F_{\max} = 100.05\text{ MHz}$, MET, a $+0.109\text{ ns}$ WNS gain) at a minor cost of $+857$ Slice LUTs ($+0.81\%$, from 105,441 to 106,298 LUTs), while consuming 0 BRAM in the accelerator core and leaving all 365 BRAM36 blocks available for system buffering. Furthermore, under continuous saturated streaming traffic (Phase 7E ablation, 10,000 canonical contracts at 100~MHz), the Zero-BRAM architecture delivers 100.4\% throughput parity (8.14 vs. 8.10~MOps/s) and near-complete bit-level output identity (97.85\% exact matches, with remaining deviations bounded within single-step clamped updates $|\Delta\sigma| \le 0.25$ induced by minor cycle-level arbitration interleaving), while reducing mean transaction latency by 3.40 cycles (698.37 vs. 701.77 cycles) by eliminating synchronous BRAM read latency during recirculating loopback.
 
 \begin{table}[t]
 \caption{Multi-Core Spatial Scaling Signoff on Artix-7 200T}
@@ -433,6 +433,84 @@ The 4-core FPGA engine achieves 400.00~MOps/s peak (151.82~MOps/s net liquid) at
 
 \subsection{Deployment Considerations and Scaling Projection}
 Deployment spans two tiers: (1)~\textit{Tier-1 Inline Filtering} ($<$25~W mezzanine), where Artix-7 consumes 4.258~W (17\% of 25~W budget) leaving BRAM available for MAC/DMA; and (2)~\textit{Tier-2 Centralized Co-Processing} (75--225~W). On Alveo U50, the 4-core engine delivers 1.00~GOps/s peak (379.57~MOps/s net liquid) at 9.560~W with 0 BRAM/URAM (12.13\% LUTs, 576 DSPs). A linear 32-core scaling projection (4,608 DSPs, 77.4\% for 8.00~GOps/s peak within $\sim$65~W) is provided only as future capacity analysis and is not included in the measured results. The zero-BRAM core leaves dedicated on-chip block memory available for future co-location of network buffering or order-book tracking; such system integration and physical host interfaces remain outside the core measurement boundary.
+
+\begin{table}[t]
+\caption{End-to-End RTL Validation Matrix Across Diverse Datasets}
+\label{tab:rtl_validation}
+\centering
+\resizebox{\columnwidth}{!}{%
+\renewcommand{\arraystretch}{0.50}%
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Validation Metric} & \textbf{Dataset A} & \textbf{Dataset B} & \textbf{Dataset C} & \textbf{Dataset D} \\
+& \textbf{(Canonical 10k)} & \textbf{(Random 100k)} & \textbf{(Boundary 2.5k)} & \textbf{(SPX 1.38k)} \\
+\midrule
+\multicolumn{5}{l}{\textit{Transaction Integrity \& Execution Bounds}} \\
+Evaluated Contracts ($N_{\text{acc}}$) & 10,000 & 100,000 & 2,500 & 1,382 \\
+Retired Contracts ($N_{\text{ret}}$)   & 10,000 & 100,000 & 2,500 & 1,382 \\
+Lost Contracts ($N_{\text{lost}}$)       & \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} \\
+Duplicate Outputs ($N_{\text{dup}}$)    & \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} \\
+TID Routing Mismatches                 & \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} \\
+Arithmetic Overflows                   & \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} \\
+\midrule
+\multicolumn{5}{l}{\textit{Implied Volatility Accuracy (RTL vs. Golden Software)}} \\
+Liquid Regime MAE (vol-bps)            & 7.67 & 14.84 & 2,686.28 & 487.62 \\
+Overall Suite MAE (vol-bps)            & 127.86 & 133.87 & 6,996.26 & 485.92 \\
+Root-Mean-Square Error (RMSE, bps)     & 437.88 & 509.09 & 13,731.72 & 862.95 \\
+Median Error (P50, vol-bps)            & 1.43 & 1.81 & 500.00 & 126.45 \\
+95th Percentile Error (P95, bps)       & 867.76 & 854.72 & 35,000.00 & 2,126.71 \\
+99th Percentile Error (P99, bps)       & 2,231.89 & 2,539.37 & 47,500.00 & 2,222.76 \\
+Max Absolute Error ($|\Delta\sigma|$)  & 0.5549 & 0.8784 & 4.7500\textsuperscript{*} & 0.2266 \\
+\midrule
+\multicolumn{5}{l}{\textit{Concurrent Greeks Accuracy (MAE vs. Golden Software)}} \\
+Delta MAE ($|\Delta_{\text{RTL}} - \Delta_{\text{gold}}|$) & 0.0119 & 0.0112 & 0.1651 & 0.0736 \\
+Vega MAE ($|\nu_{\text{RTL}} - \nu_{\text{gold}}|$)       & 0.6296 & 0.6359 & 8.8059 & 0.0139 \\
+Gamma MAE ($|\Gamma_{\text{RTL}} - \Gamma_{\text{gold}}|$) & 0.0031 & 0.0032 & 0.0660 & 13.4204 \\
+\bottomrule
+\end{tabular}%
+}
+\vskip 1pt\raggedright
+\tiny{\textsuperscript{*}Dataset C boundary errors are strictly bounded by hardware clamping ($|\Delta\sigma| \le 0.25$ per step), preventing numerical pipeline divergence in low-Vega wings ($T < 14\text{d}, \nu \to 0$).}
+\end{table}
+
+\begin{table}[t]
+\caption{Full-System Saturation, Latency, and Robustness Diagnostics}
+\label{tab:saturation_diagnostics}
+\centering
+\resizebox{\columnwidth}{!}{%
+\renewcommand{\arraystretch}{0.50}%
+\begin{tabular}{lrrrrrr}
+\toprule
+\textbf{Workload /} & \textbf{Ingress} & \textbf{Throughput} & \multicolumn{3}{c}{\textbf{Latency ($\mu$s / Cycles)}} & \textbf{Max In-Flight} \\
+\textbf{Condition}  & \textbf{(MOps/s)} & \textbf{(MOps/s)}   & \textbf{Min} & \textbf{Median} & \textbf{P95} & \textbf{Ctx / Core} \\
+\midrule
+Dataset A (10k Canonical)  & 400.00 & 8.14 & 2.30 / 230 & 5.53 / 553 & 15.18 / 1,518 & 16 / 60 \\
+Dataset B (100k Stability) & 400.00 & 8.55 & 2.30 / 230 & 5.52 / 552 & 15.18 / 1,518 & 16 / 60 \\
+Dataset C (Boundary Grid)  & 400.00 & 5.34 & 2.30 / 230 & 15.18 / 1,518 & 15.21 / 1,521 & 16 / 60 \\
+Dataset D (SPX Quotes)     & 400.00 & 18.42 & 2.30 / 230 & 2.30 / 230 & 5.55 / 555 & 16 / 60 \\
+\midrule
+\multicolumn{7}{l}{\textit{Downstream Backpressure Robustness (Dataset A, Randomized $m\_axis\_tready$ Stalls)}} \\
+0\% Backpressure (Baseline) & 400.00 & 8.14 & 2.30 / 230 & 5.53 / 553 & 15.18 / 1,518 & 16 / 60 \\
+20\% Backpressure           & 400.00 & 8.14 & 2.30 / 230 & 5.54 / 554 & 15.18 / 1,518 & 16 / 60 \\
+50\% Backpressure           & 400.00 & 8.13 & 2.30 / 230 & 5.57 / 557 & 15.19 / 1,519 & 16 / 60 \\
+\midrule
+\multicolumn{7}{l}{\textit{Exp 1B Saturated Memory Ablation ($N=10{,}000$ contracts at 100 MHz signoff)}} \\
+Zero-BRAM Engine (Proposed) & 400.00 & 8.14 & 2.30 / 230 & 5.53 / 553 & 15.18 / 1,518 & 0 BRAM \\
+BRAM Baseline               & 400.00 & 8.10 & 2.32 / 232 & 5.55 / 555 & 15.18 / 1,518 & 28 BRAM18 \\
+\bottomrule
+\end{tabular}%
+}
+\vskip 1pt\raggedright
+\tiny{Measured under continuous line-rate traffic on the 100~MHz Artix-7 signoff RTL. Latency denotes full transaction retirement time including loopback passes. All configurations satisfy the $\le 60$ in-flight context headroom limit with 0 drops and 0 deadlocks.}
+\end{table}
+
+\subsection{End-to-End Four-Core RTL Validation \& System Saturation}
+To bridge physical FPGA implementation with algorithmic correctness under continuous traffic, the complete four-core RTL array was validated in an end-to-end DPI-C co-simulation suite across five structured phases:
+(1)~\textbf{Diverse Dataset Validation (Phase 7A):} As detailed in Table~\ref{tab:rtl_validation}, the synthesized four-core RTL was evaluated across four diverse workloads: Canonical ($N=10\text{k}$), Randomized Stability ($N=100\text{k}$), Boundary Stress Grid ($N=2.5\text{k}$), and CBOE SPX quotes ($N=1{,}382$). Across all 113,882 evaluated transactions, strict transaction integrity is maintained with zero lost contracts ($N_{\text{lost}}=0$), zero duplicate egress packets ($N_{\text{dup}}=0$), and zero TID routing mismatches, confirming that the dynamic arbitration logic and distributed context stores preserve strict transaction-to-core mapping.
+(2)~\textbf{Randomized Long-Run Stability (Phase 7B):} Sustained line-rate injection of 100,000 independent contracts with randomized TIDs $\in [0, 63]$ ran continuously for 1,170,136 clock cycles (11.70~ms simulated time at 100~MHz) without pipeline stalls or scoreboard corruption, achieving 8.55~MOps/s sustained throughput with 14.84~vol-bps liquid IV MAE (1.81~vol-bps median) and concurrent Greek MAEs of $\Delta = 0.0112$, $\nu = 0.6359$, and $\Gamma = 0.0032$.
+(3)~\textbf{Full-System Saturation \& In-Flight Headroom (Phase 7C):} Table~\ref{tab:saturation_diagnostics} reports system saturation diagnostics. Minimum transaction latency is exactly 230 clock cycles (2.30~$\mu$s; 227 datapath cycles $+ 3$ handshake cycles) across all workloads. Under canonical liquid traffic, mean latency is 6.98~$\mu$s (5.53~$\mu$s median), while SPX quotes achieve 3.14~$\mu$s mean (2.30~$\mu$s median) due to 77.7\% single-pass convergence. Throughout continuous saturation, active scoreboard context occupancy peaked at 16 in-flight contracts per core (64 array-wide), strictly maintaining the 4-slot headroom invariant ($N_{\text{active}} \le 60$) and precluding deadlock.
+(4)~\textbf{Downstream Backpressure Robustness (Phase 7D):} To test egress resilience, the 10,000-contract stream was injected under 0\%, 20\%, and 50\% randomized \texttt{m\_axis\_tready} stalls. As summarized in Table~\ref{tab:saturation_diagnostics}, sustained throughput remained identical (8.14~MOps/s at 0\% and 20\%, 8.13~MOps/s at 50\%), while mean latency increased by less than 0.2\% (698.37 to 699.72 cycles) with zero dropped packets and zero buffer overflows.
+(5)~\textbf{Saturated BRAM Ablation (Phase 7E / Exp 1B):} Replaying the identical 10,000 canonical contracts through the BRAM-based baseline confirmed that the proposed Zero-BRAM architecture achieves 97.85\% exact bit-level output identity (9,785 / 10,000 contracts), 100.4\% throughput parity (8.14 vs. 8.10~MOps/s), and a 3.40-cycle lower mean transaction latency (698.37 vs. 701.77 cycles) by eliminating synchronous BRAM read latency during recirculating loopback.
 
 \subsection{Comparison with Prior FPGA Accelerators}
 \begin{table}[tb]

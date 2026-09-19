@@ -1,0 +1,22 @@
+{
+  "dataset_a": {
+    "path": "C:\\Users\\user\\iv_engine\\experiments\\data\\dataset_a_canonical_10k.csv",
+    "count": 10000,
+    "sha256": "6aa7436ba92959f225bf4388e05eed9e9b613c510bc3f06ca16cac21483a7ef3"
+  },
+  "dataset_b": {
+    "path": "C:\\Users\\user\\iv_engine\\experiments\\data\\dataset_b_random_100k.csv",
+    "count": 100000,
+    "sha256": "d590703c9125798c4108719c912d652883000a7ff53acfce0a8d31efa678cf57"
+  },
+  "dataset_c": {
+    "path": "C:\\Users\\user\\iv_engine\\experiments\\data\\dataset_c_boundary_2500.csv",
+    "count": 2500,
+    "sha256": "8bb5d8e5a3405eb7e4df5c8e72c65e708392b816525d6ae96b01ca975bd00aa0"
+  },
+  "dataset_d": {
+    "path": "C:\\Users\\user\\iv_engine\\experiments\\data\\dataset_d_spx_1382.csv",
+    "count": 1382,
+    "sha256": "ff67bba82953242cecc659ba460e073823a5fba083e69cf94b5798d08e240379"
+  }
+}

@@ -1,0 +1,363 @@
+{
+  "phase_7a": {
+    "dataset_a_10k": {
+      "accepted_count": 10000,
+      "retired_count": 10000,
+      "lost_count": 0,
+      "duplicate_count": 0,
+      "mismatch_count": 0,
+      "total_cycles": 122883,
+      "elapsed_cycles": 122881,
+      "sustained_mops": 8.138,
+      "latency_cycles": {
+        "min": 230,
+        "mean": 698.37,
+        "med": 553,
+        "p95": 1518,
+        "p99": 1679,
+        "max": 1841
+      },
+      "latency_us": {
+        "min": 2.3,
+        "mean": 6.984,
+        "med": 5.53,
+        "p95": 15.18,
+        "p99": 16.79,
+        "max": 18.41
+      },
+      "max_active_contexts": [
+        16,
+        16,
+        16,
+        16
+      ],
+      "iv_mae": 0.01278631,
+      "iv_mae_vol_bps": 127.8631,
+      "iv_rmse": 0.0437884,
+      "iv_p50_vol_bps": 1.4278,
+      "iv_p95_vol_bps": 867.7566,
+      "iv_p99_vol_bps": 2231.8919,
+      "iv_max": 0.55489702,
+      "liquid_mae_vol_bps": 7.6663,
+      "wing_mae_vol_bps": 223.3821,
+      "delta_mae": 0.01187684,
+      "vega_mae": 0.62963579,
+      "gamma_mae": 0.00312143
+    },
+    "dataset_c_boundary_2500": {
+      "accepted_count": 2500,
+      "retired_count": 2500,
+      "lost_count": 0,
+      "duplicate_count": 0,
+      "mismatch_count": 0,
+      "total_cycles": 46859,
+      "elapsed_cycles": 46857,
+      "sustained_mops": 5.3354,
+      "latency_cycles": {
+        "min": 230,
+        "mean": 1158.91,
+        "med": 1518,
+        "p95": 1521,
+        "p99": 1679,
+        "max": 1840
+      },
+      "latency_us": {
+        "min": 2.3,
+        "mean": 11.589,
+        "med": 15.18,
+        "p95": 15.21,
+        "p99": 16.79,
+        "max": 18.4
+      },
+      "max_active_contexts": [
+        16,
+        16,
+        16,
+        16
+      ],
+      "iv_mae": 0.69962596,
+      "iv_mae_vol_bps": 6996.2596,
+      "iv_rmse": 1.37317171,
+      "iv_p50_vol_bps": 500.0001,
+      "iv_p95_vol_bps": 35000.0,
+      "iv_p99_vol_bps": 47500.0,
+      "iv_max": 4.75,
+      "liquid_mae_vol_bps": 2686.2783,
+      "wing_mae_vol_bps": 13461.2316,
+      "delta_mae": 0.16507049,
+      "vega_mae": 8.80586209,
+      "gamma_mae": 0.06600395
+    },
+    "dataset_d_spx_1382": {
+      "accepted_count": 1382,
+      "retired_count": 1382,
+      "lost_count": 0,
+      "duplicate_count": 0,
+      "mismatch_count": 0,
+      "total_cycles": 7504,
+      "elapsed_cycles": 7502,
+      "sustained_mops": 18.4218,
+      "latency_cycles": {
+        "min": 230,
+        "mean": 313.76,
+        "med": 230,
+        "p95": 555,
+        "p99": 1196,
+        "max": 1518
+      },
+      "latency_us": {
+        "min": 2.3,
+        "mean": 3.138,
+        "med": 2.3,
+        "p95": 5.55,
+        "p99": 11.96,
+        "max": 15.18
+      },
+      "max_active_contexts": [
+        16,
+        16,
+        16,
+        16
+      ],
+      "iv_mae": 0.0485923,
+      "iv_mae_vol_bps": 485.923,
+      "iv_rmse": 0.08629453,
+      "iv_p50_vol_bps": 126.4526,
+      "iv_p95_vol_bps": 2126.7101,
+      "iv_p99_vol_bps": 2222.7601,
+      "iv_max": 0.22660101,
+      "liquid_mae_vol_bps": 487.6173,
+      "wing_mae_vol_bps": 331.5198,
+      "delta_mae": 0.07363671,
+      "vega_mae": 0.01391686,
+      "gamma_mae": 13.42041754
+    }
+  },
+  "phase_7b": {
+    "dataset_b_random_100k": {
+      "accepted_count": 100000,
+      "retired_count": 100000,
+      "lost_count": 0,
+      "duplicate_count": 0,
+      "mismatch_count": 0,
+      "total_cycles": 1170138,
+      "elapsed_cycles": 1170136,
+      "sustained_mops": 8.546,
+      "latency_cycles": {
+        "min": 230,
+        "mean": 672.37,
+        "med": 552,
+        "p95": 1518,
+        "p99": 1679,
+        "max": 2162
+      },
+      "latency_us": {
+        "min": 2.3,
+        "mean": 6.724,
+        "med": 5.52,
+        "p95": 15.18,
+        "p99": 16.79,
+        "max": 21.62
+      },
+      "max_active_contexts": [
+        16,
+        16,
+        16,
+        16
+      ],
+      "iv_mae": 0.01338743,
+      "iv_mae_vol_bps": 133.8743,
+      "iv_rmse": 0.05090892,
+      "iv_p50_vol_bps": 1.8119,
+      "iv_p95_vol_bps": 854.7168,
+      "iv_p99_vol_bps": 2539.3669,
+      "iv_max": 0.87838932,
+      "liquid_mae_vol_bps": 14.8365,
+      "wing_mae_vol_bps": 227.6358,
+      "delta_mae": 0.01115312,
+      "vega_mae": 0.63589704,
+      "gamma_mae": 0.00315231
+    }
+  },
+  "phase_7c": {
+    "saturation_summary": {
+      "clock_freq_mhz": 100.0,
+      "peak_ingress_capacity_mops": 400.0,
+      "sustained_throughput_liquid_mops": 8.138,
+      "sustained_throughput_random_100k_mops": 8.546,
+      "latency_percentiles_cycles": {
+        "min": 230,
+        "mean": 672.37,
+        "med": 552,
+        "p95": 1518,
+        "p99": 1679,
+        "max": 2162
+      },
+      "latency_percentiles_us": {
+        "min": 2.3,
+        "mean": 6.724,
+        "med": 5.52,
+        "p95": 15.18,
+        "p99": 16.79,
+        "max": 21.62
+      },
+      "max_active_contexts_per_core": [
+        16,
+        16,
+        16,
+        16
+      ],
+      "hardware_context_limit": 60,
+      "hardware_headroom_invariant_met": true
+    }
+  },
+  "phase_7d": {
+    "bp_0pct": {
+      "accepted_count": 10000,
+      "retired_count": 10000,
+      "lost_count": 0,
+      "duplicate_count": 0,
+      "mismatch_count": 0,
+      "total_cycles": 122883,
+      "elapsed_cycles": 122881,
+      "sustained_mops": 8.138,
+      "latency_cycles": {
+        "min": 230,
+        "mean": 698.37,
+        "med": 553,
+        "p95": 1518,
+        "p99": 1679,
+        "max": 1841
+      },
+      "latency_us": {
+        "min": 2.3,
+        "mean": 6.984,
+        "med": 5.53,
+        "p95": 15.18,
+        "p99": 16.79,
+        "max": 18.41
+      },
+      "max_active_contexts": [
+        16,
+        16,
+        16,
+        16
+      ],
+      "iv_mae": 0.01278631,
+      "iv_mae_vol_bps": 127.8631,
+      "iv_rmse": 0.0437884,
+      "iv_p50_vol_bps": 1.4278,
+      "iv_p95_vol_bps": 867.7566,
+      "iv_p99_vol_bps": 2231.8919,
+      "iv_max": 0.55489702,
+      "liquid_mae_vol_bps": 7.6663,
+      "wing_mae_vol_bps": 223.3821,
+      "delta_mae": 0.01187684,
+      "vega_mae": 0.62963579,
+      "gamma_mae": 0.00312143
+    },
+    "bp_20pct": {
+      "accepted_count": 10000,
+      "retired_count": 10000,
+      "lost_count": 0,
+      "duplicate_count": 0,
+      "mismatch_count": 0,
+      "total_cycles": 122794,
+      "elapsed_cycles": 122792,
+      "sustained_mops": 8.1439,
+      "latency_cycles": {
+        "min": 230,
+        "mean": 698.16,
+        "med": 554,
+        "p95": 1518,
+        "p99": 1679,
+        "max": 2163
+      },
+      "latency_us": {
+        "min": 2.3,
+        "mean": 6.982,
+        "med": 5.54,
+        "p95": 15.18,
+        "p99": 16.79,
+        "max": 21.63
+      },
+      "max_active_contexts": [
+        16,
+        16,
+        16,
+        16
+      ],
+      "iv_mae": 0.01270542,
+      "iv_mae_vol_bps": 127.0542,
+      "iv_rmse": 0.04363852,
+      "iv_p50_vol_bps": 1.4278,
+      "iv_p95_vol_bps": 848.9143,
+      "iv_p99_vol_bps": 2202.0534,
+      "iv_max": 0.55489702,
+      "liquid_mae_vol_bps": 8.0631,
+      "wing_mae_vol_bps": 221.615,
+      "delta_mae": 0.0118827,
+      "vega_mae": 0.62925468,
+      "gamma_mae": 0.00310667
+    },
+    "bp_50pct": {
+      "accepted_count": 10000,
+      "retired_count": 10000,
+      "lost_count": 0,
+      "duplicate_count": 0,
+      "mismatch_count": 0,
+      "total_cycles": 122956,
+      "elapsed_cycles": 122954,
+      "sustained_mops": 8.1331,
+      "latency_cycles": {
+        "min": 230,
+        "mean": 699.72,
+        "med": 557,
+        "p95": 1519,
+        "p99": 1679,
+        "max": 2002
+      },
+      "latency_us": {
+        "min": 2.3,
+        "mean": 6.997,
+        "med": 5.57,
+        "p95": 15.19,
+        "p99": 16.79,
+        "max": 20.02
+      },
+      "max_active_contexts": [
+        16,
+        16,
+        16,
+        16
+      ],
+      "iv_mae": 0.01288955,
+      "iv_mae_vol_bps": 128.8955,
+      "iv_rmse": 0.04442261,
+      "iv_p50_vol_bps": 1.4278,
+      "iv_p95_vol_bps": 869.6821,
+      "iv_p99_vol_bps": 2257.361,
+      "iv_max": 0.55489702,
+      "liquid_mae_vol_bps": 7.918,
+      "wing_mae_vol_bps": 225.0349,
+      "delta_mae": 0.01185982,
+      "vega_mae": 0.63013792,
+      "gamma_mae": 0.00310432
+    }
+  },
+  "phase_7e": {
+    "contracts_evaluated": 10000,
+    "exact_iv_match_count": 9785,
+    "exact_iv_match_pct": 97.85000000000001,
+    "max_iv_diff": 0.25000000000000006,
+    "max_delta_diff": 0.194609,
+    "max_vega_diff": 15.789029,
+    "max_gamma_diff": 0.178512,
+    "zero_bram_mean_latency_cycles": 698.3698,
+    "bram_baseline_mean_latency_cycles": 701.7728,
+    "latency_overhead_cycles": 3.4029999999999063,
+    "zero_bram_sustained_mops": 8.138,
+    "bram_baseline_sustained_mops": 8.1046,
+    "functional_equivalence_verified": false
+  }
+}

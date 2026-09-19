@@ -1,79 +1,57 @@
 `timescale 1ns / 1ps
 
 // =========================================================
-// DPI-C Co-Simulation Testbench: tb_xdma_dpi
-// =========================================================
-// Simulates the PCIe XDMA AXI4-Stream bus-functional model:
-//   - Drives 256-bit AXI4-Stream H2C transactions from a C
-//     golden model via DPI-C (mimics XDMA m_axis_h2c_* path).
-//   - Monitors 64-bit AXI4-Stream C2H results and returns them
-//     to the C golden model via DPI-C for error computation.
-//
-// DUT: iv_axis_wrapper (single-core) or iv_multi_engine_top (4-core)
-//
-// DPI-C imports (defined in dpi_c/iv_dpi_model.c):
-//   sv_init_test_vectors(num_ticks)    — loads C golden test queue
-//   sv_get_next_tick(tdata, tvalid)    — pops next 256-bit tick
-//   sv_push_result(result_data)        — pushes 64-bit result to C
-//   sv_print_report()                  — prints MAE/RMSE at $finish
-//
-// Simulation parameters:
-//   NUM_TICKS   = 1000   (option contracts to process)
-//   TIMEOUT_CYC = 500000 (watchdog: ~2 ms @ 250 MHz sim time)
-//
-// Run via: vivado -mode batch -source run_dpi_sim.tcl
+// DPI-C Co-Simulation Testbench: tb_xdma_dpi (Exp 7 & 1B)
+// Target Venue: ACM/SIGDA FPGA 2027
 // =========================================================
 
-// DPI-C import declarations
-import "DPI-C" function void sv_init_test_vectors(input int num_ticks);
-import "DPI-C" function int sv_get_next_tick(
-    output bit [255:0] tdata
+import "DPI-C" function void sv_init_test_vectors(input int num_ticks, input int dataset_mode);
+import "DPI-C" function int  sv_get_total_ticks();
+import "DPI-C" function int  sv_get_bp_pct();
+import "DPI-C" function int  sv_get_next_tick(
+    input int core_id,
+    output bit [255:0] tdata,
+    input longint current_cycle
 );
-// sv_push_result_128: receives full 128-bit egress bus as two 64-bit halves
-// word_lo = m_axis_tdata[63:0]  {delta[31:0], sigma[31:0]}
-// word_hi = m_axis_tdata[127:64] {tid[5:0], gamma[25:0], vega[31:0]}
+import "DPI-C" function void sv_record_accepted(
+    input int core_id,
+    input longint current_cycle
+);
 import "DPI-C" function void sv_push_result_128(
     input longint unsigned word_lo,
-    input longint unsigned word_hi
+    input longint unsigned word_hi,
+    input longint current_cycle
 );
-import "DPI-C" function void sv_print_report();
+import "DPI-C" function void sv_print_report(input longint total_cycles);
 
 module tb_xdma_dpi;
 
     // -------------------------------------------------------
-    // Parameters
+    // Timing & Clock (100.00 MHz signoff clock)
     // -------------------------------------------------------
-    localparam int NUM_TICKS    = 10000;
-    localparam int TIMEOUT_CYC  = 500_000;
-    localparam int CLK_HALF_NS  = 2;   // 4 ns period = 250 MHz
+    localparam int CLK_HALF_NS = 5;         // 10.0 ns period = 100 MHz
+    localparam int TIMEOUT_CYC = 10000000;  // 10M cycles watchdog (100 ms sim time)
 
-    // -------------------------------------------------------
-    // DUT I/O
-    // -------------------------------------------------------
     logic         aclk;
     logic         aresetn;
 
-    // H2C (Host-to-Card) — AXI4-Stream Master Driver
+    // Ingress (H2C)
     logic         s_axis_tvalid;
     logic         s_axis_tready;
     logic [255:0] s_axis_tdata;
     logic         s_axis_tlast;
 
-    // C2H (Card-to-Host) — AXI4-Stream Slave Monitor
+    // Egress (C2H)
     logic         m_axis_tvalid;
     logic         m_axis_tready;
     logic [127:0] m_axis_tdata;
     logic         m_axis_tlast;
 
     // -------------------------------------------------------
-    // DUT Instantiation
+    // DUT Instantiation: Zero-BRAM vs BRAM Baseline
     // -------------------------------------------------------
-    // Swap comment to test single core vs. 4-core array:
-    //   iv_axis_wrapper      — single-core (lower resource, faster sim)
-    //   iv_multi_engine_top  — 4-core array (full production config)
-    // -------------------------------------------------------
-`ifdef SINGLE_CORE
-    iv_axis_wrapper dut (
+`ifdef USE_BRAM_BASELINE
+    iv_multi_engine_top_bram #(.NUM_ENGINES(4)) dut (
         .aclk           (aclk),
         .aresetn        (aresetn),
         .s_axis_tvalid  (s_axis_tvalid),
@@ -100,128 +78,130 @@ module tb_xdma_dpi;
     );
 `endif
 
-    // -------------------------------------------------------
-    // Clock Generation: 250 MHz (4 ns period)
-    // -------------------------------------------------------
+    // Clock generator: 100 MHz (10 ns period)
     initial aclk = 1'b0;
     always #(CLK_HALF_NS) aclk = ~aclk;
 
-    // -------------------------------------------------------
-    // Reset Sequence: assert aresetn low for 10 cycles
-    // -------------------------------------------------------
+    // Reset sequence
     initial begin
         aresetn = 1'b0;
         repeat (10) @(posedge aclk);
-        @(negedge aclk);  // de-assert on negedge to avoid setup issues
+        @(negedge aclk);
         aresetn = 1'b1;
-        $display("[TB] Reset released at t=%0t ns", $realtime);
+        $display("[TB] Reset released at t=%0t ns (100 MHz clock)", $realtime);
     end
 
-    // -------------------------------------------------------
-    // Internal State
-    // -------------------------------------------------------
-    int  ticks_sent     = 0;
-    int  results_rcvd   = 0;
-    int  watchdog_cnt   = 0;
-    logic all_sent      = 1'b0;
-    logic sim_done      = 1'b0;
+    // Parameters configurable via plusargs
+    int num_ticks    = 10000;
+    int dataset_mode = 0;
+    int bp_pct       = 0;
+    int total_ticks  = 0;
 
-    // Temporary for DPI-C return
+    int ticks_sent   = 0;
+    int results_rcvd = 0;
+    int target_core  = 0;
+    longint cycle_cnt = 0;
+    bit sim_done     = 1'b0;
     bit [255:0] dpi_tdata;
 
-    // -------------------------------------------------------
-    // Initialization
-    // -------------------------------------------------------
-    initial begin
-        s_axis_tvalid  = 1'b0;
-        s_axis_tdata   = '0;
-        m_axis_tready  = 1'b1;   // Always-ready consumer (downstream never stalls)
+    // Cycle counter
+    always @(posedge aclk or negedge aresetn) begin
+        if (!aresetn) cycle_cnt <= 0;
+        else          cycle_cnt <= cycle_cnt + 1;
+    end
 
-        // Wait for reset de-assertion
+    // Initialization
+    initial begin
+        s_axis_tvalid = 1'b0;
+        s_axis_tdata  = '0;
+        s_axis_tlast  = 1'b0;
+
         @(posedge aresetn);
         @(posedge aclk);
 
-        // Load NUM_TICKS test vectors into C golden model
-        sv_init_test_vectors(NUM_TICKS);
-        $display("[TB] Initialized %0d test vectors", NUM_TICKS);
+        sv_init_test_vectors(0, 0);
+        total_ticks = sv_get_total_ticks();
+        bp_pct      = sv_get_bp_pct();
+        $display("[TB] Initialized simulation with %0d ticks, bp_pct=%0d%%",
+                 total_ticks, bp_pct);
     end
 
-    // -------------------------------------------------------
-    // AXI4-Stream H2C Master Driver
-    // Polls sv_get_next_tick() each cycle to get the next packet.
-    // Presents tvalid=1 whenever C model has a tick ready.
-    // Completes handshake when tvalid & tready are both high.
-    // -------------------------------------------------------
-    always @(posedge aclk) begin
+    // Backpressure generator on m_axis_tready
+    always @(posedge aclk or negedge aresetn) begin
+        if (!aresetn) begin
+            m_axis_tready <= 1'b1;
+        end else if (bp_pct == 0) begin
+            m_axis_tready <= 1'b1;
+        end else begin
+            m_axis_tready <= (($urandom_range(1, 100)) > bp_pct) ? 1'b1 : 1'b0;
+        end
+    end
+
+    // Next target core calculation
+    int next_target_core;
+    always_comb begin
+        if (s_axis_tvalid && s_axis_tready)
+            next_target_core = (target_core == 3) ? 0 : target_core + 1;
+        else
+            next_target_core = target_core;
+    end
+
+    // Master Driver (AXI4-Stream H2C)
+    always @(posedge aclk or negedge aresetn) begin
         if (!aresetn) begin
             s_axis_tvalid <= 1'b0;
             s_axis_tdata  <= '0;
             s_axis_tlast  <= 1'b0;
-        end else if (!all_sent) begin
-            // Handshake completed — or first cycle after reset
+            target_core   <= 0;
+            ticks_sent    <= 0;
+        end else begin
+            // On handshake: record accepted, increment ticks_sent, advance target_core
+            if (s_axis_tvalid && s_axis_tready) begin
+                sv_record_accepted(target_core, cycle_cnt);
+                ticks_sent  <= ticks_sent + 1;
+                target_core <= next_target_core;
+            end
+
+            // Drive new transaction if bus is idle or handshake just completed
             if (!s_axis_tvalid || s_axis_tready) begin
-                // Ask C model for next tick
-                if (sv_get_next_tick(dpi_tdata)) begin
+                if (ticks_sent + (s_axis_tvalid ? 1 : 0) < total_ticks &&
+                    sv_get_next_tick(next_target_core, dpi_tdata, cycle_cnt)) begin
                     s_axis_tdata  <= dpi_tdata;
                     s_axis_tvalid <= 1'b1;
                     s_axis_tlast  <= 1'b1;
-                    ticks_sent    <= ticks_sent + 1;
-                    if (ticks_sent + 1 >= NUM_TICKS) begin
-                        all_sent <= 1'b1;
-                        $display("[TB] All %0d ticks sent at t=%0t ns", NUM_TICKS, $realtime);
-                    end
                 end else begin
-                    s_axis_tvalid <= 1'b0;   // C model queue empty
+                    s_axis_tvalid <= 1'b0;
                     s_axis_tlast  <= 1'b0;
-                    all_sent      <= 1'b1;
                 end
-            end
-        end else begin
-            // All ticks sent — de-assert valid after last handshake
-            if (s_axis_tready) begin
-                s_axis_tvalid <= 1'b0;
-                s_axis_tlast  <= 1'b0;
             end
         end
     end
 
-    // -------------------------------------------------------
-    // AXI4-Stream C2H Monitor / Sink
-    // m_axis_tready is held high (always-ready sink).
-    // Captures each valid result and forwards to C via DPI-C.
-    // -------------------------------------------------------
+    // Slave Monitor (AXI4-Stream C2H)
     always @(posedge aclk) begin
         if (aresetn && m_axis_tvalid && m_axis_tready) begin
-            // Forward full 128-bit result bus to C golden model:
-            //   word_lo = m_axis_tdata[63:0]   {delta[31:0], sigma[31:0]}
-            //   word_hi = m_axis_tdata[127:64]  {tid[5:0], gamma[25:0], vega[31:0]}
             sv_push_result_128(
                 longint'(m_axis_tdata[63:0]),
-                longint'(m_axis_tdata[127:64])
+                longint'(m_axis_tdata[127:64]),
+                cycle_cnt
             );
             results_rcvd <= results_rcvd + 1;
 
-            if ((results_rcvd + 1) % 100 == 0)
-                $display("[TB] Results received: %0d / %0d  (t=%0t ns)",
-                         results_rcvd + 1, NUM_TICKS, $realtime);
+            if ((results_rcvd + 1) % 10000 == 0 || results_rcvd + 1 == total_ticks) begin
+                $display("[TB] Progress: %0d / %0d contracts retired at cycle %0d (t=%0t ns)",
+                         results_rcvd + 1, total_ticks, cycle_cnt, $realtime);
+            end
         end
     end
 
-    // -------------------------------------------------------
-    // Completion & Timeout Watchdog
-    // Simulation ends when all results are received OR timeout.
-    // -------------------------------------------------------
+    // Watchdog and completion logic
     always @(posedge aclk) begin
         if (aresetn) begin
-            watchdog_cnt <= watchdog_cnt + 1;
-
-            // All results received → done
-            if (results_rcvd >= NUM_TICKS && !sim_done) begin
+            if (results_rcvd >= total_ticks && !sim_done) begin
                 sim_done <= 1'b1;
             end
 
-            // Watchdog
-            if (watchdog_cnt >= TIMEOUT_CYC) begin
+            if (cycle_cnt >= TIMEOUT_CYC && !sim_done) begin
                 $display("[TB] WATCHDOG TIMEOUT after %0d cycles!", TIMEOUT_CYC);
                 $display("[TB] Sent: %0d / Received: %0d", ticks_sent, results_rcvd);
                 sim_done <= 1'b1;
@@ -229,50 +209,34 @@ module tb_xdma_dpi;
         end
     end
 
-    // -------------------------------------------------------
     // Finish handler
-    // -------------------------------------------------------
     always @(posedge sim_done) begin
-        @(posedge aclk);  // settle
+        @(posedge aclk);
         $display("");
         $display("[TB] ============================================================");
-        $display("[TB] Simulation Complete: %0d ticks sent, %0d results received",
+        $display("[TB] Simulation Complete: %0d ticks accepted, %0d results received",
                  ticks_sent, results_rcvd);
-        $display("[TB] Sim time: %0t ns | Cycles: %0d", $realtime, watchdog_cnt);
+        $display("[TB] Sim Time: %0t ns | Total Cycles: %0d", $realtime, cycle_cnt);
         $display("[TB] ============================================================");
 
-        // Call C golden model report
-        sv_print_report();
-
-        // AXI4-Stream protocol assertion summary
-        $display("[TB] AXI Protocol: tvalid never de-asserted during active handshake");
+        sv_print_report(cycle_cnt);
         $display("[TB] ============================================================");
         $finish;
     end
 
-    // -------------------------------------------------------
-    // AXI4-Stream Protocol Assertions (SVA)
-    // -------------------------------------------------------
-    // Rule 1: Once tvalid is asserted, it must not de-assert
-    //         until tready acknowledges (AMBA AXI4-S Spec §2.2.1)
+    // Protocol Assertions
     property axis_valid_stable;
         @(posedge aclk) disable iff (!aresetn)
         (s_axis_tvalid && !s_axis_tready) |=> s_axis_tvalid;
     endproperty
-
     assert property (axis_valid_stable)
-        else $error("[ASSERT] s_axis_tvalid de-asserted before tready at t=%0t", $realtime);
+        else $error("[ASSERT] s_axis_tvalid dropped before tready at cycle %0d", cycle_cnt);
 
-    // Rule 2: tready may de-assert at any time (DUT is allowed to back-pressure)
-    //         — no assertion needed; just monitor
-
-    // Rule 3: m_axis_tvalid should only fire after at least one tick has been sent
     property result_after_tick;
         @(posedge aclk) disable iff (!aresetn)
         m_axis_tvalid |-> (ticks_sent > 0);
     endproperty
-
     assert property (result_after_tick)
-        else $error("[ASSERT] Result arrived before any tick sent at t=%0t", $realtime);
+        else $error("[ASSERT] Result arrived before any tick sent at cycle %0d", cycle_cnt);
 
 endmodule

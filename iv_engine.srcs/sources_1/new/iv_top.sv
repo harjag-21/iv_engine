@@ -357,12 +357,14 @@ module iv_top #(
     assign bs_sigma_in = is_loopback ? fsm_pipe_sigma : ctx_bs_guess[fsm_pipe_tid];
 
     // synthesis translate_off
+`ifdef DEBUG_DISPLAY
     always @(posedge clk) begin
         if (fsm_pipe_valid) begin
             $display("[DEBUG INGRESS] TID=%0d bs_sigma_in=0x%08h fsm_pipe_sigma=0x%08h is_loopback=%0b",
                      fsm_pipe_tid, bs_sigma_in, fsm_pipe_sigma, is_loopback);
         end
     end
+`endif
     // synthesis translate_on
 
     // ---------------------------------------------------------
@@ -548,6 +550,7 @@ module iv_top #(
                 else if (sig_calc_var > MAX_SIGMA_Q24)  sig_calc_var = MAX_SIGMA_Q24;
 
                 // synthesis translate_off
+`ifdef DEBUG_DISPLAY
                 $display("[DEBUG TOP] TID=%0d Iter=%0d Sigma=0x%08h Error=0x%08h Delta=0x%08h ClampedStep=0x%08h NewSigma=0x%08h",
                          tid_div_pipe[DIV_LATENCY],
                          ctx_iter[tid_div_pipe[DIV_LATENCY]],
@@ -556,6 +559,7 @@ module iv_top #(
                          delta_sigma,
                          clamped_step,
                          sig_calc_var);
+`endif
                 // synthesis translate_on
 
                 loopback_sigma <= sig_calc_var;
