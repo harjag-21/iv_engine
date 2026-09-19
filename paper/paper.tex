@@ -49,13 +49,13 @@
   }}}}%
 }
 
-% Tight bibliography environment
+% Clean, non-overlapping bibliography environment
 \let\oldthebibliography\thebibliography
 \let\endoldthebibliography\endthebibliography
 \renewenvironment{thebibliography}[1]{%
   \begin{oldthebibliography}{#1}%
-    \fontsize{4.8pt}{5.5pt}\selectfont
-    \setlength{\itemsep}{-2.2pt plus 0.2pt}%
+    \fontsize{6.0pt}{7.0pt}\selectfont
+    \setlength{\itemsep}{0.2pt plus 0.2pt minus 0.1pt}%
     \setlength{\parskip}{0pt}%
     \setlength{\parsep}{0pt}%
 }{%
@@ -426,24 +426,24 @@ On-Chip BRAM / URAM & N/A & N/A & \textbf{0 BRAM} & \textbf{0 BRAM, 0 URAM} \\
 \tiny{\textsuperscript{1} Measured via C++ (GCC 13 \texttt{-O3 -mavx2 -fopenmp}, 16 threads, sustained 4.50~GHz Turbo) on i5-12500H across 2M contracts evaluating identical iterative IV convergence ($|\Delta C| \le \$0.01$, max 8 passes) and Greek output set ($\Delta, \nu, \Gamma$), compute loops only (file I/O and serialization excluded). \textsuperscript{2} GPU result from NVIDIA CUDA SDK Black-Scholes sample~\cite{cuda2023samples} reports forward pricing only; included solely as contextual hardware background (speedup and ops/W comparisons are not applicable). \textsuperscript{3} Pass-adjusted nominal datapath throughput reflects open-loop datapath capacity divided by empirical average passes: $\bar{P}=2.635$ for liquid options ($0.85 \le S/K \le 1.15$) and $\bar{P}=3.651$ across the extended domain ($0.70 \le K/S \le 1.40$); closed-loop credit-constrained co-simulation sustains 8.18~MOps/s (Table~\ref{tab:saturation_diagnostics}).}
 \end{table*}
 
-Table~\ref{tab:comparison} compares performance against host CPU and contextual GPU references. A C++ benchmark (GCC 13 \texttt{-O3 -mavx2 -fopenmp}, 16 threads, sustained 4.50~GHz Turbo, 45~W TDP) evaluates identical iterative IV solving ($|\Delta C| \le \$0.01$, max 8 passes) and Greek extraction over 2M contracts (compute loops only, excluding file I/O and serialization; identical BS parameters), yielding 14.22~MOps/s (316~kOps/W) as host baseline.
+Table~\ref{tab:comparison} compares performance against host CPU and contextual GPU references. A 16-thread C++ benchmark (GCC 13 \texttt{-O3 -mavx2 -fopenmp}, 4.50~GHz Turbo, 45~W TDP) evaluates identical iterative IV solving ($|\Delta C| \le \$0.01$, max 8 passes) and Greek extraction over 2M contracts (compute loops only, excluding I/O and serialization), yielding 14.22~MOps/s (316~kOps/W) as host baseline.
 
 The 4-core FPGA engine achieves 400.00~MOps/s peak (151.82~MOps/s pass-adjusted nominal liquid) at 4.258~W on Artix-7, and 1,000.00~MOps/s peak (379.57~MOps/s pass-adjusted nominal liquid) at 9.560~W on Alveo U50:
-(1)~\textbf{Throughput Speedup:} 10.7$\times$ higher pass-adjusted liquid throughput than the companion 16-thread AVX2 CPU benchmark (28.1$\times$ peak) on Artix-7 and 26.7$\times$ pass-adjusted liquid (70.3$\times$ peak) on Alveo U50;
-(2)~\textbf{Throughput-to-Power Ratio:} 35,655~kOps/W pass-adjusted liquid (93,940 peak) on Artix-7 and 39,704~kOps/W pass-adjusted liquid (104,602 peak) on U50, representing an estimated 112.8$\times$--125.6$\times$ ratio of reported throughput to modeled device power relative to host CPU TDP under post-route power models (297$\times$--331$\times$ peak; not a wall-plug measurement); and
+(1)~\textbf{Throughput Speedup:} 10.7$\times$ higher pass-adjusted liquid throughput than the 16-thread AVX2 CPU benchmark (28.1$\times$ peak) on Artix-7 and 26.7$\times$ pass-adjusted liquid (70.3$\times$ peak) on Alveo U50;
+(2)~\textbf{Throughput-to-Power Ratio:} 35,655~kOps/W pass-adjusted liquid (93,940 peak) on Artix-7 and 39,704~kOps/W pass-adjusted liquid (104,602 peak) on U50, representing an estimated 112.8$\times$--125.6$\times$ ratio of reported throughput to modeled device power relative to host CPU TDP under post-route models (297$\times$--331$\times$ peak; not wall-plug); and
 (3)~\textbf{Latency Characteristics:} End-to-end AXI cold transaction latency is 230 cycles (2.30~$\mu$s on Artix-7, 0.920~$\mu$s on U50; internal core cold latency is 227 cycles); two-pass loopback adds 159 cycles (389 AXI / 386 core cycles total). Execution is cycle-deterministic per pass (126 cycles Stage-3 datapath) with pass-dependent total latency (PHY/MAC and PCIe excluded).
 
 \noindent\textbf{Contextual GPU Reference (Non-Equivalent Workload):} While GPUs excel at batched forward pricing in offline risk analysis, streaming options demand low-latency tick evaluation. The A100 result is included solely as a contextual forward-pricing reference rather than an equivalent benchmark; the FPGA avoids PCIe batching latency while maintaining deterministic control flow.
 
 \subsection{Deployment Considerations and Scaling Projection}
-Deployment spans two tiers: (1)~\textit{Tier-1 Edge / Low-Power Filtering} ($<$25~W mezzanine), where Artix-7 consumes 4.258~W post-route estimated power, leaving BRAM available for MAC/DMA; and (2)~\textit{Tier-2 Centralized Co-Processing} (75--225~W). On Alveo U50, the 4-core engine delivers 1.00~GOps/s peak (379.57~MOps/s pass-adjusted nominal liquid) at 9.560~W with 0 BRAM/URAM (12.13\% LUTs, 576 DSPs). A linear 32-core scaling projection (4,608 DSPs, 77.4\% for 8.00~GOps/s peak within $\sim$65~W) is provided only as future capacity analysis and is not included in the measured results. The zero-BRAM core leaves dedicated on-chip block memory available for future co-location of network buffering or order-book tracking; such system integration and physical host interfaces remain outside the core measurement boundary.
+Deployment spans two tiers: (1)~\textit{Tier-1 Edge / Low-Power Filtering} ($<$25~W mezzanine), where Artix-7 consumes 4.258~W post-route power, leaving BRAM available for MAC/DMA; and (2)~\textit{Tier-2 Centralized Co-Processing} (75--225~W). On Alveo U50, the 4-core engine delivers 1.00~GOps/s peak (379.57~MOps/s pass-adjusted nominal liquid) at 9.560~W with 0 BRAM/URAM (12.13\% LUTs, 576 DSPs). A linear 32-core scaling projection (4,608 DSPs, 77.4\% for 8.00~GOps/s peak within $\sim$65~W) is provided only as future capacity analysis and is not included in measured results. The zero-BRAM core leaves block memory available for future co-location of network buffering or order-book tracking; physical host interfaces remain outside the core measurement boundary.
 
 \begin{table}[t]
 \caption{End-to-End RTL Validation Matrix Across Diverse Datasets}
 \label{tab:rtl_validation}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.50}%
+\renewcommand{\arraystretch}{0.44}%
 \begin{tabular}{lrrrr}
 \toprule
 \textbf{Validation Metric} & \textbf{Dataset A} & \textbf{Dataset B} & \textbf{Dataset C} & \textbf{Dataset D} \\
@@ -473,8 +473,8 @@ Gamma MAE ($|\Gamma_{\text{RTL}} - \Gamma_{\text{gold}}|$) & 0.0031 & 0.0032 & 0
 \bottomrule
 \end{tabular}%
 }
-\vskip 1pt\raggedright
-\tiny{\textsuperscript{*}Dataset C boundary errors are strictly bounded by hardware clamping ($|\Delta\sigma| \le 0.25$ per step), preventing numerical pipeline divergence in low-Vega wings ($T < 14\text{d}, \nu \to 0$). Across all 113,882 evaluated transactions, $N_{\text{acc}} = N_{\text{ret}}$ with 0 lost, duplicate, or mismatched contracts; no arithmetic overflow was observed across the evaluated boundary workloads. Dataset A median is 0.91~vol-bps for liquid quotes (1.43~vol-bps suite-wide).}
+\vskip 0.5pt\raggedright
+\tiny{\textsuperscript{*}Dataset C boundary errors are clamped ($|\Delta\sigma| \le 0.25$/step), preventing divergence in low-Vega wings ($T < 14\text{d}, \nu \to 0$). Across all 113,882 evaluated transactions, $N_{\text{acc}} = N_{\text{ret}}$ with 0 lost, duplicate, or mismatched contracts; no arithmetic overflow was observed across boundary workloads. Dataset A median is 0.91~vol-bps liquid (1.43~vol-bps suite-wide).}
 \end{table}
 
 \begin{table}[t]
@@ -482,7 +482,7 @@ Gamma MAE ($|\Gamma_{\text{RTL}} - \Gamma_{\text{gold}}|$) & 0.0031 & 0.0032 & 0
 \label{tab:saturation_diagnostics}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.50}%
+\renewcommand{\arraystretch}{0.44}%
 \begin{tabular}{lrrrrrr}
 \toprule
 \textbf{Workload /} & \textbf{Peak Ingress} & \textbf{Sustained Rate} & \multicolumn{3}{c}{\textbf{Latency ($\mu$s / Cycles)}} & \textbf{Max In-Flight} \\
@@ -504,17 +504,17 @@ BRAM Baseline               & 400.00 & 8.14 & 2.31 / 231 & 5.56 / 556 & 15.27 / 
 \bottomrule
 \end{tabular}%
 }
-\vskip 1pt\raggedright
-\tiny{\textsuperscript{\dag}Sustained throughput reflects closed-loop credit-constrained co-simulation streaming under a 16-credit/core testbench window ($N=64$ in-flight credits array-wide; credit-window theoretical upper bound: $T = 64 / 6.984\,\mu\text{s} \approx 9.16$~MOps/s; measured 8.14~MOps/s at 8.14\% ingress duty cycle). Peak open-loop datapath service rate is 151.82~MOps/s for liquid traffic ($400 / 2.635$ passes). All configurations satisfy the $\le 60$ in-flight context headroom limit with 0 drops and 0 deadlocks.}
+\vskip 0.5pt\raggedright
+\tiny{\textsuperscript{\dag}Sustained rate reflects closed-loop credit-constrained co-simulation streaming under a 16-credit/core window ($N=64$ in-flight credits array-wide; theoretical upper bound $T = 64 / 6.984\,\mu\text{s} \approx 9.16$~MOps/s; measured 8.14~MOps/s at 8.14\% ingress duty cycle). Peak open-loop datapath service rate is 151.82~MOps/s for liquid traffic ($400 / 2.635$ passes). All configurations satisfy $\le 60$ in-flight context headroom with 0 drops and 0 deadlocks.}
 \end{table}
 
 \subsection{End-to-End Four-Core RTL Validation \& System Saturation}
-To bridge physical FPGA implementation with algorithmic correctness under continuous traffic, the complete four-core RTL array was validated in an end-to-end DPI-C co-simulation suite across five structured phases:
+To bridge physical FPGA implementation with algorithmic correctness under streaming traffic, the complete four-core RTL array was validated in an end-to-end DPI-C co-simulation suite across five structured phases:
 (1)~\textbf{Diverse Dataset Validation (Phase 7A):} As detailed in Table~\ref{tab:rtl_validation}, the synthesized four-core RTL was evaluated across four diverse workloads totaling 113,882 transactions: Canonical ($N=10\text{k}$), Randomized Stability ($N=100\text{k}$), Boundary Stress Grid ($N=2.5\text{k}$), and CBOE SPX quotes ($N=1{,}382$). Across all 113,882 transactions, strict transaction integrity is maintained with zero lost contracts ($N_{\text{lost}}=0$), zero duplicate egress packets ($N_{\text{dup}}=0$), and zero TID routing mismatches, confirming that dynamic arbitration and distributed context stores preserve strict transaction-to-core mapping. In Dataset A, liquid IV MAE is 7.67~vol-bps (median 0.91~vol-bps; NTM MAE 2.01~vol-bps, median 0.96~vol-bps), reconciling with the 4.80~vol-bps post-update and 5.70~vol-bps pre-update algorithmic models due to fixed 33-cycle integer non-restoring divider and 16-stage CORDIC quantization in the full RTL synthesis model. On SPX index quotes (Dataset D), decomposing moneyness reveals 437.93~vol-bps MAE (78.88~vol-bps median) for near-the-money quotes ($0.95 \le S/K \le 1.05$, $N=1{,}175$) with 72.1\% single-pass convergence (230 cycles), 487.62~vol-bps MAE (122.84~vol-bps median) for liquid quotes ($0.85 \le S/K \le 1.15$, $N=1{,}367$), and 331.52~vol-bps MAE (247.01~vol-bps median) for deep wings ($N=15$), validating dynamic-range normalization with zero arithmetic overflow observed.
 (2)~\textbf{Randomized Long-Run Stability (Phase 7B):} Sustained line-rate injection of 100,000 independent contracts with randomized TIDs $\in [0, 63]$ ran continuously for 1,170,136 clock cycles (11.70~ms simulated time at 100~MHz) without pipeline stalls or scoreboard corruption, achieving 8.55~MOps/s sustained throughput with 14.84~vol-bps liquid IV MAE (1.81~vol-bps median) and concurrent Greek MAEs of $\Delta = 0.0112$, $\nu = 0.6359$, and $\Gamma = 0.0032$.
-(3)~\textbf{Full-System Saturation \& In-Flight Headroom (Phase 7C):} Table~\ref{tab:saturation_diagnostics} reports system saturation diagnostics. We clearly distinguish three throughput definitions: (i)~peak pipeline ingress capacity of 400.00~MOps/s ($II=1$ at 100~MHz across 4 cores), (ii)~open-loop datapath service rate of 151.82~MOps/s for liquid traffic ($400 / 2.635$ passes), and (iii)~closed-loop credit-constrained co-simulation throughput of 8.14~MOps/s. By Little's Law ($T = N / L$), with a testbench credit pool of 16 in-flight credits per core ($N=64$ credits array-wide) and mean retirement latency $L = 698.4$ cycles ($6.984\,\mu\text{s}$ at 100~MHz), the credit-window theoretical upper bound is $64 / 6.984\,\mu\text{s} \approx 9.16$~MOps/s (measured 8.14~MOps/s under dynamic loopback preemption at an 8.14\% input acceptance duty cycle). Headline cold latency is exactly 230 clock cycles (2.30~$\mu$s; cycle of accepted AXI input to cycle of corresponding AXI output handshake, comprising 227 core datapath cycles $+ 3$ AXI interface/FIFO cycles). In-flight scoreboard context occupancy peaked at exactly 16 contracts per core (64 array-wide), strictly bounded by the testbench credit window, safely preserving the 4-slot hardware headroom invariant ($N_{\text{active}} \le 60$) and precluding deadlock.
+(3)~\textbf{Full-System Saturation \& In-Flight Headroom (Phase 7C):} Table~\ref{tab:saturation_diagnostics} reports system saturation diagnostics, distinguishing three throughput regimes: (i)~peak pipeline ingress capacity of 400.00~MOps/s ($II=1$ at 100~MHz across 4 cores), (ii)~open-loop datapath service rate of 151.82~MOps/s for liquid traffic ($400 / 2.635$ passes), and (iii)~closed-loop credit-constrained co-simulation rate of 8.14~MOps/s. By Little's Law ($T = N / L$), with a testbench credit pool of 16 in-flight credits per core ($N=64$ credits array-wide) and mean retirement latency $L = 698.4$ cycles ($6.984\,\mu\text{s}$ at 100~MHz), the credit-window theoretical upper bound is $64 / 6.984\,\mu\text{s} \approx 9.16$~MOps/s (measured 8.14~MOps/s under dynamic loopback preemption at an 8.14\% input acceptance duty cycle). Headline cold latency is exactly 230 clock cycles (2.30~$\mu$s; accepted AXI input to output handshake, comprising 227 core datapath cycles $+ 3$ AXI interface/FIFO cycles). In-flight scoreboard context occupancy peaked at exactly 16 contracts per core (64 array-wide), strictly bounded by the testbench credit window, safely preserving the 4-slot hardware headroom invariant ($N_{\text{active}} \le 60$) and precluding deadlock.
 (4)~\textbf{Downstream Backpressure Robustness (Phase 7D):} To evaluate egress resilience, the 10,000-contract stream was injected under 0\%, 20\%, and 50\% randomized \texttt{m\_axis\_tready} stalls. The 64-entry distributed output FIFO absorbs downstream stalls, keeping sustained throughput virtually unchanged ($<0.2\%$ variation: 8.14~MOps/s at 0\% and 20\%, 8.13~MOps/s at 50\%), while mean latency increases by only 1.35 cycles (698.37 to 699.72 cycles) with zero dropped packets and zero buffer overflows.
-(5)~\textbf{Saturated BRAM Ablation (Phase 7E / Exp 1B):} Replaying identical canonical contracts through the BRAM baseline confirms 100.0\% exact bit-level output identity across all evaluated transactions (10,000 / 10,000 contracts) for implied volatility ($\max |\Delta\sigma| = 0.00000000$) and all extracted Greeks ($\Delta, \nu, \Gamma$). Decoupling \texttt{ctx\_iter} into dedicated register storage provides collision-safe dual-event commit, completely eliminating write-port arbitration hazards between concurrent ingress and loopback updates. Under saturated closed-loop traffic, Zero-BRAM delivers closed-loop throughput of 8.18 vs. 8.14~MOps/s (+0.04~MOps/s, +0.49\%) and a 3.88-cycle lower mean transaction latency (695.67 vs. 699.55 cycles; cold latency 230 vs. 231 cycles) by eliminating synchronous BRAM context-read latency bubbles that otherwise accumulate across multi-pass recirculations, with zero lost or duplicated contracts.
+(5)~\textbf{Saturated BRAM Ablation (Phase 7E / Exp 1B):} Replaying identical canonical contracts through the BRAM baseline confirms 100.0\% exact bit-level output identity across all evaluated transactions (10,000 / 10,000 contracts) for implied volatility ($\max |\Delta\sigma| = 0.00000000$) and all extracted Greeks ($\Delta, \nu, \Gamma$). Decoupling \texttt{ctx\_iter} into dedicated registers provides collision-safe dual-event commit, completely eliminating write-port arbitration hazards between concurrent ingress and loopback updates. Under saturated closed-loop traffic, Zero-BRAM delivers closed-loop throughput of 8.18 vs. 8.14~MOps/s (+0.04~MOps/s, +0.49\%) and a 3.88-cycle lower mean transaction latency (695.67 vs. 699.55 cycles; cold latency 230 vs. 231 cycles) by eliminating synchronous BRAM context-read latency bubbles across multi-pass recirculations, with zero lost or duplicated contracts.
 
 \subsection{Comparison with Prior FPGA Accelerators}
 \begin{table}[tb]
@@ -522,7 +522,7 @@ To bridge physical FPGA implementation with algorithmic correctness under contin
 \label{tab:prior_art}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.44}%
+\renewcommand{\arraystretch}{0.40}%
 \begin{tabular}{lcccccc}
 \toprule
 \textbf{Design} & \textbf{Target Device} & \textbf{Task / Method} & \textbf{Clock} & \textbf{Throughput} & \textbf{Latency} & \textbf{BRAM / DSP} \\
@@ -537,18 +537,18 @@ Tse et al.~\cite{tse2010customising} (2010) & Virtex-4 FX100 & BS / Forward Pass
 \bottomrule
 \end{tabular}%
 }
-\vskip 1pt\raggedright
-\tiny{\textsuperscript{\dag} 151.82~MOps/s pass-adjusted nominal liquid (109.55~MOps/s extended; 8.18~MOps/s co-simulation). Measured AXI cold latency is 2.30~$\mu$s (Artix-7) / 0.920~$\mu$s (U50, 230 cyc); core cold latency is 2.27~$\mu$s / 0.908~$\mu$s (227 cyc). Prior FPGA designs accelerate forward pricing~\cite{tse2010customising}, finite difference~\cite{becker2011dynamic,jin2012optimising}, or IV without Greeks~\cite{wang2022fpga}; this work evaluates simultaneous iterative IV with concurrent Greeks ($\Delta, \nu, \Gamma$). Comparisons reflect architectural context rather than identical numerical workloads.}
+\vskip 0.5pt\raggedright
+\tiny{\textsuperscript{\dag}151.82~MOps/s pass-adjusted nominal liquid (109.55~MOps/s extended; 8.18~MOps/s co-simulation). Measured AXI cold latency is 2.30~$\mu$s (Artix-7) / 0.920~$\mu$s (U50, 230 cyc); core cold latency is 2.27~$\mu$s / 0.908~$\mu$s (227 cyc). Prior designs accelerate forward pricing~\cite{tse2010customising}, finite difference~\cite{becker2011dynamic,jin2012optimising}, or IV without Greeks~\cite{wang2022fpga}; this work evaluates iterative IV with concurrent Greeks ($\Delta, \nu, \Gamma$). Comparisons reflect architectural context rather than identical workloads.}
 \end{table}
 
-Table~\ref{tab:prior_art} compares against prior FPGA accelerators~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} (surveyed in~\cite{omahony2024role}). Prior works focus on forward pricing or multi-section root finding with heavy Block RAM use. Our engine achieves 400~MOps/s peak (151.82~MOps/s pass-adjusted nominal liquid) with concurrent Greeks and 0 BRAMs; on U50, 1.00~GOps/s at 0.920~$\mu$s AXI cold latency (0.908~$\mu$s core) compares favorably with the 120~MOps/s reported by Wang et al.~\cite{wang2022fpga}, though the underlying methods (iterative NR with concurrent Greeks vs. multi-section root-finding without Greeks) represent distinct workloads.
+Table~\ref{tab:prior_art} compares against prior FPGA accelerators~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} (surveyed in~\cite{omahony2024role}). Prior works focus on forward pricing or multi-section root finding with heavy Block RAM use. Our engine achieves 400~MOps/s peak (151.82~MOps/s pass-adjusted nominal liquid) with concurrent Greeks and 0 BRAMs; on U50, 1.00~GOps/s at 0.920~$\mu$s AXI cold latency (0.908~$\mu$s core) compares favorably with the 120~MOps/s reported by Wang et al.~\cite{wang2022fpga}, though the underlying methods represent distinct numerical workloads.
 
 % -------------------------------------------------------------------------
 \section{Conclusion}
 % -------------------------------------------------------------------------
-We presented a four-core FPGA accelerator for streaming Black-Scholes IV solving and concurrent Greeks ($\Delta, \nu, \Gamma$). Synergizing Brenner-Subrahmanyam seeding, Q8.24 dynamic-range normalization via scale invariance, and a zero-BRAM microarchitecture, the engine achieves nominal post-route timing closure at 100~MHz on Artix-7 200T (400~MOps/s peak, 4.258~W) and 250~MHz on Alveo U50 (1.00~GOps/s peak, 9.560~W) with 0 BRAM/URAM in the accelerator core. In bit-accurate Q8.24 evaluation on the canonical benchmark, the dynamic loopback engine converges in an average of 2.635 passes, delivering a pass-adjusted nominal datapath throughput of 151.82~MOps/s on Artix-7 (379.57~MOps/s on U50; 8.18~MOps/s closed-loop co-simulation) at 4.80~vol-bps MAE ($3.04\times$ faster than fixed 8-pass at equivalent accuracy). For the evaluated near-the-money suite, the solver achieves an IV MAE of $1.57 \times 10^{-4}$, with 99.9\% of contracts within 1.0 percentage point of reference IV ($|\Delta\sigma| \le 0.0100$). Replay on 1,382 CBOE SPX quotes validates dynamic-range normalization up to \$7,643 spot with zero arithmetic overflow observed. The design provides cycle-deterministic per-pass execution, with a 227-cycle core cold path and a measured 230-cycle AXI end-to-end cold transaction (0.908~$\mu$s and 0.920~$\mu$s, respectively, on U50; 2.27~$\mu$s and 2.30~$\mu$s on Artix-7); total latency remains pass-dependent, achieving 10.7$\times$ higher pass-adjusted liquid throughput (28.1$\times$ peak) and a 112.8$\times$ throughput-to-power ratio (297$\times$ peak) relative to a 16-thread AVX2 host CPU baseline under post-route models.
+We presented a four-core FPGA accelerator for streaming Black-Scholes IV solving and concurrent Greeks ($\Delta, \nu, \Gamma$). Synergizing Brenner-Subrahmanyam seeding, Q8.24 dynamic-range normalization, and a zero-BRAM microarchitecture, the engine achieves nominal post-route timing closure at 100~MHz on Artix-7 200T (400~MOps/s peak, 4.258~W) and 250~MHz on Alveo U50 (1.00~GOps/s peak, 9.560~W) with 0 BRAM/URAM in the accelerator core. In bit-accurate Q8.24 canonical evaluation, the dynamic loopback engine converges in an average of 2.635 passes, delivering a pass-adjusted nominal datapath throughput of 151.82~MOps/s on Artix-7 (379.57~MOps/s on U50; 8.18~MOps/s closed-loop co-simulation) at 4.80~vol-bps MAE ($3.04\times$ faster than fixed 8-pass at equal accuracy). For the evaluated near-the-money suite, the solver achieves an IV MAE of $1.57 \times 10^{-4}$, with 99.9\% of contracts within 1.0 percentage point of reference IV ($|\Delta\sigma| \le 0.0100$). Replay on 1,382 CBOE SPX quotes validates normalization up to \$7,643 spot with zero arithmetic overflow observed. The design provides cycle-deterministic per-pass execution, with a 227-cycle core cold path and a measured 230-cycle AXI end-to-end cold transaction (0.908~$\mu$s and 0.920~$\mu$s on U50; 2.27~$\mu$s and 2.30~$\mu$s on Artix-7); total latency is pass-dependent, achieving 10.7$\times$ higher pass-adjusted liquid throughput (28.1$\times$ peak) and a 112.8$\times$ throughput-to-power ratio (297$\times$ peak) relative to a 16-thread AVX2 host CPU baseline under post-route models.
 
-\noindent\textbf{Open-Source Artifact Reproducibility:} SystemVerilog RTL, Vivado implementation scripts for Artix-7 and Alveo U50, bit-accurate DPI-C co-simulation testbenches, and empirical CBOE SPX replay vectors will be made openly available upon publication at an anonymized repository.
+\noindent\textbf{Open-Source Artifact Reproducibility:} SystemVerilog RTL, Vivado scripts for Artix-7 and Alveo U50, bit-accurate DPI-C co-simulation testbenches, and CBOE SPX replay vectors will be made openly available upon publication at an anonymized repository.
 
 \begin{thebibliography}{12}
 \bibitem{omahony2024role}
