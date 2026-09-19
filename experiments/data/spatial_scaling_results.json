@@ -1,0 +1,70 @@
+{
+  "metadata": {
+    "title": "Experiment 4: Multi-Core Spatial Scaling Signoff Matrix",
+    "target_device": "AMD Artix-7 xc7a200tffg1156-3",
+    "target_clock_mhz": 100.0,
+    "liquid_avg_passes": 2.6345
+  },
+  "configurations": {
+    "1_core": {
+      "num_cores": 1,
+      "slice_luts": 26830,
+      "slice_luts_pct": 20.05231689088191,
+      "slice_ffs": 32635,
+      "slice_ffs_pct": 12.19544095665172,
+      "dsp48e1": 152,
+      "dsp48e1_pct": 20.54054054054054,
+      "bram_blocks": 0,
+      "wns_ns": 2.114,
+      "derived_fmax_mhz": 126.806999746386,
+      "data_path_delay_ns": 7.886,
+      "route_delay_ns": 2.954,
+      "route_delay_pct": 37.45878772508242,
+      "peak_throughput_mops": 100.0,
+      "liquid_sustained_mops": 37.957866767887644,
+      "scaling_efficiency_pct": 100.0,
+      "throughput_per_lut_kops": 1.4147546316767663,
+      "throughput_per_dsp_kops": 249.72280768347136
+    },
+    "2_core": {
+      "num_cores": 2,
+      "slice_luts": 55281,
+      "slice_luts_pct": 41.31614349775784,
+      "slice_ffs": 65939,
+      "slice_ffs_pct": 24.64088191330344,
+      "dsp48e1": 304,
+      "dsp48e1_pct": 41.08108108108108,
+      "bram_blocks": 0,
+      "wns_ns": 0.71,
+      "derived_fmax_mhz": 107.64262648008612,
+      "data_path_delay_ns": 9.29,
+      "route_delay_ns": 4.478,
+      "route_delay_pct": 48.202368137782564,
+      "peak_throughput_mops": 200.0,
+      "liquid_sustained_mops": 75.91573353577529,
+      "scaling_efficiency_pct": 100.0,
+      "throughput_per_lut_kops": 1.3732699035070872,
+      "throughput_per_dsp_kops": 249.72280768347136
+    },
+    "4_core": {
+      "num_cores": 4,
+      "slice_luts": 106298,
+      "slice_luts_pct": 79.44544095665171,
+      "slice_ffs": 129786,
+      "slice_ffs_pct": 48.5,
+      "dsp48e1": 608,
+      "dsp48e1_pct": 82.16216216216216,
+      "bram_blocks": 0,
+      "wns_ns": 0.005,
+      "derived_fmax_mhz": 100.05002501250627,
+      "data_path_delay_ns": 9.777,
+      "route_delay_ns": 6.002,
+      "route_delay_pct": 61.3889741229416,
+      "peak_throughput_mops": 400.0,
+      "liquid_sustained_mops": 151.83146707155058,
+      "scaling_efficiency_pct": 100.0,
+      "throughput_per_lut_kops": 1.4283567618539443,
+      "throughput_per_dsp_kops": 249.72280768347136
+    }
+  }
+}

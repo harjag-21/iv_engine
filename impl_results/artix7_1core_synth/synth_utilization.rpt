@@ -1,0 +1,50 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
+| Date         : Sat Sep 19 01:38:38 2026
+| Host         : LAPTOP-EPHGQB72 running 64-bit major release  (build 9200)
+| Command      : report_utilization -file impl_results/artix7_1core_synth/synth_utilization.rpt -hierarchical
+| Design       : iv_axis_wrapper
+| Device       : xc7a200tffg1156-3
+| Speed File   : -3
+| Design State : Synthesized
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++-------------------------------------+-----------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+|               Instance              |            Module           | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | DSP Blocks |
++-------------------------------------+-----------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+| iv_axis_wrapper                     |                       (top) |      26830 |      24219 |     314 | 2297 | 32635 |      0 |      0 |        152 |
+|   (iv_axis_wrapper)                 |                       (top) |       2234 |       2234 |       0 |    0 |  8418 |      0 |      0 |          0 |
+|   u_iv_top                          |                      iv_top |      24596 |      21985 |     314 | 2297 | 24217 |      0 |      0 |        152 |
+|     (u_iv_top)                      |                      iv_top |        881 |        114 |     314 |  453 |   917 |      0 |      0 |          0 |
+|     cordic_inst                     | pipelined_hyperbolic_cordic |       1693 |       1692 |       0 |    1 |  1634 |      0 |      0 |          0 |
+|     gen_init_guess.u_init_guess     |         iv_bs_initial_guess |       4080 |       3904 |       0 |  176 |  3826 |      0 |      0 |          8 |
+|       (gen_init_guess.u_init_guess) |         iv_bs_initial_guess |        238 |         99 |       0 |  139 |   234 |      0 |      0 |          8 |
+|       u_init_divider                |           iv_divider_q824_6 |       2417 |       2380 |       0 |   37 |  2069 |      0 |      0 |          0 |
+|       u_sqrt_T                      |                iv_sqrt_q824 |       1425 |       1425 |       0 |    0 |  1523 |      0 |      0 |          0 |
+|     u_arb_fsm                       |          iv_arbitration_fsm |        405 |        405 |       0 |    0 |   175 |      0 |      0 |          0 |
+|     u_bs_datapath                   |              iv_bs_datapath |      13065 |      11469 |       0 | 1596 | 13447 |      0 |      0 |        140 |
+|       (u_bs_datapath)               |              iv_bs_datapath |       2396 |       1165 |       0 | 1231 |  2520 |      0 |      0 |         44 |
+|       u_d1_divider                  |           iv_divider_q824_1 |       2272 |       2236 |       0 |   36 |  2100 |      0 |      0 |          0 |
+|       u_ln_divider                  |           iv_divider_q824_2 |       2240 |       2204 |       0 |   36 |  2070 |      0 |      0 |          0 |
+|       u_norm_d1                     |                 iv_norm_cdf |       3103 |       2940 |       0 |  163 |  3419 |      0 |      0 |         48 |
+|         (u_norm_d1)                 |                 iv_norm_cdf |        906 |        775 |       0 |  131 |  1333 |      0 |      0 |         48 |
+|         u_t_divider                 |           iv_divider_q824_5 |       2197 |       2165 |       0 |   32 |  2086 |      0 |      0 |          0 |
+|       u_norm_d2                     |               iv_norm_cdf_3 |       3054 |       2924 |       0 |  130 |  3338 |      0 |      0 |         48 |
+|         (u_norm_d2)                 |               iv_norm_cdf_3 |        858 |        759 |       0 |   99 |  1285 |      0 |      0 |         48 |
+|         u_t_divider                 |           iv_divider_q824_4 |       2196 |       2165 |       0 |   31 |  2053 |      0 |      0 |          0 |
+|     u_gain_comp                     |           iv_kn_compensator |        148 |        148 |       0 |    0 |    52 |      0 |      0 |          4 |
+|     u_gamma_divider                 |             iv_divider_q824 |       2141 |       2106 |       0 |   35 |  2067 |      0 |      0 |          0 |
+|     u_nr_divider                    |           iv_divider_q824_0 |       2234 |       2198 |       0 |   36 |  2099 |      0 |      0 |          0 |
++-------------------------------------+-----------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+
+

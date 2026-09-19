@@ -1,0 +1,1003 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
+| Date         : Sat Sep 19 01:39:04 2026
+| Host         : LAPTOP-EPHGQB72 running 64-bit major release  (build 9200)
+| Command      : report_timing_summary -file impl_results/artix7_1core_synth/synth_timing.rpt -max_paths 5
+| Design       : iv_axis_wrapper
+| Device       : 7a200t-ffg1156
+| Speed File   : -3  PRODUCTION 1.23 2018-06-13
+| Design State : Synthesized
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  No
+  Borrow Time for Max Delay Exceptions       :  Yes
+  Merge Timing Exceptions                    :  Yes
+  Inter-SLR Compensation                     :  Conservative
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+------------------------------------------------------------------------------------------------
+| Report Methodology
+| ------------------
+------------------------------------------------------------------------------------------------
+
+No report available as report_methodology has not been run prior. Run report_methodology on the current design for the summary of methodology violations.
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock (0)
+2. checking constant_clock (0)
+3. checking pulse_width_clock (0)
+4. checking unconstrained_internal_endpoints (0)
+5. checking no_input_delay (169)
+6. checking no_output_delay (131)
+7. checking multiple_clock (0)
+8. checking generated_clocks (0)
+9. checking loops (0)
+10. checking partial_input_delay (0)
+11. checking partial_output_delay (0)
+12. checking latch_loops (0)
+
+1. checking no_clock (0)
+------------------------
+ There are 0 register/latch pins with no clock.
+
+
+2. checking constant_clock (0)
+------------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock (0)
+---------------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints (0)
+------------------------------------------------
+ There are 0 pins that are not constrained for maximum delay.
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay (169)
+--------------------------------
+ There are 169 input ports with no input delay specified. (HIGH)
+
+ There are 0 input ports with no input delay but user has a false path constraint.
+
+
+6. checking no_output_delay (131)
+---------------------------------
+ There are 131 ports with no output delay specified. (HIGH)
+
+ There are 0 ports with no output delay but user has a false path constraint
+
+ There are 0 ports with no output delay but with a timing clock defined on it or propagating through it
+
+
+7. checking multiple_clock (0)
+------------------------------
+ There are 0 register/latch pins with multiple clocks.
+
+
+8. checking generated_clocks (0)
+--------------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops (0)
+---------------------
+ There are 0 combinational loops in the design.
+
+
+10. checking partial_input_delay (0)
+------------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay (0)
+-------------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops (0)
+----------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+      0.215        0.000                      0                47951        0.138        0.000                      0                47951        3.950        0.000                       0                 35302  
+
+
+All user specified timing constraints are met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock  Waveform(ns)       Period(ns)      Frequency(MHz)
+-----  ------------       ----------      --------------
+aclk   {0.000 5.000}      10.000          100.000         
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+aclk                0.215        0.000                      0                47951        0.138        0.000                      0                47951        3.950        0.000                       0                 35302  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  aclk
+  To Clock:  aclk
+
+Setup :            0  Failing Endpoints,  Worst Slack        0.215ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.138ns,  Total Violation        0.000ns
+PW    :            0  Failing Endpoints,  Worst Slack        3.950ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.215ns  (required time - arrival time)
+  Source:                 u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][12]/D
+                            (rising edge-triggered cell FDCE clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             aclk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (aclk rise@10.000ns - aclk rise@0.000ns)
+  Data Path Delay:        9.744ns  (logic 3.912ns (40.147%)  route 5.832ns (59.853%))
+  Logic Levels:           26  (CARRY4=15 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=5)
+  Clock Path Skew:        -0.035ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.669ns = ( 10.669 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.704ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.704     0.704    u_iv_top/gen_init_guess.u_init_guess/aclk
+                         DSP48E1                                      r  u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/CLK
+  -------------------------------------------------------------------    -------------------
+                         DSP48E1 (Prop_dsp48e1_CLK_P[0])
+                                                      0.329     1.033 r  u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/P[0]
+                         net (fo=2, unplaced)         0.571     1.604    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_7_1[0]
+                         LUT2 (Prop_lut2_I0_O)        0.113     1.717 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][6]_i_32/O
+                         net (fo=1, unplaced)         0.000     1.717    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][6]_i_32_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.403     2.120 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_21/CO[3]
+                         net (fo=1, unplaced)         0.007     2.127    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.219 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_12/CO[3]
+                         net (fo=1, unplaced)         0.000     2.219    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_12_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.311 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000     2.311    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.403 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.403    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.495 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][11]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.495    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][11]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.587 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][15]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.587    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][15]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.679 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][19]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.679    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][19]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.771 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][22]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.771    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][22]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.863 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000     2.863    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.250     3.113 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_7/O[3]
+                         net (fo=3, unplaced)         0.475     3.588    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/den_reg_reg[31]
+                         LUT2 (Prop_lut2_I1_O)        0.229     3.817 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][25]_i_5/O
+                         net (fo=1, unplaced)         0.000     3.817    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][25]_i_5_n_0
+                         CARRY4 (Prop_carry4_DI[3]_CO[3])
+                                                      0.312     4.129 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_2/CO[3]
+                         net (fo=59, unplaced)        0.770     4.899    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/denominator_in2
+                         LUT2 (Prop_lut2_I1_O)        0.097     4.996 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][0]_i_2/O
+                         net (fo=3, unplaced)         0.858     5.854    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][0]_i_2_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.097     5.951 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[29].dbz_pipe_reg[30]_srl30_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_26_i_6/O
+                         net (fo=2, unplaced)         0.312     6.263    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[29].dbz_pipe_reg[30]_srl30_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_26_i_6_n_0
+                         LUT5 (Prop_lut5_I4_O)        0.097     6.360 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_21/O
+                         net (fo=1, unplaced)         0.301     6.661    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_21_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     6.758 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_13/O
+                         net (fo=1, unplaced)         0.301     7.059    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_13_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     7.156 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_6/O
+                         net (fo=1, unplaced)         0.301     7.457    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_6_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     7.554 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_1/O
+                         net (fo=40, unplaced)        0.378     7.932    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_1_n_0
+                         LUT4 (Prop_lut4_I0_O)        0.097     8.029 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][3]_i_1/O
+                         net (fo=4, unplaced)         0.325     8.354    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/den_abs[3]
+                         LUT6 (Prop_lut6_I4_O)        0.097     8.451 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___1004/O
+                         net (fo=1, unplaced)         0.471     8.922    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___1004_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.386     9.308 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_25/CO[3]
+                         net (fo=1, unplaced)         0.007     9.315    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_25_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.407 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_24/CO[3]
+                         net (fo=1, unplaced)         0.000     9.407    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_24_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.499 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_21/CO[3]
+                         net (fo=1, unplaced)         0.000     9.499    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.591 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_4/CO[3]
+                         net (fo=32, unplaced)        0.755    10.346    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_ge_den
+                         LUT3 (Prop_lut3_I1_O)        0.102    10.448 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe[1][12]_i_1/O
+                         net (fo=1, unplaced)         0.000    10.448    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe[1][12]_i_1_n_0
+                         FDCE                                         r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][12]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock aclk rise edge)      10.000    10.000 r  
+                                                      0.000    10.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.669    10.669    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/aclk
+                         FDCE                                         r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][12]/C
+                         clock pessimism              0.000    10.669    
+                         clock uncertainty           -0.035    10.633    
+                         FDCE (Setup_fdce_C_D)        0.030    10.663    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][12]
+  -------------------------------------------------------------------
+                         required time                         10.663    
+                         arrival time                         -10.448    
+  -------------------------------------------------------------------
+                         slack                                  0.215    
+
+Slack (MET) :             0.215ns  (required time - arrival time)
+  Source:                 u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][16]/D
+                            (rising edge-triggered cell FDCE clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             aclk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (aclk rise@10.000ns - aclk rise@0.000ns)
+  Data Path Delay:        9.744ns  (logic 3.912ns (40.147%)  route 5.832ns (59.853%))
+  Logic Levels:           26  (CARRY4=15 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=5)
+  Clock Path Skew:        -0.035ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.669ns = ( 10.669 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.704ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.704     0.704    u_iv_top/gen_init_guess.u_init_guess/aclk
+                         DSP48E1                                      r  u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/CLK
+  -------------------------------------------------------------------    -------------------
+                         DSP48E1 (Prop_dsp48e1_CLK_P[0])
+                                                      0.329     1.033 r  u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/P[0]
+                         net (fo=2, unplaced)         0.571     1.604    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_7_1[0]
+                         LUT2 (Prop_lut2_I0_O)        0.113     1.717 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][6]_i_32/O
+                         net (fo=1, unplaced)         0.000     1.717    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][6]_i_32_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.403     2.120 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_21/CO[3]
+                         net (fo=1, unplaced)         0.007     2.127    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.219 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_12/CO[3]
+                         net (fo=1, unplaced)         0.000     2.219    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_12_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.311 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000     2.311    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.403 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.403    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.495 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][11]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.495    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][11]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.587 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][15]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.587    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][15]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.679 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][19]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.679    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][19]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.771 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][22]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.771    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][22]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.863 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000     2.863    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.250     3.113 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_7/O[3]
+                         net (fo=3, unplaced)         0.475     3.588    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/den_reg_reg[31]
+                         LUT2 (Prop_lut2_I1_O)        0.229     3.817 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][25]_i_5/O
+                         net (fo=1, unplaced)         0.000     3.817    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][25]_i_5_n_0
+                         CARRY4 (Prop_carry4_DI[3]_CO[3])
+                                                      0.312     4.129 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_2/CO[3]
+                         net (fo=59, unplaced)        0.770     4.899    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/denominator_in2
+                         LUT2 (Prop_lut2_I1_O)        0.097     4.996 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][0]_i_2/O
+                         net (fo=3, unplaced)         0.858     5.854    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][0]_i_2_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.097     5.951 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[29].dbz_pipe_reg[30]_srl30_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_26_i_6/O
+                         net (fo=2, unplaced)         0.312     6.263    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[29].dbz_pipe_reg[30]_srl30_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_26_i_6_n_0
+                         LUT5 (Prop_lut5_I4_O)        0.097     6.360 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_21/O
+                         net (fo=1, unplaced)         0.301     6.661    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_21_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     6.758 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_13/O
+                         net (fo=1, unplaced)         0.301     7.059    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_13_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     7.156 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_6/O
+                         net (fo=1, unplaced)         0.301     7.457    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_6_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     7.554 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_1/O
+                         net (fo=40, unplaced)        0.378     7.932    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_1_n_0
+                         LUT4 (Prop_lut4_I0_O)        0.097     8.029 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][3]_i_1/O
+                         net (fo=4, unplaced)         0.325     8.354    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/den_abs[3]
+                         LUT6 (Prop_lut6_I4_O)        0.097     8.451 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___1004/O
+                         net (fo=1, unplaced)         0.471     8.922    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___1004_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.386     9.308 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_25/CO[3]
+                         net (fo=1, unplaced)         0.007     9.315    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_25_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.407 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_24/CO[3]
+                         net (fo=1, unplaced)         0.000     9.407    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_24_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.499 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_21/CO[3]
+                         net (fo=1, unplaced)         0.000     9.499    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.591 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_4/CO[3]
+                         net (fo=32, unplaced)        0.755    10.346    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_ge_den
+                         LUT3 (Prop_lut3_I1_O)        0.102    10.448 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe[1][16]_i_1/O
+                         net (fo=1, unplaced)         0.000    10.448    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe[1][16]_i_1_n_0
+                         FDCE                                         r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][16]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock aclk rise edge)      10.000    10.000 r  
+                                                      0.000    10.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.669    10.669    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/aclk
+                         FDCE                                         r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][16]/C
+                         clock pessimism              0.000    10.669    
+                         clock uncertainty           -0.035    10.633    
+                         FDCE (Setup_fdce_C_D)        0.030    10.663    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][16]
+  -------------------------------------------------------------------
+                         required time                         10.663    
+                         arrival time                         -10.448    
+  -------------------------------------------------------------------
+                         slack                                  0.215    
+
+Slack (MET) :             0.215ns  (required time - arrival time)
+  Source:                 u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][4]/D
+                            (rising edge-triggered cell FDCE clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             aclk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (aclk rise@10.000ns - aclk rise@0.000ns)
+  Data Path Delay:        9.744ns  (logic 3.912ns (40.147%)  route 5.832ns (59.853%))
+  Logic Levels:           26  (CARRY4=15 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=5)
+  Clock Path Skew:        -0.035ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.669ns = ( 10.669 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.704ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.704     0.704    u_iv_top/gen_init_guess.u_init_guess/aclk
+                         DSP48E1                                      r  u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/CLK
+  -------------------------------------------------------------------    -------------------
+                         DSP48E1 (Prop_dsp48e1_CLK_P[0])
+                                                      0.329     1.033 r  u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/P[0]
+                         net (fo=2, unplaced)         0.571     1.604    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_7_1[0]
+                         LUT2 (Prop_lut2_I0_O)        0.113     1.717 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][6]_i_32/O
+                         net (fo=1, unplaced)         0.000     1.717    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][6]_i_32_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.403     2.120 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_21/CO[3]
+                         net (fo=1, unplaced)         0.007     2.127    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.219 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_12/CO[3]
+                         net (fo=1, unplaced)         0.000     2.219    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_12_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.311 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000     2.311    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.403 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.403    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.495 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][11]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.495    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][11]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.587 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][15]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.587    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][15]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.679 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][19]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.679    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][19]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.771 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][22]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.771    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][22]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.863 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000     2.863    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.250     3.113 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_7/O[3]
+                         net (fo=3, unplaced)         0.475     3.588    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/den_reg_reg[31]
+                         LUT2 (Prop_lut2_I1_O)        0.229     3.817 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][25]_i_5/O
+                         net (fo=1, unplaced)         0.000     3.817    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][25]_i_5_n_0
+                         CARRY4 (Prop_carry4_DI[3]_CO[3])
+                                                      0.312     4.129 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_2/CO[3]
+                         net (fo=59, unplaced)        0.770     4.899    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/denominator_in2
+                         LUT2 (Prop_lut2_I1_O)        0.097     4.996 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][0]_i_2/O
+                         net (fo=3, unplaced)         0.858     5.854    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][0]_i_2_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.097     5.951 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[29].dbz_pipe_reg[30]_srl30_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_26_i_6/O
+                         net (fo=2, unplaced)         0.312     6.263    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[29].dbz_pipe_reg[30]_srl30_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_26_i_6_n_0
+                         LUT5 (Prop_lut5_I4_O)        0.097     6.360 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_21/O
+                         net (fo=1, unplaced)         0.301     6.661    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_21_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     6.758 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_13/O
+                         net (fo=1, unplaced)         0.301     7.059    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_13_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     7.156 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_6/O
+                         net (fo=1, unplaced)         0.301     7.457    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_6_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     7.554 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_1/O
+                         net (fo=40, unplaced)        0.378     7.932    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_1_n_0
+                         LUT4 (Prop_lut4_I0_O)        0.097     8.029 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][3]_i_1/O
+                         net (fo=4, unplaced)         0.325     8.354    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/den_abs[3]
+                         LUT6 (Prop_lut6_I4_O)        0.097     8.451 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___1004/O
+                         net (fo=1, unplaced)         0.471     8.922    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___1004_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.386     9.308 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_25/CO[3]
+                         net (fo=1, unplaced)         0.007     9.315    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_25_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.407 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_24/CO[3]
+                         net (fo=1, unplaced)         0.000     9.407    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_24_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.499 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_21/CO[3]
+                         net (fo=1, unplaced)         0.000     9.499    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.591 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_4/CO[3]
+                         net (fo=32, unplaced)        0.755    10.346    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_ge_den
+                         LUT3 (Prop_lut3_I1_O)        0.102    10.448 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe[1][4]_i_1/O
+                         net (fo=1, unplaced)         0.000    10.448    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe[1][4]_i_1_n_0
+                         FDCE                                         r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][4]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock aclk rise edge)      10.000    10.000 r  
+                                                      0.000    10.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.669    10.669    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/aclk
+                         FDCE                                         r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][4]/C
+                         clock pessimism              0.000    10.669    
+                         clock uncertainty           -0.035    10.633    
+                         FDCE (Setup_fdce_C_D)        0.030    10.663    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][4]
+  -------------------------------------------------------------------
+                         required time                         10.663    
+                         arrival time                         -10.448    
+  -------------------------------------------------------------------
+                         slack                                  0.215    
+
+Slack (MET) :             0.215ns  (required time - arrival time)
+  Source:                 u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][8]/D
+                            (rising edge-triggered cell FDCE clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             aclk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (aclk rise@10.000ns - aclk rise@0.000ns)
+  Data Path Delay:        9.744ns  (logic 3.912ns (40.147%)  route 5.832ns (59.853%))
+  Logic Levels:           26  (CARRY4=15 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=5)
+  Clock Path Skew:        -0.035ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.669ns = ( 10.669 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.704ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.704     0.704    u_iv_top/gen_init_guess.u_init_guess/aclk
+                         DSP48E1                                      r  u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/CLK
+  -------------------------------------------------------------------    -------------------
+                         DSP48E1 (Prop_dsp48e1_CLK_P[0])
+                                                      0.329     1.033 r  u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/P[0]
+                         net (fo=2, unplaced)         0.571     1.604    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_7_1[0]
+                         LUT2 (Prop_lut2_I0_O)        0.113     1.717 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][6]_i_32/O
+                         net (fo=1, unplaced)         0.000     1.717    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][6]_i_32_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.403     2.120 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_21/CO[3]
+                         net (fo=1, unplaced)         0.007     2.127    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.219 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_12/CO[3]
+                         net (fo=1, unplaced)         0.000     2.219    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_12_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.311 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000     2.311    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.403 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.403    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.495 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][11]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.495    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][11]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.587 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][15]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.587    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][15]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.679 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][19]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.679    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][19]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.771 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][22]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.771    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][22]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.863 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000     2.863    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.250     3.113 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_7/O[3]
+                         net (fo=3, unplaced)         0.475     3.588    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/den_reg_reg[31]
+                         LUT2 (Prop_lut2_I1_O)        0.229     3.817 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][25]_i_5/O
+                         net (fo=1, unplaced)         0.000     3.817    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][25]_i_5_n_0
+                         CARRY4 (Prop_carry4_DI[3]_CO[3])
+                                                      0.312     4.129 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_2/CO[3]
+                         net (fo=59, unplaced)        0.770     4.899    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/denominator_in2
+                         LUT2 (Prop_lut2_I1_O)        0.097     4.996 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][0]_i_2/O
+                         net (fo=3, unplaced)         0.858     5.854    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][0]_i_2_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.097     5.951 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[29].dbz_pipe_reg[30]_srl30_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_26_i_6/O
+                         net (fo=2, unplaced)         0.312     6.263    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[29].dbz_pipe_reg[30]_srl30_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_26_i_6_n_0
+                         LUT5 (Prop_lut5_I4_O)        0.097     6.360 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_21/O
+                         net (fo=1, unplaced)         0.301     6.661    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_21_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     6.758 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_13/O
+                         net (fo=1, unplaced)         0.301     7.059    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_13_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     7.156 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_6/O
+                         net (fo=1, unplaced)         0.301     7.457    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_6_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     7.554 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_1/O
+                         net (fo=40, unplaced)        0.378     7.932    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_1_n_0
+                         LUT4 (Prop_lut4_I0_O)        0.097     8.029 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][3]_i_1/O
+                         net (fo=4, unplaced)         0.325     8.354    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/den_abs[3]
+                         LUT6 (Prop_lut6_I4_O)        0.097     8.451 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___1004/O
+                         net (fo=1, unplaced)         0.471     8.922    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___1004_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.386     9.308 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_25/CO[3]
+                         net (fo=1, unplaced)         0.007     9.315    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_25_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.407 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_24/CO[3]
+                         net (fo=1, unplaced)         0.000     9.407    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_24_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.499 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_21/CO[3]
+                         net (fo=1, unplaced)         0.000     9.499    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.591 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_4/CO[3]
+                         net (fo=32, unplaced)        0.755    10.346    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_ge_den
+                         LUT3 (Prop_lut3_I1_O)        0.102    10.448 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe[1][8]_i_1/O
+                         net (fo=1, unplaced)         0.000    10.448    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe[1][8]_i_1_n_0
+                         FDCE                                         r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][8]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock aclk rise edge)      10.000    10.000 r  
+                                                      0.000    10.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.669    10.669    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/aclk
+                         FDCE                                         r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][8]/C
+                         clock pessimism              0.000    10.669    
+                         clock uncertainty           -0.035    10.633    
+                         FDCE (Setup_fdce_C_D)        0.030    10.663    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][8]
+  -------------------------------------------------------------------
+                         required time                         10.663    
+                         arrival time                         -10.448    
+  -------------------------------------------------------------------
+                         slack                                  0.215    
+
+Slack (MET) :             0.220ns  (required time - arrival time)
+  Source:                 u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][10]/D
+                            (rising edge-triggered cell FDCE clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             aclk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (aclk rise@10.000ns - aclk rise@0.000ns)
+  Data Path Delay:        9.739ns  (logic 3.907ns (40.116%)  route 5.832ns (59.884%))
+  Logic Levels:           26  (CARRY4=15 LUT2=3 LUT3=1 LUT4=1 LUT5=1 LUT6=5)
+  Clock Path Skew:        -0.035ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.669ns = ( 10.669 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.704ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.704     0.704    u_iv_top/gen_init_guess.u_init_guess/aclk
+                         DSP48E1                                      r  u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/CLK
+  -------------------------------------------------------------------    -------------------
+                         DSP48E1 (Prop_dsp48e1_CLK_P[0])
+                                                      0.329     1.033 r  u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/P[0]
+                         net (fo=2, unplaced)         0.571     1.604    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_7_1[0]
+                         LUT2 (Prop_lut2_I0_O)        0.113     1.717 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][6]_i_32/O
+                         net (fo=1, unplaced)         0.000     1.717    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][6]_i_32_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.403     2.120 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_21/CO[3]
+                         net (fo=1, unplaced)         0.007     2.127    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.219 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_12/CO[3]
+                         net (fo=1, unplaced)         0.000     2.219    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_12_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.311 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000     2.311    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.403 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.403    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][6]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.495 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][11]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.495    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][11]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.587 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][15]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.587    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][15]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.679 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][19]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.679    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][19]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.771 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][22]_i_2/CO[3]
+                         net (fo=1, unplaced)         0.000     2.771    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][22]_i_2_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     2.863 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000     2.863    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.250     3.113 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_7/O[3]
+                         net (fo=3, unplaced)         0.475     3.588    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/den_reg_reg[31]
+                         LUT2 (Prop_lut2_I1_O)        0.229     3.817 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][25]_i_5/O
+                         net (fo=1, unplaced)         0.000     3.817    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][25]_i_5_n_0
+                         CARRY4 (Prop_carry4_DI[3]_CO[3])
+                                                      0.312     4.129 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe_reg[1][25]_i_2/CO[3]
+                         net (fo=59, unplaced)        0.770     4.899    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/denominator_in2
+                         LUT2 (Prop_lut2_I1_O)        0.097     4.996 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][0]_i_2/O
+                         net (fo=3, unplaced)         0.858     5.854    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][0]_i_2_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.097     5.951 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[29].dbz_pipe_reg[30]_srl30_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_26_i_6/O
+                         net (fo=2, unplaced)         0.312     6.263    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[29].dbz_pipe_reg[30]_srl30_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_26_i_6_n_0
+                         LUT5 (Prop_lut5_I4_O)        0.097     6.360 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_21/O
+                         net (fo=1, unplaced)         0.301     6.661    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_21_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     6.758 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_13/O
+                         net (fo=1, unplaced)         0.301     7.059    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_13_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     7.156 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_6/O
+                         net (fo=1, unplaced)         0.301     7.457    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_6_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.097     7.554 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_1/O
+                         net (fo=40, unplaced)        0.378     7.932    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___993_i_1_n_0
+                         LUT4 (Prop_lut4_I0_O)        0.097     8.029 f  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].den_pipe[1][3]_i_1/O
+                         net (fo=4, unplaced)         0.325     8.354    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/den_abs[3]
+                         LUT6 (Prop_lut6_I4_O)        0.097     8.451 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___1004/O
+                         net (fo=1, unplaced)         0.471     8.922    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___1004_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.386     9.308 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_25/CO[3]
+                         net (fo=1, unplaced)         0.007     9.315    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_25_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.407 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_24/CO[3]
+                         net (fo=1, unplaced)         0.000     9.407    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_24_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.499 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_21/CO[3]
+                         net (fo=1, unplaced)         0.000     9.499    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_21_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     9.591 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/i___989_i_4/CO[3]
+                         net (fo=32, unplaced)        0.755    10.346    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_ge_den
+                         LUT3 (Prop_lut3_I1_O)        0.097    10.443 r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe[1][10]_i_1/O
+                         net (fo=1, unplaced)         0.000    10.443    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe[1][10]_i_1_n_0
+                         FDCE                                         r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][10]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock aclk rise edge)      10.000    10.000 r  
+                                                      0.000    10.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.669    10.669    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/aclk
+                         FDCE                                         r  u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][10]/C
+                         clock pessimism              0.000    10.669    
+                         clock uncertainty           -0.035    10.633    
+                         FDCE (Setup_fdce_C_D)        0.030    10.663    u_iv_top/gen_init_guess.u_init_guess/u_init_divider/div_stage[0].rem_pipe_reg[1][10]
+  -------------------------------------------------------------------
+                         required time                         10.663    
+                         arrival time                         -10.443    
+  -------------------------------------------------------------------
+                         slack                                  0.220    
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.138ns  (arrival time - required time)
+  Source:                 u_iv_top/u_bs_datapath/sigma_r0_reg[0]/C
+                            (rising edge-triggered cell FDCE clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][0]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/D
+                            (rising edge-triggered cell SRLC32E clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             aclk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (aclk rise@0.000ns - aclk rise@0.000ns)
+  Data Path Delay:        0.289ns  (logic 0.141ns (48.757%)  route 0.148ns (51.243%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.022ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    0.432ns
+    Source Clock Delay      (SCD):    0.411ns
+    Clock Pessimism Removal (CPR):    -0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.411     0.411    u_iv_top/u_bs_datapath/aclk
+                         FDCE                                         r  u_iv_top/u_bs_datapath/sigma_r0_reg[0]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.141     0.552 r  u_iv_top/u_bs_datapath/sigma_r0_reg[0]/Q
+                         net (fo=2, unplaced)         0.148     0.700    u_iv_top/sigma_r0[0]
+                         SRLC32E                                      r  u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][0]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.432     0.432    u_iv_top/aclk
+                         SRLC32E                                      r  u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][0]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/CLK
+                         clock pessimism              0.000     0.432    
+                         SRLC32E (Hold_srlc32e_CLK_D)
+                                                      0.130     0.562    u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][0]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28
+  -------------------------------------------------------------------
+                         required time                         -0.562    
+                         arrival time                           0.700    
+  -------------------------------------------------------------------
+                         slack                                  0.138    
+
+Slack (MET) :             0.138ns  (arrival time - required time)
+  Source:                 u_iv_top/u_bs_datapath/sigma_r0_reg[10]/C
+                            (rising edge-triggered cell FDCE clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][10]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/D
+                            (rising edge-triggered cell SRLC32E clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             aclk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (aclk rise@0.000ns - aclk rise@0.000ns)
+  Data Path Delay:        0.289ns  (logic 0.141ns (48.757%)  route 0.148ns (51.243%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.022ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    0.432ns
+    Source Clock Delay      (SCD):    0.411ns
+    Clock Pessimism Removal (CPR):    -0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.411     0.411    u_iv_top/u_bs_datapath/aclk
+                         FDCE                                         r  u_iv_top/u_bs_datapath/sigma_r0_reg[10]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.141     0.552 r  u_iv_top/u_bs_datapath/sigma_r0_reg[10]/Q
+                         net (fo=2, unplaced)         0.148     0.700    u_iv_top/sigma_r0[10]
+                         SRLC32E                                      r  u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][10]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.432     0.432    u_iv_top/aclk
+                         SRLC32E                                      r  u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][10]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/CLK
+                         clock pessimism              0.000     0.432    
+                         SRLC32E (Hold_srlc32e_CLK_D)
+                                                      0.130     0.562    u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][10]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28
+  -------------------------------------------------------------------
+                         required time                         -0.562    
+                         arrival time                           0.700    
+  -------------------------------------------------------------------
+                         slack                                  0.138    
+
+Slack (MET) :             0.138ns  (arrival time - required time)
+  Source:                 u_iv_top/u_bs_datapath/sigma_r0_reg[11]/C
+                            (rising edge-triggered cell FDCE clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][11]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/D
+                            (rising edge-triggered cell SRLC32E clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             aclk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (aclk rise@0.000ns - aclk rise@0.000ns)
+  Data Path Delay:        0.289ns  (logic 0.141ns (48.757%)  route 0.148ns (51.243%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.022ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    0.432ns
+    Source Clock Delay      (SCD):    0.411ns
+    Clock Pessimism Removal (CPR):    -0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.411     0.411    u_iv_top/u_bs_datapath/aclk
+                         FDCE                                         r  u_iv_top/u_bs_datapath/sigma_r0_reg[11]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.141     0.552 r  u_iv_top/u_bs_datapath/sigma_r0_reg[11]/Q
+                         net (fo=2, unplaced)         0.148     0.700    u_iv_top/sigma_r0[11]
+                         SRLC32E                                      r  u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][11]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.432     0.432    u_iv_top/aclk
+                         SRLC32E                                      r  u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][11]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/CLK
+                         clock pessimism              0.000     0.432    
+                         SRLC32E (Hold_srlc32e_CLK_D)
+                                                      0.130     0.562    u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][11]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28
+  -------------------------------------------------------------------
+                         required time                         -0.562    
+                         arrival time                           0.700    
+  -------------------------------------------------------------------
+                         slack                                  0.138    
+
+Slack (MET) :             0.138ns  (arrival time - required time)
+  Source:                 u_iv_top/u_bs_datapath/sigma_r0_reg[12]/C
+                            (rising edge-triggered cell FDCE clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][12]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/D
+                            (rising edge-triggered cell SRLC32E clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             aclk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (aclk rise@0.000ns - aclk rise@0.000ns)
+  Data Path Delay:        0.289ns  (logic 0.141ns (48.757%)  route 0.148ns (51.243%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.022ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    0.432ns
+    Source Clock Delay      (SCD):    0.411ns
+    Clock Pessimism Removal (CPR):    -0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.411     0.411    u_iv_top/u_bs_datapath/aclk
+                         FDCE                                         r  u_iv_top/u_bs_datapath/sigma_r0_reg[12]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.141     0.552 r  u_iv_top/u_bs_datapath/sigma_r0_reg[12]/Q
+                         net (fo=2, unplaced)         0.148     0.700    u_iv_top/sigma_r0[12]
+                         SRLC32E                                      r  u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][12]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.432     0.432    u_iv_top/aclk
+                         SRLC32E                                      r  u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][12]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/CLK
+                         clock pessimism              0.000     0.432    
+                         SRLC32E (Hold_srlc32e_CLK_D)
+                                                      0.130     0.562    u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][12]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28
+  -------------------------------------------------------------------
+                         required time                         -0.562    
+                         arrival time                           0.700    
+  -------------------------------------------------------------------
+                         slack                                  0.138    
+
+Slack (MET) :             0.138ns  (arrival time - required time)
+  Source:                 u_iv_top/u_bs_datapath/sigma_r0_reg[13]/C
+                            (rising edge-triggered cell FDCE clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][13]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/D
+                            (rising edge-triggered cell SRLC32E clocked by aclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             aclk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (aclk rise@0.000ns - aclk rise@0.000ns)
+  Data Path Delay:        0.289ns  (logic 0.141ns (48.757%)  route 0.148ns (51.243%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.022ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    0.432ns
+    Source Clock Delay      (SCD):    0.411ns
+    Clock Pessimism Removal (CPR):    -0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.411     0.411    u_iv_top/u_bs_datapath/aclk
+                         FDCE                                         r  u_iv_top/u_bs_datapath/sigma_r0_reg[13]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.141     0.552 r  u_iv_top/u_bs_datapath/sigma_r0_reg[13]/Q
+                         net (fo=2, unplaced)         0.148     0.700    u_iv_top/sigma_r0[13]
+                         SRLC32E                                      r  u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][13]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock aclk rise edge)       0.000     0.000 r  
+                                                      0.000     0.000 r  aclk (IN)
+                         net (fo=35301, unset)        0.432     0.432    u_iv_top/aclk
+                         SRLC32E                                      r  u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][13]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28/CLK
+                         clock pessimism              0.000     0.432    
+                         SRLC32E (Hold_srlc32e_CLK_D)
+                                                      0.130     0.562    u_iv_top/bs_delay_gen[32].sigma_pipe_reg[33][13]_srl32_u_iv_top_u_bs_datapath_u_ln_divider_div_stage_c_28
+  -------------------------------------------------------------------
+                         required time                         -0.562    
+                         arrival time                           0.700    
+  -------------------------------------------------------------------
+                         slack                                  0.138    
+
+
+
+
+
+Pulse Width Checks
+--------------------------------------------------------------------------------------
+Clock Name:         aclk
+Waveform(ns):       { 0.000 5.000 }
+Period(ns):         10.000
+Sources:            { aclk }
+
+Check Type        Corner  Lib Pin      Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location  Pin
+Min Period        n/a     DSP48E1/CLK  n/a            2.863         10.000      7.137                u_iv_top/gen_init_guess.u_init_guess/den_reg1__0/CLK
+Min Period        n/a     DSP48E1/CLK  n/a            2.863         10.000      7.137                u_iv_top/gen_init_guess.u_init_guess/den_reg1__2/CLK
+Min Period        n/a     DSP48E1/CLK  n/a            2.863         10.000      7.137                u_iv_top/gen_init_guess.u_init_guess/num_reg1__0/CLK
+Min Period        n/a     DSP48E1/CLK  n/a            2.863         10.000      7.137                u_iv_top/gen_init_guess.u_init_guess/num_reg1__2/CLK
+Min Period        n/a     DSP48E1/CLK  n/a            2.863         10.000      7.137                u_iv_top/u_bs_datapath/knd2_5a1__0/CLK
+Low Pulse Width   Slow    RAMD64E/CLK  n/a            1.050         5.000       3.950                u_iv_top/ctx_C_reg_0_63_0_2/RAMA/CLK
+Low Pulse Width   Fast    RAMD64E/CLK  n/a            1.050         5.000       3.950                u_iv_top/ctx_C_reg_0_63_0_2/RAMA/CLK
+Low Pulse Width   Slow    RAMD64E/CLK  n/a            1.050         5.000       3.950                u_iv_top/ctx_C_reg_0_63_0_2/RAMB/CLK
+Low Pulse Width   Fast    RAMD64E/CLK  n/a            1.050         5.000       3.950                u_iv_top/ctx_C_reg_0_63_0_2/RAMB/CLK
+Low Pulse Width   Slow    RAMD64E/CLK  n/a            1.050         5.000       3.950                u_iv_top/ctx_C_reg_0_63_0_2/RAMC/CLK
+High Pulse Width  Slow    RAMD64E/CLK  n/a            1.050         5.000       3.950                u_iv_top/ctx_C_reg_0_63_0_2/RAMA/CLK
+High Pulse Width  Fast    RAMD64E/CLK  n/a            1.050         5.000       3.950                u_iv_top/ctx_C_reg_0_63_0_2/RAMA/CLK
+High Pulse Width  Slow    RAMD64E/CLK  n/a            1.050         5.000       3.950                u_iv_top/ctx_C_reg_0_63_0_2/RAMB/CLK
+High Pulse Width  Fast    RAMD64E/CLK  n/a            1.050         5.000       3.950                u_iv_top/ctx_C_reg_0_63_0_2/RAMB/CLK
+High Pulse Width  Slow    RAMD64E/CLK  n/a            1.050         5.000       3.950                u_iv_top/ctx_C_reg_0_63_0_2/RAMC/CLK
+
+
+

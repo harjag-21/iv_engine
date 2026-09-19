@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "title": "Part 6B: Real-World CBOE SPX Scale-Invariance Replay",
+    "source": "CBOE European SPX Options",
+    "total_contracts": 1382,
+    "max_raw_spot": 7643.99,
+    "max_normalized_spot": 1.3711192825112106
+  },
+  "subsets": {
+    "liquid_ntm": {
+      "regime": "Liquid NTM (0.95 <= S/K <= 1.05)",
+      "num_contracts": 1175,
+      "mae_vol_bps": 590.0561570857798,
+      "median_vol_bps": 398.1645349256051,
+      "p95_vol_bps": 1875.4016722704318,
+      "p99_vol_bps": 2928.048302161839,
+      "max_vol_bps": 4246.355184126715,
+      "acc_within_1pct_vol": 6.978723404255319,
+      "acc_within_10bps": 0.425531914893617,
+      "single_pass_rate_pct": 77.70212765957447,
+      "avg_passes": 1.2459574468085106
+    },
+    "liquid_range": {
+      "regime": "Liquid Range (0.85 <= S/K <= 1.15)",
+      "num_contracts": 1367,
+      "mae_vol_bps": 662.9513256238768,
+      "median_vol_bps": 423.9637864990963,
+      "p95_vol_bps": 2094.0284119117887,
+      "p99_vol_bps": 3046.129339825919,
+      "max_vol_bps": 4747.912681941275,
+      "acc_within_1pct_vol": 6.3643013899049015,
+      "acc_within_10bps": 0.36576444769568395,
+      "single_pass_rate_pct": 70.51938551572788,
+      "avg_passes": 1.4498902706656913
+    },
+    "global_spx": {
+      "regime": "All Real-World SPX Quotes (0.70 <= S/K <= 1.40)",
+      "num_contracts": 1382,
+      "mae_vol_bps": 672.2125962244182,
+      "median_vol_bps": 425.95902867039456,
+      "p95_vol_bps": 2106.516130878934,
+      "p99_vol_bps": 3064.7364507647485,
+      "max_vol_bps": 4747.912681941275,
+      "acc_within_1pct_vol": 6.295224312590449,
+      "acc_within_10bps": 0.361794500723589,
+      "single_pass_rate_pct": 69.75397973950795,
+      "avg_passes": 1.5144717800289436
+    }
+  }
+}
