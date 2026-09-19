@@ -54,8 +54,8 @@
 \let\endoldthebibliography\endthebibliography
 \renewenvironment{thebibliography}[1]{%
   \begin{oldthebibliography}{#1}%
-    \fontsize{5.0pt}{5.8pt}\selectfont
-    \setlength{\itemsep}{-1.8pt plus 0.2pt}%
+    \fontsize{4.8pt}{5.5pt}\selectfont
+    \setlength{\itemsep}{-2.2pt plus 0.2pt}%
     \setlength{\parskip}{0pt}%
     \setlength{\parsep}{0pt}%
 }{%
@@ -522,7 +522,7 @@ To bridge physical FPGA implementation with algorithmic correctness under contin
 \label{tab:prior_art}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.48}%
+\renewcommand{\arraystretch}{0.44}%
 \begin{tabular}{lcccccc}
 \toprule
 \textbf{Design} & \textbf{Target Device} & \textbf{Task / Method} & \textbf{Clock} & \textbf{Throughput} & \textbf{Latency} & \textbf{BRAM / DSP} \\
@@ -538,7 +538,7 @@ Tse et al.~\cite{tse2010customising} (2010) & Virtex-4 FX100 & BS / Forward Pass
 \end{tabular}%
 }
 \vskip 1pt\raggedright
-\tiny{\textsuperscript{\dag} 151.82~MOps/s pass-adjusted nominal liquid (109.55~MOps/s extended; 8.18~MOps/s closed-loop co-simulation). Measured AXI end-to-end cold latency is 2.30~$\mu$s on Artix-7 and 0.920~$\mu$s on U50 (230 cycles); internal core cold latency is 2.27~$\mu$s and 0.908~$\mu$s (227 cycles). Prior FPGA designs accelerate forward pricing~\cite{tse2010customising}, finite difference~\cite{becker2011dynamic,jin2012optimising}, or IV without Greeks~\cite{wang2022fpga}; this work evaluates simultaneous iterative IV with concurrent Greeks ($\Delta, \nu, \Gamma$). Comparisons reflect architectural context rather than identical numerical workloads.}
+\tiny{\textsuperscript{\dag} 151.82~MOps/s pass-adjusted nominal liquid (109.55~MOps/s extended; 8.18~MOps/s co-simulation). Measured AXI cold latency is 2.30~$\mu$s (Artix-7) / 0.920~$\mu$s (U50, 230 cyc); core cold latency is 2.27~$\mu$s / 0.908~$\mu$s (227 cyc). Prior FPGA designs accelerate forward pricing~\cite{tse2010customising}, finite difference~\cite{becker2011dynamic,jin2012optimising}, or IV without Greeks~\cite{wang2022fpga}; this work evaluates simultaneous iterative IV with concurrent Greeks ($\Delta, \nu, \Gamma$). Comparisons reflect architectural context rather than identical numerical workloads.}
 \end{table}
 
 Table~\ref{tab:prior_art} compares against prior FPGA accelerators~\cite{wang2022fpga,becker2011dynamic,jin2012optimising,tse2010customising} (surveyed in~\cite{omahony2024role}). Prior works focus on forward pricing or multi-section root finding with heavy Block RAM use. Our engine achieves 400~MOps/s peak (151.82~MOps/s pass-adjusted nominal liquid) with concurrent Greeks and 0 BRAMs; on U50, 1.00~GOps/s at 0.920~$\mu$s AXI cold latency (0.908~$\mu$s core) compares favorably with the 120~MOps/s reported by Wang et al.~\cite{wang2022fpga}, though the underlying methods (iterative NR with concurrent Greeks vs. multi-section root-finding without Greeks) represent distinct workloads.
