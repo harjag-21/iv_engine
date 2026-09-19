@@ -115,26 +115,30 @@ ax2.set_ylabel('Empirical Error [vol-bps]')
 ax2.set_title('(b) CBOE European SPX Scale-Invariance ($N=1{,}382$)')
 ax2.set_xticks(x)
 ax2.set_xticklabels(labels)
-ax2.set_ylim([0, 2500])
-ax2.grid(True, axis='y')
+ax2.set_ylim([0, 3200])
+ax2.grid(True, axis='y', linestyle='--', alpha=0.5)
 
-# Annotate single pass rate and spot scale
-ax2.text(0, 1950, f'Single-Pass: {single_pass_pcts[0]:.1f}%\nAvg Passes: {subsets[0]["avg_passes"]:.2f}',
-         ha='center', fontsize=7.5, fontweight='bold',
-         bbox=dict(boxstyle="round,pad=0.25", fc="#e6f2ff", ec="#1f77b4", lw=1))
-ax2.text(1, 2150, f'Single-Pass: {single_pass_pcts[1]:.1f}%\nAvg Passes: {subsets[1]["avg_passes"]:.2f}',
-         ha='center', fontsize=7.5, fontweight='bold',
-         bbox=dict(boxstyle="round,pad=0.25", fc="#fff2e6", ec="#ff7f0e", lw=1))
+# Horizontal legend at the very top
+ax2.legend(loc='upper center', bbox_to_anchor=(0.5, 0.99), ncol=3, fontsize=7.2, framealpha=0.92)
+
+# Annotate single pass rate and average passes for each regime cleanly below legend
+ax2.text(0, 2350, f'Single-Pass: {single_pass_pcts[0]:.1f}%\nAvg: {subsets[0]["avg_passes"]:.2f} passes',
+         ha='center', fontsize=7.2, fontweight='bold',
+         bbox=dict(boxstyle="round,pad=0.2", fc="#e6f2ff", ec="#1f77b4", lw=1))
+ax2.text(1, 2350, f'Single-Pass: {single_pass_pcts[1]:.1f}%\nAvg: {subsets[1]["avg_passes"]:.2f} passes',
+         ha='center', fontsize=7.2, fontweight='bold',
+         bbox=dict(boxstyle="round,pad=0.2", fc="#fff2e6", ec="#ff7f0e", lw=1))
+ax2.text(2, 2350, f'Single-Pass: {single_pass_pcts[2]:.1f}%\nAvg: {subsets[2]["avg_passes"]:.2f} passes',
+         ha='center', fontsize=7.2, fontweight='bold',
+         bbox=dict(boxstyle="round,pad=0.2", fc="#f0fff0", ec="#2ca02c", lw=1))
 
 raw_spot = data_6b["metadata"]["max_raw_spot"]
 norm_spot = data_6b["metadata"]["max_normalized_spot"]
-ax2.annotate(f'Spot: \\${raw_spot:.0f} \\rightarrow \\tilde{{S}} = {norm_spot:.2f}\n(0 Fixed-Point Overflows)',
-             xy=(2, 700), xytext=(1.05, 1400),
+ax2.annotate(f'Spot: \\${raw_spot:,.2f} $\\rightarrow \\tilde{{S}} = {norm_spot:.2f}$\n(0 Fixed-Point Overflows)',
+             xy=(2, 600), xytext=(0.85, 1450),
              arrowprops=dict(facecolor='black', shrink=0.08, width=0.8, headwidth=4),
-             fontsize=7.8, fontweight='bold',
-             bbox=dict(boxstyle="round,pad=0.3", fc="#f0fff0", ec="#2ca02c", lw=1))
-
-ax2.legend(loc='upper left', framealpha=0.92)
+             fontsize=7.5, fontweight='bold',
+             bbox=dict(boxstyle="round,pad=0.3", fc="#fafffa", ec="#2ca02c", lw=1))
 
 # Save figure
 figures_dir = os.path.join(REPO_ROOT, "paper", "figures")
