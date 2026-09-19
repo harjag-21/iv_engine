@@ -131,7 +131,7 @@ module iv_top_bram #(
     (* ram_style = "block" *) logic signed [31:0] ctx_C [0:63];
     (* ram_style = "block" *) logic signed [31:0] ctx_r [0:63];
     (* ram_style = "block" *) logic signed [31:0] ctx_T [0:63];
-    (* ram_style = "distributed" *) logic [3:0]   ctx_iter [0:63];
+    logic [3:0]                                   ctx_iter [0:63];
 
     // Single write port for market context
     always_ff @(posedge clk) begin
@@ -144,12 +144,20 @@ module iv_top_bram #(
         end
     end
 
-    // Iteration tracking
-    always_ff @(posedge clk) begin
-        if (valid_in && !is_cordic_mode) begin
-            ctx_iter[active_tid] <= 4'd0;
-        end else if (ctx_iter_inc_en) begin
-            ctx_iter[ctx_iter_inc_tid] <= ctx_iter[ctx_iter_inc_tid] + 4'd1;
+    // Iteration tracking: collision-safe dual-event commit (registers)
+    // Preserves both loopback increment and new ingress initialization even if coinciding on the same clock cycle.
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            for (int i = 0; i < 64; i++) begin
+                ctx_iter[i] <= 4'd0;
+            end
+        end else begin
+            if (ctx_iter_inc_en) begin
+                ctx_iter[ctx_iter_inc_tid] <= ctx_iter[ctx_iter_inc_tid] + 4'd1;
+            end
+            if (valid_in && !is_cordic_mode) begin
+                ctx_iter[active_tid] <= 4'd0;
+            end
         end
     end
 

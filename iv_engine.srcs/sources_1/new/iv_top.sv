@@ -163,21 +163,33 @@ module iv_top #(
     (* ram_style = "distributed" *) logic signed [31:0] ctx_C [0:63];
     (* ram_style = "distributed" *) logic signed [31:0] ctx_r [0:63];
     (* ram_style = "distributed" *) logic signed [31:0] ctx_T [0:63];
-    (* ram_style = "distributed" *) logic [3:0]         ctx_iter [0:63];
+    logic [3:0]                                         ctx_iter [0:63];
 
-    // Single always_ff block — one write port, priority: new-entry > loopback-increment
+    // Market data context store (distributed LUTRAM)
     always_ff @(posedge clk) begin
         if (valid_in && !is_cordic_mode) begin
-            // New transaction: store context and reset iteration counter
-            ctx_S[active_tid]    <= S_in;
-            ctx_K[active_tid]    <= K_in;
-            ctx_C[active_tid]    <= C_in;
-            ctx_r[active_tid]    <= r_in;
-            ctx_T[active_tid]    <= T_in;
-            ctx_iter[active_tid] <= 4'd0;
-        end else if (ctx_iter_inc_en) begin
-            // Loopback: increment iteration counter for this TID
-            ctx_iter[ctx_iter_inc_tid] <= ctx_iter[ctx_iter_inc_tid] + 4'd1;
+            ctx_S[active_tid] <= S_in;
+            ctx_K[active_tid] <= K_in;
+            ctx_C[active_tid] <= C_in;
+            ctx_r[active_tid] <= r_in;
+            ctx_T[active_tid] <= T_in;
+        end
+    end
+
+    // Iteration tracking: collision-safe dual-event commit (registers)
+    // Preserves both loopback increment and new ingress initialization even if coinciding on the same clock cycle.
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            for (int i = 0; i < 64; i++) begin
+                ctx_iter[i] <= 4'd0;
+            end
+        end else begin
+            if (ctx_iter_inc_en) begin
+                ctx_iter[ctx_iter_inc_tid] <= ctx_iter[ctx_iter_inc_tid] + 4'd1;
+            end
+            if (valid_in && !is_cordic_mode) begin
+                ctx_iter[active_tid] <= 4'd0;
+            end
         end
     end
 
