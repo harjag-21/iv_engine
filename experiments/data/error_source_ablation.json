@@ -1,0 +1,226 @@
+{
+  "full_rtl_measured": {
+    "name": "Full Q8.24 RTL Baseline (Measured Synthesis)",
+    "description": "Complete physical Q8.24 RTL synthesis output with all hardware units active",
+    "liquid_regime": {
+      "count": 4428,
+      "mae_bps": 7.6663,
+      "rmse_bps": 58.3081,
+      "median_bps": 0.91,
+      "p95_bps": 17.96,
+      "p99_bps": 145.5,
+      "max_bps": 1353.3
+    },
+    "ntm_regime": {
+      "count": 2890,
+      "mae_bps": 2.0083,
+      "rmse_bps": 12.7143,
+      "median_bps": 0.96,
+      "p95_bps": 4.57,
+      "p99_bps": 20.67,
+      "max_bps": 398.87
+    },
+    "extended_domain": {
+      "count": 10000,
+      "mae_bps": 127.8631,
+      "rmse_bps": 437.8841,
+      "median_bps": 1.43,
+      "p95_bps": 867.76,
+      "p99_bps": 2231.89,
+      "max_bps": 5548.97
+    },
+    "runtime_sec": 0.03
+  },
+  "bit_accurate_model": {
+    "name": "Q8.24 Bit-Accurate Algorithmic Baseline",
+    "description": "Software bit-accurate emulation of complete hardware datapath",
+    "liquid_regime": {
+      "count": 4428,
+      "mae_bps": 5.5734,
+      "rmse_bps": 45.8075,
+      "median_bps": 0.9013,
+      "p95_bps": 9.4336,
+      "p99_bps": 84.929,
+      "max_bps": 1283.871
+    },
+    "ntm_regime": {
+      "count": 2890,
+      "mae_bps": 1.9116,
+      "rmse_bps": 11.3889,
+      "median_bps": 0.8749,
+      "p95_bps": 5.7605,
+      "p99_bps": 14.6866,
+      "max_bps": 489.2469
+    },
+    "extended_domain": {
+      "count": 10000,
+      "mae_bps": 155.1422,
+      "rmse_bps": 555.6974,
+      "median_bps": 1.8155,
+      "p95_bps": 1135.6973,
+      "p99_bps": 3061.0601,
+      "max_bps": 5383.1201
+    },
+    "runtime_sec": 0.46
+  },
+  "exact_logarithm": {
+    "name": "Exact Logarithm (Isolates Pade [1/1] / CORDIC Log)",
+    "description": "Replaces Pade [1/1] and CORDIC log with double-precision natural log",
+    "liquid_regime": {
+      "count": 4428,
+      "mae_bps": 5.5891,
+      "rmse_bps": 46.0839,
+      "median_bps": 0.9001,
+      "p95_bps": 9.4408,
+      "p99_bps": 89.754,
+      "max_bps": 1295.4755
+    },
+    "ntm_regime": {
+      "count": 2890,
+      "mae_bps": 1.9121,
+      "rmse_bps": 11.4725,
+      "median_bps": 0.8746,
+      "p95_bps": 5.782,
+      "p99_bps": 14.6449,
+      "max_bps": 494.0552
+    },
+    "extended_domain": {
+      "count": 10000,
+      "mae_bps": 159.1283,
+      "rmse_bps": 564.3927,
+      "median_bps": 1.7867,
+      "p95_bps": 1198.6801,
+      "p99_bps": 3075.1401,
+      "max_bps": 5379.2801
+    },
+    "runtime_sec": 0.44
+  },
+  "exact_exp": {
+    "name": "Exact CORDIC Exp / Scaling (Isolates 16-Stage Exp)",
+    "description": "Replaces CORDIC/Taylor exponential with double-precision exp(-rT)",
+    "liquid_regime": {
+      "count": 4428,
+      "mae_bps": 5.4712,
+      "rmse_bps": 45.8038,
+      "median_bps": 0.7669,
+      "p95_bps": 9.2899,
+      "p99_bps": 84.929,
+      "max_bps": 1283.8412
+    },
+    "ntm_regime": {
+      "count": 2890,
+      "mae_bps": 1.8146,
+      "rmse_bps": 11.3793,
+      "median_bps": 0.7558,
+      "p95_bps": 5.727,
+      "p99_bps": 14.621,
+      "max_bps": 489.2469
+    },
+    "extended_domain": {
+      "count": 10000,
+      "mae_bps": 155.0058,
+      "rmse_bps": 555.6902,
+      "median_bps": 1.6907,
+      "p95_bps": 1135.6973,
+      "p99_bps": 3061.0601,
+      "max_bps": 5383.1201
+    },
+    "runtime_sec": 0.47
+  },
+  "exact_norm_cdf": {
+    "name": "Exact Normal CDF (Isolates 5-Term Horner Poly)",
+    "description": "Replaces 5-term Horner CDF and t-divider with exact double-precision CDF",
+    "liquid_regime": {
+      "count": 4428,
+      "mae_bps": 1.6291,
+      "rmse_bps": 4.659,
+      "median_bps": 0.4488,
+      "p95_bps": 6.493,
+      "p99_bps": 15.254,
+      "max_bps": 159.104
+    },
+    "ntm_regime": {
+      "count": 2890,
+      "mae_bps": 1.2884,
+      "rmse_bps": 2.7104,
+      "median_bps": 0.388,
+      "p95_bps": 5.5127,
+      "p99_bps": 11.5834,
+      "max_bps": 40.6577
+    },
+    "extended_domain": {
+      "count": 10000,
+      "mae_bps": 11.6137,
+      "rmse_bps": 67.9113,
+      "median_bps": 0.857,
+      "p95_bps": 26.3147,
+      "p99_bps": 313.6799,
+      "max_bps": 1740.3701
+    },
+    "runtime_sec": 0.39
+  },
+  "exact_divider": {
+    "name": "Exact Divider (Isolates 33-Cycle Non-Restoring Div)",
+    "description": "Replaces 33-cycle integer non-restoring dividers with IEEE-754 division",
+    "liquid_regime": {
+      "count": 4428,
+      "mae_bps": 5.5732,
+      "rmse_bps": 45.8067,
+      "median_bps": 0.9011,
+      "p95_bps": 9.436,
+      "p99_bps": 84.9183,
+      "max_bps": 1283.852
+    },
+    "ntm_regime": {
+      "count": 2890,
+      "mae_bps": 1.9116,
+      "rmse_bps": 11.3891,
+      "median_bps": 0.8745,
+      "p95_bps": 5.7623,
+      "p99_bps": 14.6866,
+      "max_bps": 489.2594
+    },
+    "extended_domain": {
+      "count": 10000,
+      "mae_bps": 155.1433,
+      "rmse_bps": 555.6975,
+      "median_bps": 1.8153,
+      "p95_bps": 1135.6622,
+      "p99_bps": 3061.0601,
+      "max_bps": 5383.1201
+    },
+    "runtime_sec": 0.47
+  },
+  "floating_point_reference": {
+    "name": "Full Floating-Point Reference (FP64)",
+    "description": "Reference double-precision Black-Scholes inversion",
+    "liquid_regime": {
+      "count": 4428,
+      "mae_bps": 0.0,
+      "rmse_bps": 0.0,
+      "median_bps": 0.0,
+      "p95_bps": 0.0,
+      "p99_bps": 0.0,
+      "max_bps": 0.0
+    },
+    "ntm_regime": {
+      "count": 2890,
+      "mae_bps": 0.0,
+      "rmse_bps": 0.0,
+      "median_bps": 0.0,
+      "p95_bps": 0.0,
+      "p99_bps": 0.0,
+      "max_bps": 0.0
+    },
+    "extended_domain": {
+      "count": 10000,
+      "mae_bps": 0.0,
+      "rmse_bps": 0.0,
+      "median_bps": 0.0,
+      "p95_bps": 0.0,
+      "p99_bps": 0.0,
+      "max_bps": 0.0
+    },
+    "runtime_sec": 0.01
+  }
+}
