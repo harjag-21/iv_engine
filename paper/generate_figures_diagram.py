@@ -127,13 +127,13 @@ draw_elbow(p_start=(78, 28.0), p_c1=(85.0, 28.0), p_c2=(85.0, 56.0), p_end=(98, 
 # Stage 4 Loopback to Stage 3 via Lane 2 (x=92)
 draw_elbow(p_start=(98, 44.0), p_c1=(92.0, 44.0), p_c2=(92.0, 16.0), p_end=(78, 16.0),
            color='#d62728', lw=1.8, ls='--',
-           label='Loopback\n' + r'$\sigma_{n+1}$' + ' (2.4% liq.)', label_pos=(92.0, 30.0),
+           label='Priority Loopback\n' + r'$\sigma_{n+1}$ ($|C_{\mathrm{BS}}-C_{\mathrm{mkt}}| > \epsilon$)', label_pos=(92.0, 30.0),
            label_kw=dict(bbox=dict(boxstyle='round,pad=0.25', facecolor='#ffffff', edgecolor='#d62728', lw=0.8, alpha=0.95)))
 
 # Stage 4 to Stage 5
 ax.annotate('', xy=(115, 34), xytext=(115, 40),
             arrowprops=dict(arrowstyle='->', lw=1.8, color='#2ca02c', mutation_scale=14))
-ax.text(117.5, 37.0, 'Converged (97.6%)\n(Liquid Subset)', fontsize=6.8, fontweight='bold', color='#2ca02c', va='center')
+ax.text(117.5, 37.0, 'Converged IV & Greeks\n' + r'($|C_{\mathrm{BS}}-C_{\mathrm{mkt}}| \leq \epsilon$)', fontsize=6.8, fontweight='bold', color='#2ca02c', va='center')
 
 # External Ingress Arrow
 ax.annotate('', xy=(0, 54.0), xytext=(-10, 54.0),
@@ -161,9 +161,10 @@ for d in target_dirs:
         path = os.path.join(d, name)
         plt.savefig(path, bbox_inches='tight')
 
-brain_dir = r'C:\Users\user\.gemini\antigravity\brain\4fa2118d-f554-4c27-b47f-ade45a8ac811'
-plt.savefig(os.path.join(brain_dir, 'fig1_architecture_block_diagram.png'), bbox_inches='tight')
-plt.savefig(os.path.join(brain_dir, 'fig1_architecture_block_diagram.pdf'), bbox_inches='tight')
+curr_brain_dir = r'C:\Users\user\.gemini\antigravity\brain\a960527e-43da-498f-afa3-d9d2fcea574e'
+if os.path.exists(curr_brain_dir):
+    plt.savefig(os.path.join(curr_brain_dir, 'fig1_architecture_block_diagram.png'), bbox_inches='tight')
+    plt.savefig(os.path.join(curr_brain_dir, 'fig1_architecture_block_diagram.pdf'), bbox_inches='tight')
 
 plt.close()
 print('Refined v6 diagram generated with perfect alignments!')

@@ -107,7 +107,7 @@ FPGA accelerator, Implied Volatility, Black-Scholes, Greek extraction, Zero-BRAM
 \begin{figure*}[t]
 \centering
 \includefigfile[width=0.33\textwidth]{fig1_architecture_block_diagram.pdf}{fig3_architecture_block_diagram.pdf}
-\caption{Microarchitecture of the 4-Core Pipelined Implied Volatility and Greeks Engine, illustrating dynamic-range normalization, Brenner-Subrahmanyam analytical guess generator with shared $\sqrt{T}$ path, pipelined datapath, Zero-BRAM distributed context store, and 128-bit egress bus (convergence and loopback rates reflect the evaluated liquid subset).}
+\caption{Microarchitecture of the 4-Core Pipelined Implied Volatility and Greeks Engine, illustrating dynamic-range normalization, Brenner-Subrahmanyam analytical guess generator with shared $\sqrt{T}$ path, pipelined datapath, Zero-BRAM distributed context store, and 128-bit egress bus.}
 \label{fig:arch}
 \end{figure*}
 
@@ -213,7 +213,7 @@ The complete design was synthesized, placed, and routed using AMD Vivado 2025.2 
 Process Node & \multicolumn{2}{c}{28nm Planar (-3)} & \multicolumn{2}{c}{16nm FinFET (-2)} \\
 Target Clock ($T_{\text{clk}}$) & \multicolumn{2}{c}{100.00 MHz (10.0 ns)} & \multicolumn{2}{c}{250.00 MHz (4.0 ns)} \\
 Timing Slack (WNS / WHS) & \multicolumn{2}{c}{\textbf{+0.005 / +0.058 ns} (Met)} & \multicolumn{2}{c}{\textbf{+0.073 / +0.004 ns} (Met)} \\
-Critical Path Delay & \multicolumn{2}{c}{9.777 ns (22 levels)} & \multicolumn{2}{c}{3.910 ns ($F_{\max}=254.6$ MHz)} \\
+Critical Path Delay & \multicolumn{2}{c}{9.777 ns (22 levels)} & \multicolumn{2}{c}{3.910 ns ($F_{\max}=254.65$ MHz)} \\
 Timing Endpoints & \multicolumn{2}{c}{189,999 (0 fail)} & \multicolumn{2}{c}{182,201 (0 fail)} \\
 \midrule
 \textbf{Resource Utilization} & \textbf{Count} & \textbf{Util \%} & \textbf{Count} & \textbf{Util \%} \\
@@ -281,14 +281,14 @@ Vivado post-route vectorless power analysis yields an estimated dissipation of 4
 % -------------------------------------------------------------------------
 
 \begin{table}[t]
-\caption{Multi-Output Accuracy and Hardware Error-Source Ablation (Dataset A, $N=10{,}000$)}
-\label{tab:greek_accuracy}\label{tab:error_ablation}
+\caption{Multi-Output Numerical Accuracy (10,000-Contract Synthesized RTL Co-Simulation, Dataset A)}
+\label{tab:greek_accuracy}
 \centering
 \resizebox{\columnwidth}{!}{%
-\renewcommand{\arraystretch}{0.44}%
+\renewcommand{\arraystretch}{0.50}%
 \begin{tabular}{lrrrrrr}
 \toprule
-\textbf{Part A: Output Metric} & \multicolumn{3}{c}{\textbf{Liquid Regime ($0.85 \le S/K \le 1.15$, $N{=}4{,}428$)}} & \multicolumn{3}{c}{\textbf{Extended Domain ($0.70 \le K/S \le 1.40$, $N{=}10{,}000$)}} \\
+\textbf{Output Metric} & \multicolumn{3}{c}{\textbf{Liquid Regime ($0.85 \le S/K \le 1.15$, $N{=}4{,}428$)}} & \multicolumn{3}{c}{\textbf{Extended Domain ($0.70 \le K/S \le 1.40$, $N{=}10{,}000$)}} \\
 \cmidrule(lr){2-4} \cmidrule(lr){5-7}
 & \textbf{MAE} & \textbf{Median} & \textbf{95th Pct} & \textbf{MAE} & \textbf{Median} & \textbf{95th Pct} \\
 \midrule
@@ -296,23 +296,9 @@ Implied Volatility ($\sigma$, vol-bps) & 7.67 & 0.91 & 17.96 & 127.86 & 1.43 & 8
 Delta ($\Delta = N(d_1)$) & $4.41\times 10^{-3}$ & $1.80\times 10^{-4}$ & $0.0275$ & $0.0119$ & $1.46\times 10^{-3}$ & $0.0588$ \\
 Vega ($\nu = S\sqrt{T}N'(d_1)$) & $0.0971$ & $1.64\times 10^{-3}$ & $0.5517$ & $0.6296$ & $0.0325$ & $2.8312$ \\
 Gamma ($\Gamma = \frac{N'(d_1)}{S\sigma\sqrt{T}}$) & $2.57\times 10^{-4}$ & $1.20\times 10^{-5}$ & $9.91\times 10^{-4}$ & $3.12\times 10^{-3}$ & $5.45\times 10^{-5}$ & $5.96\times 10^{-3}$ \\
-\midrule
-\textbf{Part B: Isolated Error Source} & \multicolumn{3}{c}{\textbf{Liquid Regime ($N{=}4{,}428$, vol-bps)}} & \multicolumn{3}{c}{\textbf{Extended Domain ($N{=}10{,}000$, vol-bps)}} \\
-\cmidrule(lr){2-4} \cmidrule(lr){5-7}
-\textbf{Ablation Configuration} & \textbf{MAE} & \textbf{Median} & \textbf{95th Pct} & \textbf{MAE} & \textbf{Median} & \textbf{95th Pct} \\
-\midrule
-Full Q8.24 RTL Baseline (Measured)     & 7.67 & 0.91 & 17.96 & 127.86 & 1.43 & 867.76 \\
-Bit-Accurate Emulation Baseline        & 5.57 & 0.90 &  9.43 & 155.14 & 1.82 & 867.76 \\
-Exact Logarithm (No Pad\'{e}/CORDIC log)& 5.59 & 0.90 &  9.44 & 159.13 & 1.79 & 867.76 \\
-Exact CORDIC Exp (No Taylor/CORDIC exp)& 5.47 & 0.77 &  9.29 & 155.01 & 1.69 & 867.76 \\
-Exact Normal CDF (No Horner Poly)      & \textbf{1.63} & \textbf{0.45} & \textbf{6.49} & \textbf{11.61} & \textbf{0.86} & \textbf{53.12} \\
-Exact Divider (No 33-cyc non-restoring)& 5.57 & 0.90 &  9.44 & 155.14 & 1.82 & 867.76 \\
-Floating-Point Reference (FP64)        & 0.00 & 0.00 &  0.00 &   0.00 & 0.00 &   0.00 \\
 \bottomrule
 \end{tabular}%
 }
-\vskip 0.5pt\raggedright
-\tiny{In Part B, replacing the 5-term Horner normal CDF with exact double precision reduces liquid MAE by 70.8\% ($5.57 \to 1.63$~vol-bps), isolating polynomial truncation as the primary algorithmic error contributor.}
 \end{table}
 
 \subsection{Numerical Accuracy and Greeks Extraction}
@@ -320,7 +306,7 @@ Synthetic contract parameters $\{S, K/S, T, r, \sigma^*\}$ are generated indepen
 
 Under near-the-money sampling ($K/S \in [0.90, 1.10]$), the RTL achieves an IV \textbf{MAE of $1.57 \times 10^{-4}$ absolute volatility} (1.57 vol-bps), with \textbf{99.9\% of evaluated near-the-money contracts within 1.0 percentage point error} ($|\Delta\sigma| \le 0.0100$). Over the extended domain ($K/S \in [0.70, 1.40]$), Table~\ref{tab:greek_accuracy} details the simultaneous accuracy of IV and all three concurrent Greeks extracted from the 128-bit egress bus for the finalized 10,000-contract synthesized RTL co-simulation (Dataset A): in the liquid regime ($N=4{,}428$), IV MAE is $7.67 \times 10^{-4}$ (7.67~vol-bps; median $0.91$~vol-bps), Delta MAE is $4.41 \times 10^{-3}$ (median $1.80 \times 10^{-4}$), Vega MAE is 0.0971 (median $1.64 \times 10^{-3}$), and Gamma MAE is $2.57 \times 10^{-4}$ (median $1.20 \times 10^{-5}$). Over the full extended suite including deep wings ($N=10{,}000$), blended IV MAE is 0.0128 (127.86~vol-bps; median $1.43 \times 10^{-4}$, 1.43~vol-bps; 0.91~vol-bps liquid median) with zero overflow, while suite-wide Greeks achieve MAEs of 0.0119 (Delta), 0.6296 (Vega), and $3.12 \times 10^{-3}$ (Gamma), exactly matching Table~\ref{tab:rtl_validation}. In the algorithmic loopback ablation of Section~\ref{sec:eval_multipass} and Fig.~\ref{fig:ablation}, liquid MAE reaches 4.80~vol-bps under idealized double-precision divider rounding, whereas the synthesized 33-cycle integer non-restoring divider and 16-stage CORDIC quantization yield the measured 7.67~vol-bps RTL result.
 
-\textit{Controlled Hardware Error-Source Ablation:} To isolate the numerical error introduced by each approximation in the pipelined datapath, we evaluate six ablation configurations across the 10,000 contracts of Dataset A (Table~\ref{tab:error_ablation}): (1)~the physical Q8.24 RTL baseline yields 7.67~vol-bps liquid MAE (0.91~vol-bps median; 127.86~vol-bps suite-wide); (2)~the bit-accurate emulation baseline achieves 5.57~vol-bps liquid MAE (0.90~vol-bps median); (3)~replacing the [1/1] Pad\'{e} logarithm with exact double-precision log yields 5.59~vol-bps ($<0.02$~vol-bps delta), confirming that Pad\'{e} error ($<3.6 \times 10^{-4}$) is negligible in liquid trading; (4)~replacing the 16-stage hyperbolic CORDIC exponential with exact $\exp(-rT)$ yields 5.47~vol-bps (0.77~vol-bps median); (5)~replacing the 5-term Horner polynomial and $t$-divider with exact normal CDF drops liquid MAE to 1.63~vol-bps (0.45~vol-bps median; suite-wide MAE drops from 155.14 to 11.61~vol-bps), isolating polynomial truncation as the primary algorithmic error contributor (a 70.8\% error reduction); (6)~replacing the 33-cycle integer non-restoring dividers with double-precision division yields 5.57~vol-bps; and (7)~the floating-point reference achieves 0.00~vol-bps. This empirical ablation replaces first-order perturbation estimates with measured hardware error bounds.
+\textit{Controlled Hardware Error-Source Ablation:} To isolate the numerical error introduced by each approximation in the pipelined datapath, we evaluate six ablation configurations across the 10,000 contracts of Dataset A (detailed in \texttt{error\_source\_ablation.json}): (1)~the physical Q8.24 RTL baseline yields 7.67~vol-bps liquid MAE (0.91~vol-bps median; 127.86~vol-bps suite-wide); (2)~the bit-accurate emulation baseline achieves 5.57~vol-bps liquid MAE (0.90~vol-bps median); (3)~replacing the [1/1] Pad\'{e} logarithm with exact double-precision log yields 5.59~vol-bps ($<0.02$~vol-bps delta), confirming that Pad\'{e} error ($<3.6 \times 10^{-4}$) is negligible in liquid trading; (4)~replacing the 16-stage hyperbolic CORDIC exponential with exact $\exp(-rT)$ yields 5.47~vol-bps (0.77~vol-bps median); (5)~replacing the 5-term Horner polynomial and $t$-divider with exact normal CDF drops liquid MAE to 1.63~vol-bps (0.45~vol-bps median; suite-wide MAE drops from 155.14 to 11.61~vol-bps), isolating polynomial truncation as the primary algorithmic error contributor (a 70.8\% error reduction); (6)~replacing the 33-cycle integer non-restoring dividers with double-precision division yields 5.57~vol-bps; and (7)~the floating-point reference achieves 0.00~vol-bps. This empirical ablation replaces first-order perturbation estimates with measured hardware error bounds.
 
 \begin{figure}[t]
 \centering
@@ -561,7 +547,7 @@ Table~\ref{tab:prior_art} compares against prior FPGA accelerators~\cite{wang202
 % -------------------------------------------------------------------------
 \section{Conclusion}
 % -------------------------------------------------------------------------
-We presented a four-core FPGA accelerator for streaming Black-Scholes IV solving and concurrent Greeks ($\Delta, \nu, \Gamma$). Synergizing Brenner-Subrahmanyam seeding, Q8.24 dynamic-range normalization, and a zero-BRAM microarchitecture, the engine achieves nominal post-route timing closure at 100~MHz on Artix-7 200T (400~MOps/s peak, 4.258~W) and 250~MHz on Alveo U50 (1.00~GOps/s peak, 9.560~W) with 0 BRAM/URAM in the accelerator core. In bit-accurate Q8.24 evaluation on the canonical benchmark, the dynamic loopback engine converges in an average of 2.635 passes, delivering a pass-adjusted nominal datapath throughput of 151.82~MOps/s on Artix-7 (379.57~MOps/s on U50; 8.18~MOps/s closed-loop co-simulation), achieving a synthesized liquid IV MAE of 7.67~vol-bps (0.91~vol-bps median; 4.80~vol-bps in algorithmic post-update modeling, $3.04\times$ faster than fixed 8-pass). For evaluated NTM quotes, the solver achieves an IV MAE of $1.57 \times 10^{-4}$ (1.57~vol-bps), with 99.9\% of contracts within 1.0 percentage point of reference IV ($|\Delta\sigma| \le 0.0100$). Replay on 1,382 CBOE SPX quotes validates dynamic-range normalization up to \$7,643 spot with zero arithmetic overflow observed. The design provides cycle-deterministic per-pass execution, with a 227-cycle core cold path and a measured 230-cycle AXI end-to-end cold transaction (0.908~$\mu$s and 0.920~$\mu$s, respectively, on U50; 2.27~$\mu$s and 2.30~$\mu$s on Artix-7); total latency remains pass-dependent, achieving 10.7$\times$ higher pass-adjusted liquid throughput (28.1$\times$ peak) and a 112.8$\times$ throughput-to-power ratio (297$\times$ peak) relative to a 16-thread AVX2 host CPU baseline under post-route models.
+We presented a four-core FPGA accelerator for streaming Black-Scholes IV solving and concurrent Greeks ($\Delta, \nu, \Gamma$). Synergizing Brenner-Subrahmanyam seeding, Q8.24 scale-invariant normalization, and a zero-BRAM microarchitecture, the engine achieves nominal post-route timing closure at 100~MHz on Artix-7 200T (400~MOps/s peak, 4.258~W) and 250~MHz on Alveo U50 (1.00~GOps/s peak, 9.560~W) consuming 0 BRAM/URAM in the accelerator core. In canonical evaluation, dynamic loopback converges in 2.635 passes, delivering 151.82~MOps/s pass-adjusted nominal datapath throughput on Artix-7 (379.57~MOps/s on U50; 8.18~MOps/s closed-loop co-simulation), achieving 7.67~vol-bps liquid IV MAE (0.91~vol-bps median; 4.80~vol-bps algorithmic post-update, $3.04\times$ faster than fixed 8-pass). For NTM quotes, the solver achieves $1.57 \times 10^{-4}$ IV MAE (99.9\% within $1.0\%$). Replay on 1,382 CBOE SPX quotes validates normalization up to \$7,643 spot with zero arithmetic overflow observed. The design provides cycle-deterministic per-pass execution, with a 227-cycle core cold path and a measured 230-cycle AXI cold transaction (0.908/0.920~$\mu$s on U50; 2.27/2.30~$\mu$s on Artix-7); total latency is pass-dependent, delivering 10.7$\times$ higher pass-adjusted liquid throughput and a 112.8$\times$ throughput-to-power ratio relative to a 16-thread AVX2 CPU baseline.
 
 \noindent\textbf{Open-Source Artifact Reproducibility:} SystemVerilog RTL, Vivado scripts for Artix-7/U50, bit-accurate DPI-C co-simulation testbenches, and SPX replay vectors will be made openly available upon publication at an anonymized repository.
 

@@ -306,14 +306,14 @@ draw_elbow3(p_start=(78, 28.0), p_c1=(85.0, 28.0), p_c2=(85.0, 56.0), p_end=(98,
 # Stage 4 Loopback -> Stage 3 via Lane 2 (dashed red)
 draw_elbow3(p_start=(98, 44.0), p_c1=(92.0, 44.0), p_c2=(92.0, 16.0), p_end=(78, 16.0),
             color='#d62728', lw=1.8, ls='--',
-            label='Loopback\n' + r'$\sigma_{n+1}$' + ' (2.4% liq.)', label_pos=(92.0, 30.0),
+            label='Priority Loopback\n' + r'$\sigma_{n+1}$ ($|C_{\mathrm{BS}}-C_{\mathrm{mkt}}| > \epsilon$)', label_pos=(92.0, 30.0),
             label_kw=dict(bbox=dict(boxstyle='round,pad=0.25', facecolor='#ffffff',
                                     edgecolor='#d62728', lw=0.8, alpha=0.95)))
 
 # Stage 4 -> Stage 5 (converged)
 ax.annotate('', xy=(115, 34), xytext=(115, 40),
             arrowprops=dict(arrowstyle='->', lw=1.8, color='#2ca02c', mutation_scale=14))
-ax.text(117.5, 37.0, 'Converged (97.6%)\n(Liquid Subset)', fontsize=6.8, fontweight='bold',
+ax.text(117.5, 37.0, 'Converged IV & Greeks\n' + r'($|C_{\mathrm{BS}}-C_{\mathrm{mkt}}| \leq \epsilon$)', fontsize=6.8, fontweight='bold',
         color='#2ca02c', va='center')
 
 # External Ingress Arrow
