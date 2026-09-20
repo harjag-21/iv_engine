@@ -122,13 +122,13 @@ ax2.grid(True, axis='y', linestyle='--', alpha=0.5)
 ax2.legend(loc='upper center', bbox_to_anchor=(0.5, 0.99), ncol=3, fontsize=7.2, framealpha=0.92)
 
 # Annotate single pass rate and average passes for each regime cleanly below legend
-ax2.text(0, 2350, f'Single-Pass: {single_pass_pcts[0]:.1f}%\nAvg: {subsets[0]["avg_passes"]:.2f} passes',
+ax2.text(0, 2350, f'NTM: {single_pass_pcts[0]:.1f}% single-pass\nAvg passes: {subsets[0]["avg_passes"]:.2f}',
          ha='center', fontsize=7.2, fontweight='bold',
          bbox=dict(boxstyle="round,pad=0.2", fc="#e6f2ff", ec="#1f77b4", lw=1))
-ax2.text(1, 2350, f'Single-Pass: {single_pass_pcts[1]:.1f}%\nAvg: {subsets[1]["avg_passes"]:.2f} passes',
+ax2.text(1, 2350, f'Liquid: {single_pass_pcts[1]:.1f}% single-pass\nAvg passes: {subsets[1]["avg_passes"]:.2f}',
          ha='center', fontsize=7.2, fontweight='bold',
          bbox=dict(boxstyle="round,pad=0.2", fc="#fff2e6", ec="#ff7f0e", lw=1))
-ax2.text(2, 2350, f'Single-Pass: {single_pass_pcts[2]:.1f}%\nAvg: {subsets[2]["avg_passes"]:.2f} passes',
+ax2.text(2, 2350, f'Global: {single_pass_pcts[2]:.1f}% single-pass\nAvg passes: {subsets[2]["avg_passes"]:.2f}',
          ha='center', fontsize=7.2, fontweight='bold',
          bbox=dict(boxstyle="round,pad=0.2", fc="#f0fff0", ec="#2ca02c", lw=1))
 

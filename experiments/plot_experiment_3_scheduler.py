@@ -77,13 +77,13 @@ ax1.plot(p_sim, t_sim, 'o', color='#1f77b4', markersize=7, markeredgecolor='blac
 
 # Highlight boundary points
 ax1.scatter([0.0, 0.5, 1.0], [400.0, 266.67, 200.0], color='#d62728', s=45, zorder=5)
-ax1.annotate('p=0: 400.0 MOps/s', xy=(0.0, 400.0), xytext=(0.06, 385),
+ax1.annotate('Model: 400.0 MOps/s', xy=(0.0, 400.0), xytext=(0.06, 385),
              arrowprops=dict(facecolor='black', shrink=0.08, width=0.8, headwidth=4),
              fontsize=8.5, fontweight='bold')
-ax1.annotate('p=0.5: 266.7 MOps/s', xy=(0.5, 266.67), xytext=(0.45, 305),
+ax1.annotate('Model: 266.7 MOps/s', xy=(0.5, 266.67), xytext=(0.45, 305),
              arrowprops=dict(facecolor='black', shrink=0.08, width=0.8, headwidth=4),
              fontsize=8.5, fontweight='bold')
-ax1.annotate('p=1.0: 200.0 MOps/s', xy=(1.0, 200.0), xytext=(0.72, 170),
+ax1.annotate('Model: 200.0 MOps/s', xy=(1.0, 200.0), xytext=(0.72, 170),
              arrowprops=dict(facecolor='black', shrink=0.08, width=0.8, headwidth=4),
              fontsize=8.5, fontweight='bold')
 
@@ -150,14 +150,21 @@ ax2.legend(lines1 + lines2, labels1 + labels2, loc='lower right', framealpha=0.9
 
 # Save figure
 figures_dir = os.path.join(REPO_ROOT, "paper", "figures")
+paper_root = os.path.join(REPO_ROOT, "paper")
 os.makedirs(figures_dir, exist_ok=True)
 pdf_path = os.path.join(figures_dir, "fig3_scheduler_stress.pdf")
 png_path = os.path.join(figures_dir, "fig3_scheduler_stress.png")
+pdf_root_path = os.path.join(paper_root, "fig3_scheduler_stress.pdf")
+png_root_path = os.path.join(paper_root, "fig3_scheduler_stress.png")
 
 plt.savefig(pdf_path, bbox_inches='tight')
 plt.savefig(png_path, bbox_inches='tight')
+plt.savefig(pdf_root_path, bbox_inches='tight')
+plt.savefig(png_root_path, bbox_inches='tight')
 plt.close()
 
 print(f"Figure 3 successfully generated at:")
 print(f"  - {pdf_path}")
 print(f"  - {png_path}")
+print(f"  - {pdf_root_path}")
+print(f"  - {png_root_path}")
