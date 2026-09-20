@@ -118,14 +118,22 @@ ax2.legend(loc='upper left', framealpha=0.92)
 
 # Save figure
 figures_dir = os.path.join(REPO_ROOT, "paper", "figures")
+paper_dir = os.path.join(REPO_ROOT, "paper")
 os.makedirs(figures_dir, exist_ok=True)
+
 pdf_path = os.path.join(figures_dir, "fig4_precision_pareto.pdf")
 png_path = os.path.join(figures_dir, "fig4_precision_pareto.png")
+paper_pdf = os.path.join(paper_dir, "fig4_precision_pareto.pdf")
+paper_png = os.path.join(paper_dir, "fig4_precision_pareto.png")
 
 plt.savefig(pdf_path, bbox_inches='tight')
 plt.savefig(png_path, bbox_inches='tight')
+plt.savefig(paper_pdf, bbox_inches='tight')
+plt.savefig(paper_png, bbox_inches='tight')
 plt.close()
 
 print(f"Figure 4 successfully generated at:")
 print(f"  - {pdf_path}")
 print(f"  - {png_path}")
+print(f"  - {paper_pdf}")
+print(f"  - {paper_png}")

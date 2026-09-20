@@ -105,10 +105,10 @@ ax2.plot(fp_maes, fp_tputs, 'k--', alpha=0.6, linewidth=1.5, label='Fixed Time-M
 # Annotate proposed knee
 prop_mae = cfgs["prop_dynamic"]["liquid_domain"]["metrics"]["mae"]
 prop_tput = cfgs["prop_dynamic"]["liquid_domain"]["sustained_tput_mops"]
-ax2.annotate(f'Proposed Dynamic Knee:\n{prop_tput:.1f} MOps/s @ {prop_mae:.1f} bps\n(3.0$\\times$ faster than 8-pass)',
-             xy=(prop_mae, prop_tput), xytext=(12, 270),
+ax2.annotate(f'Proposed Dynamic:\n{prop_tput:.1f} MOps/s @ {prop_mae:.1f} bps modeled\n(7.67 bps synthesized RTL)',
+             xy=(prop_mae, prop_tput), xytext=(10, 260),
              arrowprops=dict(facecolor='#2ca02c', edgecolor='black', shrink=0.18, width=1.5, headwidth=6),
-             fontsize=8.5, fontweight='bold', bbox=dict(boxstyle="round,pad=0.35", fc="#eafaf1", ec="#2ca02c", lw=1.2))
+             fontsize=8.0, fontweight='bold', bbox=dict(boxstyle="round,pad=0.35", fc="#eafaf1", ec="#2ca02c", lw=1.2))
 
 for label, mae, tput, marker, color in points_liq:
     size = 140 if marker == '*' else 65
@@ -127,15 +127,22 @@ ax2.legend(loc='lower left', framealpha=0.9, fontsize=8)
 
 # Save figures
 figures_dir = os.path.join(REPO_ROOT, "paper", "figures")
+paper_dir = os.path.join(REPO_ROOT, "paper")
 os.makedirs(figures_dir, exist_ok=True)
 
 out_pdf = os.path.join(figures_dir, "fig2_iteration_ablation.pdf")
 out_png = os.path.join(figures_dir, "fig2_iteration_ablation.png")
+paper_pdf = os.path.join(paper_dir, "fig2_iteration_ablation.pdf")
+paper_png = os.path.join(paper_dir, "fig2_iteration_ablation.png")
 
 plt.savefig(out_pdf, bbox_inches='tight')
 plt.savefig(out_png, bbox_inches='tight')
+plt.savefig(paper_pdf, bbox_inches='tight')
+plt.savefig(paper_png, bbox_inches='tight')
 plt.close()
 
 print(f"Generated Figure 2 successfully:")
 print(f"  - {out_pdf}")
 print(f"  - {out_png}")
+print(f"  - {paper_pdf}")
+print(f"  - {paper_png}")

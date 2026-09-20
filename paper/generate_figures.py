@@ -93,7 +93,7 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.9), dpi=300)
 # (a) Histogram
 x = np.arange(1, 9)
 width = 0.36
-seeded_pct = np.array([97.6, 2.3, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0])
+seeded_pct = np.array([0.4, 49.5, 38.8, 10.1, 0.7, 0.1, 0.0, 0.4])
 unseeded_pct = np.array([11.8, 16.4, 17.2, 17.6, 14.1, 9.8, 5.3, 3.6])
 
 b1 = ax1.bar(x - width/2, seeded_pct, width, label='With Analytical Seed (B-S)', color='#1f77b4', edgecolor='black', alpha=0.85)
@@ -108,7 +108,7 @@ ax1.set_ylim([0, 115])
 ax1.grid(True, axis='y')
 ax1.legend(loc='upper right', framealpha=0.9)
 
-ax1.annotate('97.6% 1-Pass', xy=(1 - width/2, 97.6), xytext=(1.4, 75),
+ax1.annotate(r'88.7% $\le 3$ Passes', xy=(2 - width/2, 49.5), xytext=(2.4, 75),
              arrowprops=dict(facecolor='#1f77b4', shrink=0.08, width=1.2, headwidth=6),
              fontweight='bold', color='#1f77b4', fontsize=10.5)
 ax1.annotate('4.2% Fail / Oscillate', xy=(8 + width/2, 3.6), xytext=(4.2, 28),
@@ -116,7 +116,7 @@ ax1.annotate('4.2% Fail / Oscillate', xy=(8 + width/2, 3.6), xytext=(4.2, 28),
              fontweight='bold', color='#d62728', fontsize=10.5)
 
 # (b) Cumulative Convergence CDF
-cdf_seeded = np.array([97.6, 99.9, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0])
+cdf_seeded = np.cumsum(seeded_pct)
 cdf_unseeded = np.cumsum(unseeded_pct)
 
 ax2.plot(x, cdf_seeded, label='With Analytical Seed (Mean: 1.024)', color='#1f77b4', linewidth=2.2, marker='o', markersize=6)
@@ -313,7 +313,7 @@ draw_elbow3(p_start=(98, 44.0), p_c1=(92.0, 44.0), p_c2=(92.0, 16.0), p_end=(78,
 # Stage 4 -> Stage 5 (converged)
 ax.annotate('', xy=(115, 34), xytext=(115, 40),
             arrowprops=dict(arrowstyle='->', lw=1.8, color='#2ca02c', mutation_scale=14))
-ax.text(117.5, 37.0, 'Converged IV & Greeks\n(Liquid: 88.7% $\\leq 3$ passes; $\\bar{P} = 2.635$)', fontsize=6.5, fontweight='bold',
+ax.text(117.5, 37.0, 'Converged IV & Greeks\n' + r'($|C_{\mathrm{BS}}-C_{\mathrm{mkt}}| \leq \epsilon$)', fontsize=7.0, fontweight='bold',
         color='#2ca02c', va='center')
 
 # External Ingress Arrow
