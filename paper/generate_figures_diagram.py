@@ -53,8 +53,8 @@ s_mem = patches.FancyBboxPatch((0, 6), 26, 28, boxstyle='round,pad=0.8,rounding_
 ax.add_patch(s_mem)
 ax.text(13, 28.5, 'Zero-BRAM Context Store',
         ha='center', va='center', fontsize=9.0, fontweight='bold', color='#4a2468')
-ax.text(13, 16.5, '\u2022 64 x 32-bit Distributed LUTRAM\n\u2022 SRL32 Delay Shift Registers\n\u2022 0 Block RAMs / UltraRAMs\n\u2022 Leaves on-chip block memory\n  for external packet & DMA buffering',
-        ha='center', va='center', fontsize=7.4, linespacing=1.35)
+ax.text(13, 16.5, '\u2022 64 Context Slots / Core (256 Total)\n\u2022 60 Active + 4 Headroom Invariant\n  (Prevents Recirculation Deadlock)\n\u2022 Distributed LUTRAM & SRL32\n\u2022 0 Block RAM / UltraRAM in Core\n\u2022 Leaves 365 BRAM36 Free for System',
+        ha='center', va='center', fontsize=7.1, linespacing=1.30)
 
 # =========================================================================
 # Column 2: Stage 2 Seeder & Stage 3 Core Datapath (x = 38 to 78)
@@ -74,10 +74,10 @@ ax.text(58, 44.8, '\u2022 Shared Digit-Recurrence ' + r'$\sqrt{T}$' + ' (29 Cyc)
 s3 = patches.FancyBboxPatch((38, 6), 40, 28, boxstyle='round,pad=0.8,rounding_size=1.5',
                            edgecolor='#d62728', facecolor='#fdf0ef', linewidth=1.6)
 ax.add_patch(s3)
-ax.text(58, 28.5, 'Stage 3: Core BS Datapath\n(126 Cycles, II = 1)',
+ax.text(58, 28.5, 'Stage 3: Core Feedforward Datapath\n(126 Cycles, II = 1)',
         ha='center', va='center', fontsize=9.2, fontweight='bold', color='#681314')
-ax.text(58, 16.5, '• Scale-Invariant Padé Ratio (S-K)/(S+K)\n• 18-Cyc CORDIC Log Fallback (SRL15-Matched)\n• Horner 5th-Order Poly CDF N(d1), N(d2)\n• Hyperbolic CORDIC for exp(-rT) & exp(-d1²/2)\n• Fully Unrolled 126-Stage Feedforward',
-        ha='center', va='center', fontsize=7.4, linespacing=1.35)
+ax.text(58, 16.5, '\u2022 II = 1 Pipeline (Reused Across Passes)\n\u2022 Scale-Invariant Pad\u00e9 Ratio (S-K)/(S+K)\n\u2022 18-Cyc CORDIC Log Fallback (SRL15-Matched)\n\u2022 Horner 5th-Order Poly CDF N(d1), N(d2)\n\u2022 Hyperbolic CORDIC for exp(-rT) & exp(-d1\u00b2/2)',
+        ha='center', va='center', fontsize=7.1, linespacing=1.30)
 
 # =========================================================================
 # Column 3: Stage 4 NR Update & Stage 5 Egress (x = 98 to 132)
@@ -127,7 +127,7 @@ draw_elbow(p_start=(78, 28.0), p_c1=(85.0, 28.0), p_c2=(85.0, 56.0), p_end=(98, 
 # Stage 4 Loopback to Stage 3 via Lane 2 (x=92)
 draw_elbow(p_start=(98, 44.0), p_c1=(92.0, 44.0), p_c2=(92.0, 16.0), p_end=(78, 16.0),
            color='#d62728', lw=1.8, ls='--',
-           label='Not converged ' + r'$\rightarrow \sigma_{n+1}$' + ' Loopback', label_pos=(92.0, 30.0),
+           label='Nonconverged ' + r'$\rightarrow \sigma_{n+1}$' + ' Recirculation\n(Priority Restore to Stage 3)', label_pos=(92.0, 30.0),
            label_kw=dict(bbox=dict(boxstyle='round,pad=0.25', facecolor='#ffffff', edgecolor='#d62728', lw=0.8, alpha=0.95)))
 
 # Stage 4 to Stage 5
