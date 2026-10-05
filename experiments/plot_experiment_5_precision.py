@@ -101,10 +101,10 @@ ax2.set_ylim([0, 1300])
 ax2.grid(True, axis='y')
 
 # Annotate Q8.24 selected knee
-ax2.annotate('Selected Design Point (Q8.24)\n608 DSPs (82.2% Feasible)\nModel: 4.80 bps | RTL: 7.67 bps',
-             xy=(2, 608), xytext=(0.7, 850),
+ax2.annotate('Selected Design Point (Q8.24)\n608 DSPs (82.2% Capacity)\nResource-feasible; 4.80 vol-bps modeled MAE,\n7.67 vol-bps synthesized-RTL MAE',
+             xy=(2, 608), xytext=(0.65, 850),
              arrowprops=dict(facecolor='black', shrink=0.08, width=0.8, headwidth=4),
-             fontsize=7.8, fontweight='bold',
+             fontsize=7.4, fontweight='bold',
              bbox=dict(boxstyle="round,pad=0.3", fc="#e6f2ff", ec="#1f77b4", lw=1))
 
 # Overrun label

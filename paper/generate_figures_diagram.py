@@ -67,8 +67,8 @@ ax.text(58, 62.8, 'Stage 2: Analytical Seeder\n(Brenner-Subrahmanyam, 64 Cyc)',
         ha='center', va='center', fontsize=9.2, fontweight='bold', color='#7a3c04')
 ax.text(58, 52.8, r'$\sigma_0 \approx \frac{2.5066 \, C_{\mathrm{mkt}}}{\sqrt{T} \, (S+K)/2}$',
         ha='center', va='center', fontsize=9.2)
-ax.text(58, 44.8, '\u2022 Shared Digit-Recurrence ' + r'$\sqrt{T}$' + ' (29 Cyc, II = 1)\n\u2022 Forwards ' + r'$\sqrt{T}$' + ' Directly to Stage 3\n\u2022 Non-Restoring Divider (33 Cyc, II = 1)\n\u2022 Analytical Initial Estimate:\n  ' + r'Median Seed Err: $0.1037$ ($30.52\%$ rel)',
-        ha='center', va='center', fontsize=7.2, linespacing=1.35)
+ax.text(58, 44.5, '\u2022 Shared Digit-Recurrence ' + r'$\sqrt{T}$' + ' (29 Cyc, II = 1)\n\u2022 Forwards ' + r'$\sqrt{T}$' + ' Directly to Stage 3\n\u2022 Non-Restoring Divider (33 Cyc, II = 1)\n\u2022 Analytical Initial Estimate (Sec 2.4):\n  ' + r'Med Abs Err: $0.1037$ | Rel: $30.52\%$ ($11.53\%$ ATM)',
+        ha='center', va='center', fontsize=7.1, linespacing=1.32)
 
 # Stage 3: Core Black-Scholes Datapath (126 Cycles, II = 1)
 s3 = patches.FancyBboxPatch((38, 6), 40, 28, boxstyle='round,pad=0.8,rounding_size=1.5',
@@ -97,7 +97,7 @@ s5 = patches.FancyBboxPatch((98, 6), 34, 28, boxstyle='round,pad=0.8,rounding_si
 ax.add_patch(s5)
 ax.text(115, 28.5, 'Stage 5: Multi-Core Arbiter\n& 128-Bit Egress (2 Cycles)',
         ha='center', va='center', fontsize=9.2, fontweight='bold', color='#0e565d')
-ax.text(115, 16.5, '\u2022 Round-Robin 4-Core Drain Arbiter\n\u2022 128-Bit Data Payload:\n  [127:122] Local TID (6b)\n  [121:96]  Delta Greek (26b, Q2.24)\n  [95:64]   Gamma Greek (32b, Q8.24)*\n  [63:32]   Vega Greek (32b, Q8.24)*\n  [31:0]    sigma Implied Vol (32b)\n\u2022 Sideband: Core ID (2b)\n*Carries ' + r'$\nu^*, \Gamma^*$' + ' for normalized inputs',
+ax.text(115, 16.5, '\u2022 Round-Robin 4-Core Drain Arbiter\n\u2022 128-Bit Data Payload:\n  [127:122] Local TID (6b)\n  [121:96]  Delta Greek (26b, Q2.24)\n  [95:64]   Gamma Greek (32b, Q8.24)*\n  [63:32]   Vega Greek (32b, Q8.24)*\n  [31:0]    sigma Implied Vol (32b, Q8.24)\n\u2022 Sideband: Core ID (2b)\n*Carries ' + r'$\nu^*, \Gamma^*$' + ' for normalized inputs',
         ha='center', va='center', fontsize=6.8, linespacing=1.26)
 
 # =========================================================================

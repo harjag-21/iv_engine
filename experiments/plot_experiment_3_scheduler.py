@@ -10,7 +10,7 @@ Generates publication-quality dual-panel figure:
   1. (a) Throughput Reference Model Validation:
          Theoretical closed-form capacity T(p) = 400 / (1 + p) MOps/s vs.
          cycle-accurate simulated sustained throughput, annotating benchmark
-         operating points and empirical liquid / extended market regimes.
+         operating points and synthetic liquid-moneyness / extended-moneyness regimes.
   2. (b) Scoreboard Headroom & Latency Bounds:
          Execution latency percentiles (Median, P95, P99, Max) and burst drain
          stress confirming strict bounded queueing and 0-deadlock headroom isolation.

@@ -467,11 +467,11 @@ BRAM Baseline               & 400.00 & 8.14 & 2.31 / 231 & 5.56 / 556 & 15.27 / 
 
 \subsection{Saturation Diagnostics \& Backpressure Robustness}
 Table~\ref{tab:saturation_diagnostics} reports system saturation diagnostics. In closed-loop testbench co-simulation under a 64-credit window, the engine sustains 8.14~MOps/s on Dataset~A and 8.55~MOps/s on Dataset~B. Under downstream backpressure sweeps of 0\%, 20\%, and 50\% randomized stalls, the 64-entry distributed output FIFO absorbs stalls with $<0.2\%$ throughput variation (8.14~MOps/s at 0\% and 20\%, 8.13~MOps/s at 50\%) and only a 1.35-cycle mean latency delta (698.37 to 699.72 cycles).
-
 \begin{table*}[t]
 \caption{Architectural Comparison with Prior FPGA Option Accelerators}
 \label{tab:prior_art}
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{llcccccl}
 \toprule
 \textbf{Design} & \textbf{Numerical Task} & \textbf{Var. Iter.} & \textbf{Persist. Ctx.} & \textbf{Zero-BRAM} & \textbf{Greeks} & \textbf{Reported Rate / Clock} & \textbf{Target Device} \\
@@ -484,11 +484,13 @@ Klaisoongnoen et al.~\cite{klaisoongnoen2024evaluating} (2024) & Forward MC / AI
 \textbf{This Work (Artix-7)} & \textbf{Iterative IV + Greeks} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes (0 BRAM)} & \textbf{Yes} & \textbf{400 MOps/s\textsuperscript{\dag} @ 100 MHz} & \textbf{Artix-7 200T} \\
 \textbf{This Work (Alveo U50)} & \textbf{Iterative IV + Greeks} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes (0 BRAM)} & \textbf{Yes} & \textbf{1.00 GOps/s @ 250 MHz} & \textbf{Alveo U50} \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \vskip 2pt\raggedright
 \footnotesize{\textsuperscript{\dag}Nominal one-pass contract-ingress capacity (151.82~MOps/s open-loop nominal liquid service capacity; 8.14~MOps/s closed-loop RTL testbench). AXI cold latency: 2.30~$\mu$s (Artix-7) / 0.920~$\mu$s (U50, 230 cyc); core: 2.27~$\mu$s / 0.908~$\mu$s (227 cyc). Prior works accelerate forward pricing~\cite{tse2010customising,klaisoongnoen2024evaluating}, finite difference~\cite{becker2011dynamic,jin2012optimising}, or root-finding without Greeks~\cite{wang2022fpga}. This work combines variable-iteration recirculation, persistent distributed context, zero-BRAM core storage, and concurrent Greeks.}
 \end{table*}
 
+\newpage
 \subsection{Architectural Taxonomy \& Prior Art Comparison}
 Table~\ref{tab:prior_art} compares the architectural features of the proposed engine against prior FPGA accelerators. Prior works either accelerate forward pricing~\cite{tse2010customising}, evaluate finite-difference grids~\cite{becker2011dynamic,jin2012optimising}, or perform multi-section interval search without variable-iteration loopback or Greeks~\cite{wang2022fpga}. While Klaisoongnoen et al.~\cite{klaisoongnoen2024evaluating} evaluate AMD Versal AI Engines (AIE) for nested Monte Carlo forward simulations, our work addresses the orthogonal challenge of streaming inverse implied-volatility solving. Within the surveyed accelerators, this work uniquely combines variable-iteration recirculation, persistent distributed context, zero-BRAM core storage, and concurrent Greek extraction.
 
