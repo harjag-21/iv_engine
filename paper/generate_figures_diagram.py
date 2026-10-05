@@ -67,7 +67,7 @@ ax.text(58, 62.8, 'Stage 2: Analytical Seeder\n(Brenner-Subrahmanyam, 64 Cyc)',
         ha='center', va='center', fontsize=9.2, fontweight='bold', color='#7a3c04')
 ax.text(58, 52.8, r'$\sigma_0 \approx \frac{2.5066 \, C_{\mathrm{mkt}}}{\sqrt{T} \, (S+K)/2}$',
         ha='center', va='center', fontsize=9.2)
-ax.text(58, 44.8, '\u2022 Shared Digit-Recurrence ' + r'$\sqrt{T}$' + ' (29 Cyc)\n\u2022 Forwards ' + r'$\sqrt{T}$' + ' Directly to Stage 3\n\u2022 Non-Restoring Divider (33 Cyc)\n\u2022 Obs. Liquid Error: ' + r'$|\sigma_0 - \sigma^*| / \sigma^* < 0.5\%$' + '\n  ' + r'(obs. $< 0.08$ vol in wings)',
+ax.text(58, 44.8, '\u2022 Shared Digit-Recurrence ' + r'$\sqrt{T}$' + ' (29 Cyc, II = 1)\n\u2022 Forwards ' + r'$\sqrt{T}$' + ' Directly to Stage 3\n\u2022 Non-Restoring Divider (33 Cyc, II = 1)\n\u2022 Analytical Initial Estimate:\n  ' + r'Median Seed Err: $0.1037$ ($30.52\%$ rel)',
         ha='center', va='center', fontsize=7.2, linespacing=1.35)
 
 # Stage 3: Core Black-Scholes Datapath (126 Cycles, II = 1)
@@ -86,7 +86,7 @@ ax.text(58, 16.5, '\u2022 II = 1 Pipeline (Reused Across Passes)\n\u2022 Scale-I
 s4 = patches.FancyBboxPatch((98, 40), 34, 28, boxstyle='round,pad=0.8,rounding_size=1.5',
                            edgecolor='#2ca02c', facecolor='#edf7ed', linewidth=1.6)
 ax.add_patch(s4)
-ax.text(115, 62.8, 'Stage 4: NR Update & Dividers\n(33 Cycles)',
+ax.text(115, 62.8, 'Stage 4: NR Update & Dividers\n(33 Cycles, II = 1)',
         ha='center', va='center', fontsize=9.2, fontweight='bold', color='#134713')
 ax.text(115, 49.5, '• Convergence: ' + r'$|C_{\mathrm{BS}} - C_{\mathrm{mkt}}| \leq \$0.01$' + '\n• ' + r'$\mathbf{u\_nr\_divider}$' + ': ' + r'$\Delta\sigma = (C_{\mathrm{BS}} - C_{\mathrm{mkt}})/\nu$' + '\n• ' + r'$\mathbf{u\_gamma\_divider}$' + ': ' + r'$\Gamma = \phi(d_1)/(S\sigma\sqrt{T})$' + '\n• Greeks: ' + r'$\Delta = N(d_1)$' + ', ' + r'$\nu = S\sqrt{T}\phi(d_1)$' + '\n• TID-Scoreboard Priority Loopback',
         ha='center', va='center', fontsize=7.1, linespacing=1.35)
@@ -97,8 +97,8 @@ s5 = patches.FancyBboxPatch((98, 6), 34, 28, boxstyle='round,pad=0.8,rounding_si
 ax.add_patch(s5)
 ax.text(115, 28.5, 'Stage 5: Multi-Core Arbiter\n& 128-Bit Egress (2 Cycles)',
         ha='center', va='center', fontsize=9.2, fontweight='bold', color='#0e565d')
-ax.text(115, 16.5, '\u2022 Round-Robin 4-Core Drain Arbiter\n\u2022 128-Bit Data Payload:\n  [127:122] Local TID (6b)\n  [121:96]  Gamma Greek (26b)\n  [95:64]   Vega Greek (32b)\n  [63:32]   Delta Greek (32b)\n  [31:0]    sigma Implied Vol (32b)\n\u2022 Sideband: Core ID (2b)\n\u2022 Global Tag: {Core[1:0], TID[5:0]}',
-        ha='center', va='center', fontsize=7.0, linespacing=1.30)
+ax.text(115, 16.5, '\u2022 Round-Robin 4-Core Drain Arbiter\n\u2022 128-Bit Data Payload:\n  [127:122] Local TID (6b)\n  [121:96]  Delta Greek (26b, Q2.24)\n  [95:64]   Gamma Greek (32b, Q8.24)*\n  [63:32]   Vega Greek (32b, Q8.24)*\n  [31:0]    sigma Implied Vol (32b)\n\u2022 Sideband: Core ID (2b)\n*Carries ' + r'$\nu^*, \Gamma^*$' + ' for normalized inputs',
+        ha='center', va='center', fontsize=6.8, linespacing=1.26)
 
 # =========================================================================
 # Inter-block Arrows & Orthogonal Routing

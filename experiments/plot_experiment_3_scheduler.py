@@ -91,12 +91,12 @@ ax1.annotate('Model: 200.0 MOps/s', xy=(1.0, 200.0), xytext=(0.72, 170),
 liq_tput = empirical["liquid_regime"]["simulated_throughput_mops"]
 liq_passes = empirical["liquid_regime"]["avg_passes"]
 ax1.scatter([liq_passes - 1.0], [liq_tput], marker='*', s=160, color='#2ca02c',
-            edgecolor='black', zorder=6, label=f'Liquid Market ({liq_tput:.1f} MOps/s, $\\bar{{P}}=2.63$)')
+            edgecolor='black', zorder=6, label=f'Synthetic liquid-moneyness ({liq_tput:.1f} MOps/s, $\\bar{{P}}=2.63$)')
 
 ext_tput = empirical["extended_domain"]["simulated_throughput_mops"]
 ext_passes = empirical["extended_domain"]["avg_passes"]
 ax1.scatter([ext_passes - 1.0], [ext_tput], marker='D', s=60, color='#ff7f0e',
-            edgecolor='black', zorder=6, label=f'Extended Market ({ext_tput:.1f} MOps/s, $\\bar{{P}}=3.65$)')
+            edgecolor='black', zorder=6, label=f'Synthetic extended-moneyness ({ext_tput:.1f} MOps/s, $\\bar{{P}}=3.65$)')
 
 ax1.set_xlabel(r'Loopback Probability $p$ (Pass 2 Demand)')
 ax1.set_ylabel('Sustained Throughput (MOps/s)')
@@ -161,6 +161,10 @@ plt.savefig(pdf_path, bbox_inches='tight')
 plt.savefig(png_path, bbox_inches='tight')
 plt.savefig(pdf_root_path, bbox_inches='tight')
 plt.savefig(png_root_path, bbox_inches='tight')
+curr_brain_dir = r'C:\Users\user\.gemini\antigravity\brain\a960527e-43da-498f-afa3-d9d2fcea574e'
+if os.path.exists(curr_brain_dir):
+    plt.savefig(os.path.join(curr_brain_dir, 'fig3_scheduler_stress.png'), bbox_inches='tight')
+    plt.savefig(os.path.join(curr_brain_dir, 'fig3_scheduler_stress.pdf'), bbox_inches='tight')
 plt.close()
 
 print(f"Figure 3 successfully generated at:")
