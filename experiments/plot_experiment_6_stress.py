@@ -97,7 +97,7 @@ ax1.set_ylim([1.0, 730.0])
 # Panel (b): Real-World CBOE SPX Scale-Invariance Replay
 # ------------------------------------------------------------------------------
 subsets = [data_6b["subsets"]["liquid_ntm"], data_6b["subsets"]["liquid_range"], data_6b["subsets"]["global_spx"]]
-labels = ['Liquid NTM\n($0.95 \\leq S/K \\leq 1.05$)', 'Liquid Range\n($0.85 \\leq S/K \\leq 1.15$)', 'Global SPX Quotes\n($0.70 \\leq S/K \\leq 1.40$)']
+labels = ['NTM moneyness\n($0.95 \\leq S/K \\leq 1.05$)', 'Moneyness band\n($0.85 \\leq S/K \\leq 1.15$)', 'Full SPX quote sample\n($0.70 \\leq S/K \\leq 1.40$)']
 
 maes = [s["mae_vol_bps"] for s in subsets]
 medians = [s["median_vol_bps"] for s in subsets]
@@ -125,10 +125,10 @@ ax2.legend(loc='upper center', bbox_to_anchor=(0.5, 0.99), ncol=3, fontsize=7.2,
 ax2.text(0, 2350, f'NTM: {single_pass_pcts[0]:.1f}% Single-Pass\nAvg Passes: {subsets[0]["avg_passes"]:.2f}',
          ha='center', fontsize=7.2, fontweight='bold',
          bbox=dict(boxstyle="round,pad=0.2", fc="#e6f2ff", ec="#1f77b4", lw=1))
-ax2.text(1, 2350, f'Liquid: {single_pass_pcts[1]:.1f}% Single-Pass\nAvg Passes: {subsets[1]["avg_passes"]:.2f}',
+ax2.text(1, 2350, f'Band: {single_pass_pcts[1]:.1f}% Single-Pass\nAvg Passes: {subsets[1]["avg_passes"]:.2f}',
          ha='center', fontsize=7.2, fontweight='bold',
          bbox=dict(boxstyle="round,pad=0.2", fc="#fff2e6", ec="#ff7f0e", lw=1))
-ax2.text(2, 2350, f'Global: {single_pass_pcts[2]:.1f}% Single-Pass\nAvg Passes: {subsets[2]["avg_passes"]:.2f}',
+ax2.text(2, 2350, f'Full: {single_pass_pcts[2]:.1f}% Single-Pass\nAvg Passes: {subsets[2]["avg_passes"]:.2f}',
          ha='center', fontsize=7.2, fontweight='bold',
          bbox=dict(boxstyle="round,pad=0.2", fc="#f0fff0", ec="#2ca02c", lw=1))
 

@@ -80,9 +80,9 @@ ax1.set_ylim([1, 15000])
 ax1.grid(True, which='both', axis='y')
 ax1.legend(loc='upper right', framealpha=0.92)
 
-# Highlight accuracy threshold (< 10 bps)
+# Highlight accuracy threshold (< 10 bps MAE)
 ax1.axhline(10.0, color='#d62728', linestyle=':', lw=1.5)
-ax1.text(0.1, 12.0, '10 vol-bps Market Threshold', color='#d62728', fontsize=8.0, fontweight='bold')
+ax1.text(0.1, 12.0, '10 vol-bps MAE target', color='#d62728', fontsize=8.0, fontweight='bold')
 
 # ------------------------------------------------------------------------------
 # Panel (b): Hardware Resource Scaling & Device Capacity
