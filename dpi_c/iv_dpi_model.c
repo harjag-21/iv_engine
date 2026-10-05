@@ -46,13 +46,13 @@ void sv_record_accepted(int core_id, long long current_cycle) {
 
 void sv_push_result_128(uint64_t word_lo, uint64_t word_hi, long long current_cycle) {
     uint32_t sigma_q824 = (uint32_t)(word_lo & 0xFFFFFFFFULL);
-    int32_t  delta_q824 = (int32_t)((word_lo >> 32) & 0xFFFFFFFFULL);
-    int32_t  vega_q824  = (int32_t)(word_hi & 0xFFFFFFFFULL);
+    int32_t  vega_q824  = (int32_t)((word_lo >> 32) & 0xFFFFFFFFULL);
+    int32_t  gamma_q824 = (int32_t)(word_hi & 0xFFFFFFFFULL);
 
-    uint32_t gamma_raw  = (uint32_t)((word_hi >> 32) & 0x3FFFFFFULL);
-    int32_t  gamma_q824 = (gamma_raw & 0x2000000U)
-                          ? (int32_t)(gamma_raw | 0xFC000000U)
-                          : (int32_t)gamma_raw;
+    uint32_t delta_raw  = (uint32_t)((word_hi >> 32) & 0x3FFFFFFULL);
+    int32_t  delta_q824 = (delta_raw & 0x2000000U)
+                          ? (int32_t)(delta_raw | 0xFC000000U)
+                          : (int32_t)delta_raw;
 
     uint8_t tid = (uint8_t)((word_hi >> 58) & 0x3FULL);
 

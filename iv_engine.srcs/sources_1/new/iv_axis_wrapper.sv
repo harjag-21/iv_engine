@@ -51,13 +51,14 @@ module iv_axis_wrapper (
 
     // -----------------------------------------
     // Pack the pipeline output into 128 bits
-    // [31:0]   sigma (Q8.24)
-    // [63:32]  delta (Q8.24)
-    // [95:64]  vega  (Q8.24)
-    // [121:96] gamma (Q8.24, 26 bits)
+    // [31:0]   sigma (Q8.24, 32 bits)
+    // [63:32]  vega  (Q8.24, 32 bits)
+    // [95:64]  gamma (Q8.24, 32 bits, full dynamic range up to 127.999)
+    // [121:96] delta (Q2.24, 26 bits, range [-2.0, +1.999]; Delta in [0,1] preserves full 24b fractional precision)
     // [127:122] tid   (6 bits)
+    // Total = 32 + 32 + 32 + 26 + 6 = 128 bits
     // -----------------------------------------
-    wire [127:0] packed_output = {iv_done_tid, iv_done_gamma[25:0], iv_done_vega, iv_done_delta, iv_done_sigma};
+    wire [127:0] packed_output = {iv_done_tid, iv_done_delta[25:0], iv_done_gamma, iv_done_vega, iv_done_sigma};
 
     // -----------------------------------------
     // Output FIFO (AXI4-Stream Compliance & Data Loss Prevention)
