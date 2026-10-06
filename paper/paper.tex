@@ -39,7 +39,7 @@
 }
 
 \begin{abstract}
-Streaming financial analytics require repeated implied-volatility (IV) root finding and risk sensitivity evaluation under tight latency and resource bounds. We present a four-core spatial FPGA architecture for variable-iteration Black-Scholes IV solving with concurrent Delta, Vega, and Gamma evaluation. Rather than relying on Block RAM or UltraRAM FIFOs, the architecture organizes intermediate transaction state entirely within distributed LUTRAM and SRL32 structures, reserving all embedded block memory for host and network subsystem buffering. A priority-driven recirculation datapath re-injects non-converged contracts directly into pipeline Stage~3, while each core enforces a strict 4-slot scoreboard headroom invariant ($N_{\text{active}} \le 60$) that prevents circular buffer deadlock under continuous streaming traffic. 
+High-throughput financial analytics require repeated implied-volatility (IV) extraction and risk sensitivity evaluation under tight latency and resource bounds. We present a four-core spatial FPGA architecture for variable-iteration Black-Scholes IV solving with concurrent Delta, Vega, and Gamma evaluation. Rather than relying on Block RAM or UltraRAM FIFOs, the architecture organizes intermediate transaction state entirely within distributed LUTRAM and SRL32 structures, reserving all embedded block memory for host and network subsystem buffering. A priority-driven recirculation datapath re-injects non-converged contracts directly into pipeline Stage~3, while each core enforces a strict 4-slot scoreboard headroom invariant ($N_{\text{active}} \le 60$) that prevents circular buffer deadlock under continuous streaming traffic. 
 
 Dual-platform post-route implementation signoff demonstrates nominal timing closure at 100.00~MHz on AMD Artix-7 200T (+0.005~ns WNS, 4.258~W estimated power) and 250.00~MHz on AMD Alveo U50 (+0.073~ns WNS, 9.560~W), achieving nominal one-pass contract-ingress capacities of 400.00~MOps/s and 1.00~GOps/s, respectively. Numerical and hardware co-design using Brenner-Subrahmanyam analytical seeding converges in an empirical average of $\bar{P} = 2.635$ passes across the synthetic liquid-moneyness regime ($0.85 \le S/K \le 1.15$), yielding a derived open-loop, pass-adjusted nominal service capacity of 151.82~MOps/s on Artix-7 (379.57~MOps/s on U50). In closed-loop RTL co-simulation under a credit-constrained 64-credit window, the canonical workload sustains 8.14~MOps/s testbench throughput with zero observed loss or deadlock (8.18~MOps/s in a saturated zero-BRAM ablation). Across 113,882 evaluated transactions spanning four benchmark workloads, strict transaction integrity is maintained ($N_{\text{acc}} = N_{\text{ret}} = 113{,}882$, 0 lost, 0 duplicate, 0 tag mismatches). For liquid-moneyness contracts, synthesized RTL achieves an IV mean absolute error (MAE) of 7.67~vol-bps (median 0.91~vol-bps) and concurrent Greek MAEs of $4.41\times 10^{-3}$ ($\Delta$), 0.0971 ($\nu$), and $2.57\times 10^{-4}$ ($\Gamma$). A matched physical ablation confirms that eliminating 28 RAMB18 primitives saves 1 AXI cold cycle (230 vs. 231 cycles) and secures a +0.109~ns WNS advantage, enabling 100~MHz timing closure on Artix-7.
 \end{abstract}
@@ -75,7 +75,7 @@ The architectural contribution of this work is not the Black-Scholes formulation
 \begin{enumerate}
     \item \textbf{Recirculation vs. Spatial Unrolling:} Full spatial unrolling of an 8-pass Newton-Raphson datapath requires 2,432 DSP slices (328.6\% of an Artix-7 200T device). Conversely, naive feedback loops cause pipeline stall bubbles and circular buffer deadlock under bursty traffic. We introduce a priority recirculation mechanism with bounded scoreboard headroom that preserves forward progress while sharing an $II=1$ datapath across iteration passes.
     \item \textbf{Elimination of Accelerator-Core BRAM:} Conventional designs buffer intermediate transaction state in dedicated Block RAM primitives. On resource-constrained edge FPGAs, BRAM columns dictate routing congestion and exacerbate setup timing slack. We map all transaction context exclusively to distributed LUTRAM and SRL primitives (Zero-BRAM core), securing timing closure while leaving 100\% of device BRAM free for PCIe and network DMA subsystem buffering.
-    \item \textbf{Numerical \& Hardware Co-Design:} Standard Newton-Raphson solvers require 5--8 iterations from generic seeds. By pairing an analytical Brenner-Subrahmanyam guess seeder~\cite{brenner1988simple} with Q8.24 fixed-point arithmetic, our pipeline converges in an average of $\bar{P} = 2.635$ passes for liquid options ($0.85 \le S/K \le 1.15$), with 88.7\% converging within $\le 3$ passes.
+    \item \textbf{Numerical \& Hardware Co-Design:} Conventional Newton-Raphson solvers require 5--8 iterations from generic seeds. Pairing an analytical Brenner-Subrahmanyam guess seeder~\cite{brenner1988simple} with Q8.24 arithmetic enables our pipeline to converge in an average of $\bar{P} = 2.635$ passes for liquid options ($0.85 \le S/K \le 1.15$), with 88.7\% converging within $\le 3$ passes.
     \item \textbf{Concurrent Greek Extraction:} Rather than re-evaluating derivatives in separate execution cycles, our datapath reuses intermediate normal distributions and powers computed during Stage~3, outputting final IV, Delta, Vega, and Gamma concurrently within a single packed egress payload.
 \end{enumerate}
 
@@ -87,19 +87,21 @@ We demonstrate this architecture through a synthesized four-core design implemen
 \subsection{Black-Scholes Model \& Greeks}
 For a European call option with spot price $S$, strike $K$, time-to-maturity $T$ (years), risk-free rate $r$, and volatility $\sigma$, the theoretical Black-Scholes price is:
 \begin{equation}
-    C(S, K, T, r, \sigma) = S \, N(d_1) - K \, e^{-rT} N(d_2)
+    C(S, K, T, r, \sigma) = S N(d_1) - K e^{-rT} N(d_2)
     \label{eq:bs_call}
 \end{equation}
-where $N(x) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{x} e^{-t^2/2} \, dt$ is the standard normal cumulative distribution function (CDF), and:
+where $N(x) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^x e^{-t^2/2} \, dt$ is the standard normal cumulative distribution function (CDF), and:
 \begin{equation}
     d_1 = \frac{\ln(S/K) + (r + \frac{1}{2}\sigma^2)T}{\sigma\sqrt{T}}, \quad d_2 = d_1 - \sigma\sqrt{T}
     \label{eq:d1_d2}
 \end{equation}
 The financial risk sensitivities (Greeks) are given by:
 \begin{equation}
-    \Delta = \frac{\partial C}{\partial S} = N(d_1), \quad 
-    \nu = \frac{\partial C}{\partial \sigma} = S \sqrt{T} N'(d_1), \quad 
-    \Gamma = \frac{\partial^2 C}{\partial S^2} = \frac{N'(d_1)}{S \sigma \sqrt{T}}
+\begin{aligned}
+    \Delta &= \frac{\partial C}{\partial S} = N(d_1), \quad 
+    \nu = \frac{\partial C}{\partial \sigma} = S \sqrt{T} N'(d_1), \\
+    \Gamma &= \frac{\partial^2 C}{\partial S^2} = \frac{N'(d_1)}{S \sigma \sqrt{T}}
+\end{aligned}
     \label{eq:greeks}
 \end{equation}
 where $N'(x) = \frac{1}{\sqrt{2\pi}} e^{-x^2/2}$ is the standard normal probability density function (PDF).
@@ -126,7 +128,7 @@ We define the algorithmic root-finding convergence criterion in the market price
 We use a fixed price-residual tolerance of $\epsilon = \$0.01$ (represented in Q8.24 as $32'd167772$) as an algorithmic convergence criterion. For scale-normalized inputs, the corresponding threshold is $\tilde{\epsilon} = 0.01 / K$. This tolerance is an implementation choice designed to balance pricing precision against iteration depth, rather than a claim about specific exchange minimum tick sizes. The fixed price-residual tolerance does not guarantee a uniform implied-volatility error bound because the mapping from price error to volatility error depends on Vega ($|\Delta\sigma| \approx |\Delta C| / \nu$). We therefore evaluate IV accuracy empirically against a double-precision reference. On the evaluated near-the-money benchmark, the synthesized RTL achieves an IV MAE of 1.57~vol-bps; errors can increase substantially in low-Vega regimes. In extreme wings where Vega vanishes ($\nu \to 0$), the price residual criterion halts unproductive iterations and prevents division-by-zero instability.
 
 \subsection{Analytical Guess Seeder \& Function Approximations}
-To minimize iteration count, we evaluate the Brenner-Subrahmanyam analytical guess~\cite{brenner1988simple} in hardware:
+To minimize iterations, we evaluate Brenner-Subrahmanyam seeding~\cite{brenner1988simple} in hardware:
 \begin{equation}
     \sigma_0 \approx \frac{\sqrt{2\pi} \cdot C_{\text{mkt}}}{\frac{S + K}{2} \cdot \sqrt{T}} \approx \frac{2.5066 \cdot C_{\text{mkt}}}{\sqrt{T} \cdot (S + K)/2}
     \label{eq:seeder}
@@ -137,12 +139,12 @@ Nonlinear transcendental operations are implemented with hardware-tailored polyn
 \begin{itemize}
     \item \textbf{Normal CDF $N(x)$:} Approximated via the 5th-order Abramowitz-Stegun polynomial~\cite{abramowitz1964handbook} (Eq.~26.2.17) evaluated via Horner's rule across 6 cascaded polynomial multiply-accumulate stages ($\max |\epsilon_{\text{poly}}| \le 7.5 \times 10^{-8}$). In 32-bit Q8.24 arithmetic, each product decomposes across multiple sub-word DSP slices, totaling 48 DSP48E1 slices per CDF block (96 DSPs per core across $N(d_1)$ and $N(d_2)$ chains).
     \item \textbf{Exponential $e^{-x}$:} Evaluated using a 16-stage unrolled Hyperbolic CORDIC pipeline in rotation mode (driving $z \to 0$) followed by $K_n \approx 1.2075$ scale compensation.
-    \item \textbf{Logarithm $\ln(S/K)$:} Implemented using a two-region hybrid datapath. For near-the-money contracts \mbox{($|S/K - 1| \le 0.15$)}, a [1/1] Pad\'{e} rational approximant evaluates:
+    \item \textbf{Logarithm $\ln(S/K)$:} Implemented with a two-region hybrid datapath. For near-the-money options ($|S/K - 1| \le 0.15$), a [1/1] Pad\'{e} approximant evaluates:
     \begin{equation}
         \ln\left(\frac{S}{K}\right) \approx 2 \cdot \frac{S - K}{S + K}
         \label{eq:pade_log}
     \end{equation}
-    saving 15 clock cycles. For wing contracts \mbox{($|S/K - 1| > 0.15$)}, a 16-stage Hyperbolic CORDIC logarithm evaluates full $\ln(S/K)$, matched to 33 clock cycles via SRL delay matching.
+    saving 15 clock cycles. For wing contracts ($|S/K - 1| > 0.15$), a 16-stage Hyperbolic CORDIC logarithm evaluates full $\ln(S/K)$, matched to 33 clock cycles via SRL delay matching.
 \end{itemize}
 
 % -------------------------------------------------------------------------
@@ -163,14 +165,13 @@ As illustrated in Figure~\ref{fig:arch}, each independent compute core implement
     \item \textbf{Stage 1: Ingress Registration \& Queuing (1 Cycle):} Admitted AXI4-Stream transactions carrying $\{S, K, T, r, C_{\text{mkt}}, \text{TID}\}$ are registered. Strike normalization is handled algebraically downstream, eliminating an initial division.
     \item \textbf{Stage 2: Analytical Seeder \& Sqrt Unit (64 Cycles, $II=1$):} A shared 29-cycle fully pipelined digit-recurrence square-root core ($II=1$) evaluates $\sqrt{T}$ and forwards it directly to Stage~3 via context registers, avoiding redundant square-root units. An internal 33-cycle pipelined non-restoring divider ($II=1$) computes $\sigma_0$ via Eq.~(\ref{eq:seeder}). Every sub-operator sustains an initiation interval of $II=1$, ingesting one transaction per cycle.
     \item \textbf{Stage 3: Core Feedforward Datapath (126 Cycles, $II=1$):} A fully unrolled, 126-cycle feedforward pipeline accepting one transaction per cycle ($II=1$). Sub-operations include Pad\'{e}/CORDIC logarithm selection, $d_1/d_2$ computation, 5th-order Horner CDF evaluation, and exponential scaling.
-    \item \textbf{Stage 4: Convergence Check \& Greek Dividers (33 Cycles, $II=1$):} Checks $|C_{\text{BS}} - C_{\text{mkt}}| \le \epsilon$. Non-converged contracts evaluate $\Delta\sigma = (C_{\text{BS}} - C_{\text{mkt}}) / \nu$ concurrently with the Gamma quotient $\Gamma = N'(d_1) / (S\sigma\sqrt{T})$ using two parallel 33-cycle pipelined non-restoring integer dividers ($II=1$).
+    \item \textbf{Stage 4: Convergence Check \& Greek Dividers (33 Cycles, $II=1$):} Checks $|C_{\text{BS}} - C_{\text{mkt}}| \le \epsilon$. Non-converged contracts evaluate $\Delta\sigma = (C_{\text{BS}} - C_{\text{mkt}})/\nu$ concurrently with the Gamma quotient $\Gamma = N'(d_1)/(S\sigma\sqrt{T})$ using two parallel 33-cycle pipelined non-restoring integer dividers ($II=1$).
     \item \textbf{Stage 5: Arbitration \& Egress Packing (2 Cycles):} Converged results are packed into a 128-bit payload and drained via a 4-core round-robin arbiter.
 \end{itemize}
-
-Internal cold latency is exactly 227 cycles (1 Stage~1 + 64 Stage~2 + 1 FIFO + 126 Stage~3 + 33 Stage~4 + 2 Stage~5), translating to 2.27~$\mu$s at 100~MHz on Artix-7 and 0.908~$\mu$s at 250~MHz on Alveo U50. With AXI interface registration handshakes, end-to-end cold latency is 230 cycles (2.30~$\mu$s Artix-7 / 0.920~$\mu$s U50). Each additional loopback pass incurs 159 cycles (389 AXI / 386 core cycles for a 2-pass contract).
+Internal cold latency is exactly 227 cycles (1 Stage 1 + 64 Stage 2 + 1 FIFO + 126 Stage 3 + 33 Stage 4 + 2 Stage 5), translating to 2.27~$\mu$s at 100~MHz on Artix-7 and 0.908~$\mu$s at 250~MHz on Alveo U50. With AXI interface registration handshakes, end-to-end cold latency is 230 cycles (2.30~$\mu$s Artix-7 / 0.920~$\mu$s U50). Each additional loopback pass incurs 159 cycles (389 AXI / 386 core cycles for a 2-pass contract).
 
 \subsection{Zero-BRAM Distributed Context Store}
-Standard spatial designs store in-flight transaction parameters in Block RAM (BRAM18/36) FIFOs. On resource-constrained edge devices such as the Artix-7 200T, BRAM placement along fixed vertical silicon columns introduces routing bottlenecks that degrade setup timing. Our architecture implements all context storage exclusively using distributed Slice LUTRAM (\texttt{ram\_style = "distributed"}) and SRL32 shift registers, consuming \textbf{0 Block RAMs and 0 UltraRAMs} inside the accelerator core. 
+Standard spatial designs store in-flight transaction parameters in Block RAM (BRAM18/36) FIFOs. On resource-constrained edge devices such as the Artix-7 200T, BRAM placement along fixed vertical silicon columns introduces routing bottlenecks that degrade setup timing. Our architecture implements all context storage exclusively using distributed Slice LUTRAM (\texttt{ram\_style = "distributed"}) and SRL32 shift registers, consuming \textbf{0 Block RAMs and 0 UltraRAMs} inside the accelerator core.
 
 Feedforward transaction data flows through SRL32s at $II=1$, while static parameters $\{S, K, C_{\text{mkt}}, r, T\}$ are held in distributed LUTRAM across each transaction's lifetime (230 cycles cold, up to 1,518 cycles for 8 passes). Each core provisions 64 context slots (256 slots across the 4-core array), indexed by a 6-bit Transaction ID (TID). A 64-bit scoreboard (\texttt{tid\_busy\_mask}) tracks active slot occupancy.
 
@@ -182,19 +183,22 @@ To prevent circular waiting, each core enforces a strict \textbf{4-slot scoreboa
     N_{\text{active}} \le 60 \quad (\text{out of 64 provisioned slots})
     \label{eq:headroom}
 \end{equation}
-When active contracts reach 60, ingress backpressure (\texttt{s\_axis\_tready = 0}) asserts immediately, reserving 4 slots exclusively for recirculating loopbacks. Because recirculating contracts hold pre-allocated context slots and preempt Stage~3 ingress via a 2-to-1 multiplexer, loopbacks preserve forward progress without circular wait. Across 113,882 cycle-accurate verification transactions and burst stress tests up to 256 contracts, zero deadlocks and zero stall overflows were observed.
+When active contracts reach 60, ingress backpressure (\texttt{s\_axis\_}\allowbreak\texttt{tready = 0}) asserts immediately, reserving 4 slots exclusively for recirculating loopbacks. Because recirculating contracts hold pre-allocated context slots and preempt Stage~3 ingress via a 2-to-1 multiplexer, loopbacks preserve forward progress without circular wait. Across 113,882 cycle-accurate verification transactions and burst stress tests up to 256 contracts, zero deadlocks and zero stall overflows were observed.
 
 \subsection{128-Bit Egress Packing \& Greek Export}
 Upon convergence, results are packed into a 128-bit payload:
 \begin{equation}
-    \text{Egress}[127:0] = \{ \text{TID}[5:0],\, \Delta[25:0],\, \Gamma[31:0],\, \nu[31:0],\, \sigma[31:0] \}
+\begin{aligned}
+    \text{Egress}[127:0] = \{ &\text{TID}[5:0],\, \Delta[25:0], \\
+    &\Gamma[31:0],\, \nu[31:0],\, \sigma[31:0] \}
+\end{aligned}
     \label{eq:egress_pack}
 \end{equation}
 carrying the 6-bit local TID, 26-bit Delta (signed Q2.24), 32-bit Gamma (signed Q8.24), 32-bit Vega (signed Q8.24), and 32-bit IV ($6 + 26 + 32 + 32 + 32 = 128$ bits). The 2-bit originating core ID is emitted on an AXI sideband, forming a composite global tag $\{\text{Core}[1:0], \text{TID}[5:0]\}$ that tracks up to 240 concurrent in-flight contracts without a reorder buffer.
 
 Because European call option Delta is mathematically bounded to $\Delta \in [0, 1]$, allocating 26 bits (signed Q2.24, range $[-2.0, +1.999]$) preserves 100\% of Delta's 24-bit fractional resolution with zero precision loss. Concurrently, allocating the full 32-bit Q8.24 format to Gamma expands the exportable dynamic range from $[-2.0, +1.999]$ to $[-128.0, +127.999]$. This completely resolves short-expiry normalized Gamma dynamic range clipping, accommodating the peak observed dimensionless $\Gamma^* = 72.43$ without saturation.
 
-For transactions with scale-normalized inputs ($S^* = S/K, K^* = 1.0$, such as SPX index quotes in Dataset~D), the 128-bit payload carries dimensionless normalized Greeks: $\nu^*$ in the Vega field and $\Gamma^*$ in the Gamma field. The downstream host or risk consumer recovers standard monetary Greeks via:
+For scale-normalized transactions ($S^* = S/K, K^* = 1.0$, such as SPX quotes in Dataset~D), the 128-bit payload carries dimensionless normalized Greeks: $\nu^*$ in Vega and $\Gamma^*$ in Gamma. The downstream host or risk consumer recovers standard monetary Greeks via:
 \begin{equation}
     \nu = K \cdot \nu^*, \qquad \Gamma = \frac{\Gamma^*}{K}
     \label{eq:egress_recovery}
@@ -209,15 +213,15 @@ We rigorously distinguish three throughput metrics:
     \begin{equation}
         T_{\text{nominal}} = \frac{T_{\text{peak}}}{\bar{P}}
     \end{equation}
-    Under the synthetic liquid-moneyness distribution ($0.85 \le S/K \le 1.15$), contracts average $\bar{P} = 2.635$ passes, yielding $151.82$~MOps/s on Artix-7 and $379.57$~MOps/s on U50.
-    \item \textbf{Measured Closed-Loop RTL Testbench Throughput ($T_{\text{meas}}$):} The actual sustained rate measured in cycle-accurate RTL co-simulation under a finite credit window. With 64 outstanding credits (16 credits/core) and a measured 698.4-cycle mean round-trip latency ($6.984\,\mu\text{s}$ at 100~MHz), Little's Law ($T = N / L$) bounds concurrency to $64 / 6.984\,\mu\text{s} \approx 9.16$~MOps/s. The closed-loop testbench sustains $8.14$~MOps/s on the canonical suite (8.18~MOps/s in memory ablation).
+    Under the synthetic liquid-moneyness distribution ($0.85 \le S/K \le 1.15$), contracts average $\bar{P} = 2.635$ passes, yielding $151.82$ MOps/s on Artix-7 and $379.57$ MOps/s on Alveo U50.
+    \item \textbf{Measured RTL Testbench Throughput ($T_{\text{meas}}$):} The actual sustained rate measured in cycle-accurate RTL co-simulation under a finite credit window. With 64 outstanding credits (16 credits/core) and a measured 698.4-cycle mean round-trip latency ($6.984\,\mu\text{s}$ at 100~MHz), Little's Law ($T = N / L$) bounds concurrency to $64 / 6.984\,\mu\text{s} \approx 9.16$~MOps/s. The closed-loop testbench sustains $8.14$~MOps/s on the canonical suite (8.18~MOps/s in memory ablation).
 \end{enumerate}
 
 % -------------------------------------------------------------------------
 \section{Physical Implementation Signoff}
 % -------------------------------------------------------------------------
 \subsection{Dual-Platform Signoff \& Resource Utilization}
-The four-core spatial architecture was synthesized, placed, and routed using AMD Vivado 2025.2 across two silicon targets: (1) an edge-oriented AMD Artix-7 200T (\texttt{xc7a200tffg1156-3}, 28nm planar), and (2) a datacenter AMD Alveo U50 accelerator (\texttt{xcu50-fsvh2104-2-e}, 16nm FinFET).
+The four-core spatial architecture was synthesized, placed, and routed using AMD Vivado 2025.2 across two silicon targets: (1) an edge-oriented AMD Artix-7 200T (\texttt{xc7a200t}\allowbreak\texttt{ffg1156-3}, 28nm planar), and (2) a datacenter AMD Alveo U50 accelerator (\texttt{xcu50-fsvh2104-2-e}, 16nm FinFET).
 
 \begin{table}[t]
 \caption{Dual-Platform Post-Route Signoff (Artix-7 200T vs. Alveo U50)}
@@ -305,7 +309,7 @@ To isolate the numerical error contributed by individual approximations in the p
     \item \textbf{Exact Normal CDF (Replacing Horner Poly):} 1.63 vol-bps liquid MAE (isolates normal CDF truncation as the dominant error contributor).
     \item \textbf{Exact Division (Replacing 33-Cycle Divider):} 5.57 vol-bps liquid MAE.
     \item \textbf{Exact Logarithm (Replacing Pad\'{e}/CORDIC Log):} 5.59 vol-bps liquid MAE.
-    \item \textbf{Exact Exponential (Replacing Hyperbolic CORDIC):} 5.47 vol-bps liquid MAE.
+    \item \textbf{Exact Exponential (Replacing CORDIC):} 5.47 vol-bps liquid MAE.
     \item \textbf{Bit-Accurate Emulation Baseline:} 5.57 vol-bps liquid MAE (155.14 vol-bps extended suite MAE).
     \item \textbf{Synthesized Physical Q8.24 RTL:} 7.67 vol-bps liquid MAE (127.86 vol-bps extended suite MAE, median 0.91 vol-bps).
 \end{enumerate}
@@ -381,7 +385,7 @@ Figure~\ref{fig:boundary_stress} examines a 2,500-point boundary surface alongsi
 
 \textit{Boundary Stress Surface (Dataset C):} In Figure~\ref{fig:boundary_stress}(a), moneyness $S/K \in [0.70, 1.40]$ and maturity $T \in [0.0027, 2.0]$~yr are sampled on a dense $50 \times 50$ grid. The surface identifies two demanding regimes:
 \begin{enumerate}
-    \item \textbf{Low-Vega Boundary ($T < 14$~days):} As $T \to 0$, Vega vanishes ($\nu \to 0$), causing unconstrained Newton-Raphson updates to destabilize. Hardware step clamping ($|\Delta\sigma| \le 0.25$) successfully bounds solver steps, maintaining finite error (MAE 4,389.72~vol-bps) without pipeline divergence.
+    \item \textbf{Low-Vega Boundary ($T < 14$~days):} As $T \to 0$, Vega vanishes ($\nu \to 0$), causing unconstrained Newton-Raphson updates to destabilize. Hardware step clamping ($|\Delta\sigma| \le 0.25$) successfully bounds solver steps, maintaining finite error (MAE 4,389.72 vol-bps) without pipeline divergence.
     \item \textbf{Pad\'{e} Transition Zone ($|S/K - 1| \approx 0.15$):} Across the sampled boundary region near $|S/K - 1| \approx 0.15$, we observe an elevated MAE of 415.24~vol-bps (averaging 4.96 passes), reflecting the compound numerical sensitivity of piecewise approximation combined with low-Vega boundary dynamics. Inside the grid interior ($0.85 \le S/K \le 1.15, T \ge 14\text{d}$), grid MAE is 104.38~vol-bps. This grid interior includes short maturities down to 14 days ($14\text{d} \le T < 36\text{d}$); when restricted to maturities matched to Dataset~A ($0.85 \le S/K \le 1.15, T \ge 0.10$~yr), grid MAE drops to 15.38~vol-bps (median 0.64~vol-bps), and reaches 1.39~vol-bps (median 0.38~vol-bps) in the near-the-money core ($0.90 \le S/K \le 1.10, T \ge 0.10$~yr).
 \end{enumerate}
 
