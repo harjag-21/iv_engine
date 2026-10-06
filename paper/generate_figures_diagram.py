@@ -112,12 +112,13 @@ ax.add_patch(s4)
 ax.text(131.0, 78.5, 'Stage 4: NR Update & Dividers\n(33 Cycles, II = 1)',
         ha='center', va='center', fontsize=9.4, fontweight='bold', color='#134713')
 txt_s4 = ('\u2022 Convergence: ' + r'$|C_{\mathrm{BS}} - C_{\mathrm{mkt}}| \leq \$0.01$' + '\n' +
+          '  (Norm: ' + r'$|C^*_{\mathrm{BS}} - C^*_{\mathrm{mkt}}| \leq 0.01/K$' + ')\n' +
           '\u2022 ' + r'$\mathbf{u\_nr\_divider}$' + ': ' + r'$\Delta\sigma = (C_{\mathrm{BS}} - C_{\mathrm{mkt}})/\nu$' + '\n' +
           '\u2022 ' + r'$\mathbf{u\_gamma\_divider}$' + ': ' + r'$\Gamma = \phi(d_1)/(S\sigma\sqrt{T})$' + '\n' +
           '\u2022 Greeks: ' + r'$\Delta = N(d_1)$' + ', ' + r'$\nu = S\sqrt{T}\phi(d_1)$' + '\n' +
           '\u2022 TID-Scoreboard Priority Loopback')
-ax.text(114.0, 64.0, txt_s4,
-        ha='left', va='center', fontsize=7.2, linespacing=1.35)
+ax.text(114.0, 63.5, txt_s4,
+        ha='left', va='center', fontsize=6.8, linespacing=1.28)
 
 # Stage 5: Multi-Core Arbiter & 128-Bit Egress (2 Cycles)
 s5 = patches.FancyBboxPatch((112, 10), 38, 30, boxstyle='round,pad=0.8,rounding_size=1.5',

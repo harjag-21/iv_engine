@@ -39,7 +39,7 @@
 }
 
 \begin{abstract}
-High-throughput financial analytics require repeated implied-volatility (IV) extraction and risk sensitivity evaluation under tight latency and resource bounds. We present a four-core spatial FPGA architecture for variable-iteration Black-Scholes IV solving with concurrent Delta, Vega, and Gamma evaluation. Rather than relying on Block RAM or UltraRAM FIFOs, the architecture organizes intermediate transaction state entirely within distributed LUTRAM and SRL32 structures, reserving all embedded block memory for host and network subsystem buffering. A priority-driven recirculation datapath re-injects non-converged contracts directly into pipeline Stage~3, while each core enforces a strict 4-slot scoreboard headroom invariant ($N_{\text{active}} \le 60$) that prevents circular buffer deadlock under continuous streaming traffic. 
+High-throughput financial analytics require repeated implied-volatility (IV) extraction and risk sensitivity evaluation under tight latency and resource bounds. We present a four-core spatial FPGA architecture for variable-iteration Black-Scholes IV solving with concurrent Delta, Vega, and Gamma evaluation. Rather than relying on Block RAM or UltraRAM FIFOs, the architecture organizes intermediate transaction state entirely within distributed LUTRAM and SRL32 structures, leaving all embedded block memory available for host and network subsystem buffering. A priority-driven recirculation datapath re-injects non-converged contracts directly into pipeline Stage~3, while each core enforces a strict 4-slot scoreboard headroom invariant ($N_{\text{active}} \le 60$) that prevents circular buffer deadlock under continuous streaming traffic. 
 
 Dual-platform post-route implementation signoff demonstrates nominal timing closure at 100.00~MHz on AMD Artix-7 200T (+0.005~ns WNS, 4.258~W estimated power) and 250.00~MHz on AMD Alveo U50 (+0.073~ns WNS, 9.560~W), achieving nominal one-pass contract-ingress capacities of 400.00~MOps/s and 1.00~GOps/s, respectively. Numerical and hardware co-design using Brenner-Subrahmanyam analytical seeding converges in an empirical average of $\bar{P} = 2.635$ passes across the synthetic liquid-moneyness regime ($0.85 \le S/K \le 1.15$), yielding a derived open-loop, pass-adjusted nominal service capacity of 151.82~MOps/s on Artix-7 (379.57~MOps/s on U50). In closed-loop RTL co-simulation under a credit-constrained 64-credit window, the canonical workload sustains 8.14~MOps/s testbench throughput with zero observed loss or deadlock (8.18~MOps/s in a saturated zero-BRAM ablation). Across 113,882 evaluated transactions spanning four benchmark workloads, strict transaction integrity is maintained ($N_{\text{acc}} = N_{\text{ret}} = 113{,}882$, 0 lost, 0 duplicate, 0 tag mismatches). For liquid-moneyness contracts, synthesized RTL achieves an IV mean absolute error (MAE) of 7.67~vol-bps (median 0.91~vol-bps) and concurrent Greek MAEs of $4.41\times 10^{-3}$ ($\Delta$), 0.0971 ($\nu$), and $2.57\times 10^{-4}$ ($\Gamma$). A matched physical ablation confirms that eliminating 28 RAMB18 primitives saves 1 AXI cold cycle (230 vs. 231 cycles) and secures a +0.109~ns WNS advantage, enabling 100~MHz timing closure on Artix-7.
 \end{abstract}
@@ -69,11 +69,11 @@ Dual-platform post-route implementation signoff demonstrates nominal timing clos
 % -------------------------------------------------------------------------
 \section{Introduction}
 % -------------------------------------------------------------------------
-Modern options pricing and market risk systems require continuous calculation of implied volatility (IV)---the standard deviation of underlying asset returns implied by market option prices---alongside first- and second-order price sensitivities (Greeks: Delta $\Delta$, Vega $\nu$, Gamma $\Gamma$). Because the Black-Scholes formula~\cite{black1973pricing} has no closed-form analytical inverse, streaming IV extraction requires iterative numerical root-finding. On conventional CPU and GPU architectures, streaming root-finding suffers from variable iteration trajectories, instruction branch divergence, and millisecond-scale operating system scheduling jitter~\cite{omahony2024role}. While custom spatial architectures on FPGAs offer cycle-deterministic datapath execution, existing hardware accelerators predominantly focus on forward option pricing~\cite{tse2010customising,klaisoongnoen2024evaluating} or multi-section interval bisection~\cite{wang2022fpga}. These prior designs either unroll a fixed iteration depth, consume prohibitive Block RAM (BRAM) capacity for intermediate queuing, or omit concurrent Greek evaluation entirely.
+Modern options pricing and market risk systems require continuous calculation of implied volatility (IV)---the standard deviation of underlying asset returns implied by market option prices---alongside first- and second-order price sensitivities (Greeks: Delta $\Delta$, Vega $\nu$, Gamma $\Gamma$). Because the Black-Scholes formula~\cite{black1973pricing} has no closed-form analytical inverse, streaming IV extraction requires iterative numerical root-finding. On conventional CPU and GPU architectures, streaming root-finding suffers from variable iteration trajectories, instruction branch divergence, and operating-system scheduling variability~\cite{omahony2024role}. While custom spatial architectures on FPGAs offer cycle-deterministic datapath execution, existing hardware accelerators predominantly focus on forward option pricing~\cite{tse2010customising,klaisoongnoen2024evaluating} or multi-section interval bisection~\cite{wang2022fpga}. These prior designs either unroll a fixed iteration depth, consume prohibitive Block RAM (BRAM) capacity for intermediate queuing, or omit concurrent Greek evaluation entirely.
 
-The architectural contribution of this work is not the Black-Scholes formulation itself, but a hardware organization for variable-iteration numerical kernels with persistent transaction state across pipeline passes. By combining distributed per-transaction context, bounded scoreboard headroom, priority recirculation, and an $II=1$ feedforward datapath, nonconverged transactions re-enter the numerical pipeline without BRAM/URAM state storage. Evaluated through Black-Scholes IV root-finding, the architecture addresses four acute spatial computing challenges:
+The architectural contribution of this work is not the Black-Scholes formulation itself, but a hardware organization for variable-iteration numerical kernels with persistent transaction state across pipeline passes. By combining distributed per-transaction context, bounded scoreboard headroom, priority recirculation, and an $II=1$ feedforward datapath, nonconverged transactions re-enter the numerical pipeline without BRAM/URAM state storage. Evaluated through Black-Scholes IV root-finding, the architecture addresses four key spatial-computing challenges:
 \begin{enumerate}
-    \item \textbf{Recirculation vs. Spatial Unrolling:} Full spatial unrolling of an 8-pass Newton-Raphson datapath requires 2,432 DSP slices (328.6\% of an Artix-7 200T device). Conversely, naive feedback loops cause pipeline stall bubbles and circular buffer deadlock under bursty traffic. We introduce a priority recirculation mechanism with bounded scoreboard headroom that preserves forward progress while sharing an $II=1$ datapath across iteration passes.
+    \item \textbf{Recirculation vs. Spatial Unrolling:} Full spatial unrolling of an 8-pass Newton-Raphson datapath across four cores would require 4,864 DSP slices (657.3\% of an Artix-7 200T device; 2,432 DSPs / 328.6\% even for a 4-pass pipeline). Conversely, naive feedback loops cause pipeline stall bubbles and circular buffer deadlock under bursty traffic. We introduce a priority recirculation mechanism with bounded scoreboard headroom that preserves forward progress while sharing an $II=1$ datapath across iteration passes.
     \item \textbf{Elimination of Accelerator-Core BRAM:} Conventional designs buffer intermediate transaction state in dedicated Block RAM primitives. On resource-constrained edge FPGAs, BRAM columns dictate routing congestion and exacerbate setup timing slack. We map all transaction context exclusively to distributed LUTRAM and SRL primitives (Zero-BRAM core), securing timing closure while leaving 100\% of device BRAM free for PCIe and network DMA subsystem buffering.
     \item \textbf{Numerical \& Hardware Co-Design:} Conventional Newton-Raphson solvers require 5--8 iterations from generic seeds. Pairing an analytical Brenner-Subrahmanyam guess seeder~\cite{brenner1988simple} with Q8.24 arithmetic enables our pipeline to converge in an average of $\bar{P} = 2.635$ passes for liquid options ($0.85 \le S/K \le 1.15$), with 88.7\% converging within $\le 3$ passes.
     \item \textbf{Concurrent Greek Extraction:} Rather than re-evaluating derivatives in separate execution cycles, our datapath reuses intermediate normal distributions and powers computed during Stage~3, outputting final IV, Delta, Vega, and Gamma concurrently within a single packed egress payload.
@@ -125,7 +125,7 @@ We define the algorithmic root-finding convergence criterion in the market price
     |C_{\text{BS}}(\sigma_n) - C_{\text{mkt}}| \le \epsilon
     \label{eq:convergence_tol}
 \end{equation}
-We use a fixed price-residual tolerance of $\epsilon = \$0.01$ (represented in Q8.24 as $32'd167772$) as an algorithmic convergence criterion. For scale-normalized inputs, the corresponding threshold is $\tilde{\epsilon} = 0.01 / K$. This tolerance is an implementation choice designed to balance pricing precision against iteration depth, rather than a claim about specific exchange minimum tick sizes. The fixed price-residual tolerance does not guarantee a uniform implied-volatility error bound because the mapping from price error to volatility error depends on Vega ($|\Delta\sigma| \approx |\Delta C| / \nu$). We therefore evaluate IV accuracy empirically against a double-precision reference. On the evaluated near-the-money benchmark, the synthesized RTL achieves an IV MAE of 1.57~vol-bps; errors can increase substantially in low-Vega regimes. In extreme wings where Vega vanishes ($\nu \to 0$), the price residual criterion halts unproductive iterations and prevents division-by-zero instability.
+We use a fixed price-residual tolerance of $\epsilon = \$0.01$ (represented in Q8.24 as $32'd167772$) as an algorithmic convergence criterion. For scale-normalized inputs, the corresponding threshold is $\tilde{\epsilon} = 0.01 / K$. This tolerance is an implementation choice designed to balance pricing precision against iteration depth, rather than a claim about specific exchange minimum tick sizes. The fixed price-residual tolerance does not guarantee a uniform implied-volatility error bound because the mapping from price error to volatility error depends on Vega ($|\Delta\sigma| \approx |\Delta C| / \nu$). We therefore evaluate IV accuracy empirically against a double-precision reference. On the evaluated near-the-money benchmark, the synthesized RTL achieves an IV MAE of 1.57~vol-bps; errors can increase substantially in low-Vega regimes. In extreme wings where Vega vanishes ($\nu \to 0$), unproductive iterations are bounded by the 8-pass ceiling and residual checks, while division-by-zero protection and solver stability are provided separately by an explicit non-zero divider input guard ($\nu = 0 \to 1$ clamp) and hardware step clamping ($|\Delta\sigma| \le 0.25$).
 
 \subsection{Analytical Guess Seeder \& Function Approximations}
 To minimize iterations, we evaluate Brenner-Subrahmanyam seeding~\cite{brenner1988simple} in hardware:
@@ -138,13 +138,13 @@ While alternative analytical approximations (e.g., Corrado-Miller~\cite{corrado1
 Nonlinear transcendental operations are implemented with hardware-tailored polynomial approximations:
 \begin{itemize}
     \item \textbf{Normal CDF $N(x)$:} Approximated via the 5th-order Abramowitz-Stegun polynomial~\cite{abramowitz1964handbook} (Eq.~26.2.17) evaluated via Horner's rule across 6 cascaded polynomial multiply-accumulate stages ($\max |\epsilon_{\text{poly}}| \le 7.5 \times 10^{-8}$). In 32-bit Q8.24 arithmetic, each product decomposes across multiple sub-word DSP slices, totaling 48 DSP48E1 slices per CDF block (96 DSPs per core across $N(d_1)$ and $N(d_2)$ chains).
-    \item \textbf{Exponential $e^{-x}$:} Evaluated using a 16-stage unrolled Hyperbolic CORDIC pipeline in rotation mode (driving $z \to 0$) followed by $K_n \approx 1.2075$ scale compensation.
+    \item \textbf{Exponential $e^{-x}$:} Evaluated using an 18-stage unrolled Hyperbolic CORDIC pipeline in rotation mode (driving $z \to 0$; shifts $i=1..16$ with repeated iterations 4 and 13 to satisfy hyperbolic convergence) followed by $K_n \approx 1.2075$ scale compensation.
     \item \textbf{Logarithm $\ln(S/K)$:} Implemented with a two-region hybrid datapath. For near-the-money options ($|S/K - 1| \le 0.15$), a [1/1] Pad\'{e} approximant evaluates:
     \begin{equation}
         \ln\left(\frac{S}{K}\right) \approx 2 \cdot \frac{S - K}{S + K}
         \label{eq:pade_log}
     \end{equation}
-    saving 15 clock cycles. For wing contracts ($|S/K - 1| > 0.15$), a 16-stage Hyperbolic CORDIC logarithm evaluates full $\ln(S/K)$, matched to 33 clock cycles via SRL delay matching.
+    saving 15 clock cycles. For wing contracts ($|S/K - 1| > 0.15$), an 18-stage Hyperbolic CORDIC logarithm evaluates full $\ln(S/K)$ (18-cycle operator latency), matched to 33 clock cycles via 15 cycles of SRL delay matching ($18 + 15 = 33$).
 \end{itemize}
 
 % -------------------------------------------------------------------------
@@ -194,7 +194,7 @@ Upon convergence, results are packed into a 128-bit payload:
 \end{aligned}
     \label{eq:egress_pack}
 \end{equation}
-carrying the 6-bit local TID, 26-bit Delta (signed Q2.24), 32-bit Gamma (signed Q8.24), 32-bit Vega (signed Q8.24), and 32-bit IV ($6 + 26 + 32 + 32 + 32 = 128$ bits). The 2-bit originating core ID is emitted on an AXI sideband, forming a composite global tag $\{\text{Core}[1:0], \text{TID}[5:0]\}$ that tracks up to 240 concurrent in-flight contracts without a reorder buffer.
+carrying the 6-bit local TID, 26-bit Delta (signed Q2.24), 32-bit Gamma (signed Q8.24), 32-bit Vega (signed Q8.24), and 32-bit IV ($6 + 26 + 32 + 32 + 32 = 128$ bits). The 2-bit originating core ID is emitted on an AXI sideband, forming a composite global tag $\{\text{Core}[1:0], \text{TID}[5:0]\}$ that tracks up to 240 concurrent in-flight contracts without a reorder buffer. Because all admitted contracts retire to egress upon either residual convergence or reaching the 8-pass ceiling ($N_{\text{ret}} = N_{\text{acc}}$), the packed 128-bit payload carries the final numerical estimate without a dedicated hardware convergence status bit; downstream host verification distinguishes converged contracts from ceiling-terminated contracts by evaluating price residual error or tracking iteration count.
 
 Because European call option Delta is mathematically bounded to $\Delta \in [0, 1]$, allocating 26 bits (signed Q2.24, range $[-2.0, +1.999]$) preserves 100\% of Delta's 24-bit fractional resolution with zero precision loss. Concurrently, allocating the full 32-bit Q8.24 format to Gamma expands the exportable dynamic range from $[-2.0, +1.999]$ to $[-128.0, +127.999]$. This completely resolves short-expiry normalized Gamma dynamic range clipping, accommodating the peak observed dimensionless $\Gamma^* = 72.43$ without saturation.
 
@@ -206,7 +206,7 @@ For scale-normalized transactions ($S^* = S/K, K^* = 1.0$, such as SPX quotes in
 matching Eq.~(\ref{eq:greek_scaling}). For unnormalized transactions (Datasets~A--C where $S, K \in [20, 100]$), the datapath evaluates and emits standard monetary Vega $\nu$ and Gamma $\Gamma$ directly.
 
 \subsection{Throughput Terminology \& Little's Law}
-We rigorously distinguish three throughput metrics:
+We rigorously distinguish three throughput metrics, where one ``operation'' (Op) represents the complete multi-stage execution of a single contract pass through the pipelined numerical kernel:
 \begin{enumerate}
     \item \textbf{Nominal One-Pass Contract-Ingress Capacity ($T_{\text{peak}}$):} The theoretical maximum ingress rate of the $II=1$ datapath assuming single-pass processing: $400.00$~MOps/s on Artix-7 (4 cores $\times 100$~MHz) and $1.00$~GOps/s on Alveo U50 (4 cores $\times 250$~MHz).
     \item \textbf{Derived Open-Loop, Pass-Adjusted Nominal Service Capacity ($T_{\text{nominal}}$):} The open-loop service capacity adjusted for the empirical average pass count $\bar{P}$:
@@ -255,7 +255,7 @@ Estimated Total Power & \multicolumn{2}{c}{\textbf{4.258 W}} & \multicolumn{2}{c
 \end{tabular}%
 }
 \vskip 1pt\raggedright
-\footnotesize{\textit{Note:} Power reported from Vivado post-route vector-based estimates. Artix-7 signoff exhibits a +0.005~ns setup margin; environmental variation was not experimentally evaluated. Host PCIe and PHY/MAC interfaces are outside the measurement boundary.}
+\footnotesize{\textit{Note:} Power reported from Vivado post-route vector-based estimates. Timing slacks reconcile data path delays ($9.777$~ns Artix-7, $3.910$~ns U50) against clock periods ($10.000$~ns, $4.000$~ns) via post-route clock skew ($-0.213$~ns Artix-7, $-0.007$~ns U50), clock uncertainty ($0.035$~ns), and library setup times ($+0.040$~ns, $+0.025$~ns), yielding WNS $= +0.005$~ns on Artix-7 and $+0.073$~ns on U50. Host PCIe and PHY/MAC interfaces are outside the measurement boundary.}
 \end{table}
 
 As summarized in Table~\ref{tab:util}, both implementations achieve post-route timing closure with \textbf{zero Block RAMs and zero UltraRAMs} inside the core. On Artix-7, utilization reaches 106,298 LUTs (79.45\%) and 608 DSPs (82.16\%), with a positive worst negative slack of WNS = +0.005~ns (+5~ps margin). On Alveo U50, the four-core engine occupies only 12.13\% of CLB LUTs and 9.68\% of DSPs at 250~MHz. Total estimated device power is 4.258~W on Artix-7 and 9.560~W on Alveo U50.
@@ -275,7 +275,7 @@ Non-Restoring Dividers ($\times 7$) & 15,654 &  0 & 33-cycle non-restoring slice
 Horner Normal CDF Poly ($\times 2$) & 1,760 & 96 & 5th-order Horner MAC stages ($II=1$) \\
 BS Datapath Multipliers \& Regs  & 2,261 & 44 & Normal deviates \& Black-Scholes math ($II=1$) \\
 Digit-Recurrence $\sqrt{T}$ \& Seeder & 1,696 & 8 & Shared $\sqrt{T}$ + analytical seeder ($II=1$) \\
-Hyperbolic CORDIC \& Scaling     & 1,324 &  4 & 16-stage $e^{-rT}, e^{-d_1^2/2}$ + $K_n$ scale ($II=1$) \\
+Hyperbolic CORDIC \& Scaling     & 1,324 &  4 & 18-stage Hyperbolic CORDIC ($e^{-rT}, e^{-d_1^2/2}$) + $K_n$ ($II=1$) \\
 Arbitration, FSM \& Scoreboard   &   268 &  0 & Loopback preemption \& TID tracking \\
 Distributed Context Store / SRL  &   863 &  0 & 314 LUTRAM + 451 SRL32 (0 BRAM) \\
 AXI4-Stream Interface \& FIFOs   & 2,748 &  0 & 256-bit ingress \& 128-bit packed egress \\
@@ -286,7 +286,7 @@ AXI4-Stream Interface \& FIFOs   & 2,748 &  0 & 256-bit ingress \& 128-bit packe
 }
 \end{table}
 
-\subsection{Controlled BRAM Ablation (Killer Experiment)}
+\subsection{Controlled BRAM Ablation}
 \label{sec:bram_ablation}
 \textit{What is the physical cost and performance impact of eliminating block RAM from the persistent context?} We evaluate this via a matched four-core baseline using dedicated Block RAM primitives (28 RAMB18E1, equivalent to 14 BRAM36 blocks) for context storage under identical placement seeds and timing constraints (100~MHz, Artix-7 200T). 
 
@@ -303,7 +303,7 @@ The experimental evidence establishes a clear physical advantage for distributed
 % -------------------------------------------------------------------------
 \subsection{Controlled Datapath Error-Source Ablation}
 \label{sec:eval_ablation}
-To isolate the numerical error contributed by individual approximations in the pipelined datapath, we evaluate seven controlled ablation configurations across the 10,000 contracts of Dataset~A, comparing against exact double-precision software:
+To isolate the numerical error contributed by individual approximations in the pipelined datapath, we evaluate seven controlled ablation configurations across the 10,000 contracts of Dataset~A, comparing against a double-precision software reference:
 \begin{enumerate}
     \item \textbf{Full Double Precision Software:} 0.00 vol-bps MAE (reference).
     \item \textbf{Exact Normal CDF (Replacing Horner Poly):} 1.63 vol-bps liquid MAE (isolates normal CDF truncation as the dominant error contributor).
@@ -315,6 +315,15 @@ To isolate the numerical error contributed by individual approximations in the p
 \end{enumerate}
 This ablation demonstrates that the Horner CDF polynomial and its associated scale divider account for over 70\% of residual numerical error, confirming the efficacy of Q8.24 fixed-point representation.
 
+\begin{figure}[t]
+\centering
+\includefigfile[width=\columnwidth]{fig2_iteration_ablation.pdf}{figures/fig2_iteration_ablation.pdf}
+\caption{Algorithmic ablation of analytical guess seeding versus fixed-pass baselines on the 10,000-contract benchmark: (a) convergence pass distribution showing 88.7\% of liquid-moneyness options converge in $\le 3$ passes ($\bar{P}=2.635$); (b) throughput-accuracy Pareto frontier highlighting the dynamic loopback operating point (151.82~MOps/s nominal service capacity at 4.80~vol-bps modeled MAE; 7.67~vol-bps in synthesized RTL) against fixed multi-pass baselines and physical capacity bounds.}
+\label{fig:ablation}
+\end{figure}
+
+\subsection{Multi-Pass Iteration Dynamics \& Resource Bounds}
+\label{sec:eval_multipass}
 \begin{table}[t]
 \caption{Implied Volatility and Greek Accuracy (Synthesized RTL vs. Double-Precision Reference, Dataset A)}
 \label{tab:greek_accuracy}
@@ -326,29 +335,19 @@ This ablation demonstrates that the Horner CDF polynomial and its associated sca
 \cmidrule(lr){2-4} \cmidrule(lr){5-7}
 & \textbf{MAE} & \textbf{Median} & \textbf{P95} & \textbf{MAE} & \textbf{Median} & \textbf{P95} \\
 \midrule
-IV ($\sigma$, vol-bps) & 7.67 & 0.91 & 17.87 & 127.86 & 1.43 & 867.70 \\
-Delta ($\Delta$)       & $4.41\times 10^{-3}$ & $1.80\times 10^{-4}$ & $2.21\times 10^{-2}$ & 0.0119 & $4.10\times 10^{-4}$ & 0.0582 \\
-Vega ($\nu$)          & 0.0971 & $1.64\times 10^{-3}$ & 0.4215 & 0.6296 & $8.90\times 10^{-3}$ & 2.8450 \\
-Gamma ($\Gamma$)      & $2.57\times 10^{-4}$ & $1.20\times 10^{-5}$ & $9.91\times 10^{-4}$ & $3.12\times 10^{-3}$ & $5.45\times 10^{-5}$ & $5.96\times 10^{-3}$ \\
+IV ($\sigma$, vol-bps)            & 7.67 & 0.91 & 17.87 & 127.86 & 1.43 & 867.70 \\
+Delta ($\Delta$, dimensionless)   & $4.41\times 10^{-3}$ & $1.80\times 10^{-4}$ & $2.21\times 10^{-2}$ & 0.0119 & $4.10\times 10^{-4}$ & 0.0582 \\
+Vega ($\nu$, monetary, \$/vol)    & 0.0971 & $1.64\times 10^{-3}$ & 0.4215 & 0.6296 & $8.90\times 10^{-3}$ & 2.8450 \\
+Gamma ($\Gamma$, monetary, 1/\$)  & $2.57\times 10^{-4}$ & $1.20\times 10^{-5}$ & $9.91\times 10^{-4}$ & $3.12\times 10^{-3}$ & $5.45\times 10^{-5}$ & $5.96\times 10^{-3}$ \\
 \bottomrule
 \end{tabular}%
 }
 \vskip 1pt\raggedright
-\footnotesize{\textit{Note:} All 4,428 liquid contracts converged within the 8-pass budget ($100\%$ convergence). Extended suite metrics encompass all 10,000 evaluated contracts with returned estimates, including 327 convergence failures ($3.3\%$) that retired at the 8-pass ceiling under step clamping (Table~\ref{tab:rtl_validation}).}
+\footnotesize{\textit{Note:} All 4,428 liquid contracts converged within the 8-pass budget ($100\%$ convergence). Extended suite metrics encompass all 10,000 evaluated contracts with returned estimates, including 327 convergence failures ($3.3\%$) that retired at the 8-pass ceiling under step clamping (Table~\ref{tab:rtl_validation}). Greek errors for Dataset A reflect standard monetary units.}
 \end{table}
+As shown in Table~\ref{tab:greek_accuracy}, the four-core RTL achieves 7.67~vol-bps liquid MAE (0.91~vol-bps median) on Dataset~A. Under the synthetic near-the-money benchmark ($K/S \in [0.90, 1.10]$), synthesized RTL achieves an IV MAE of 1.57~vol-bps; 99.9\% of evaluated estimates have absolute IV error no greater than 0.0100 volatility units ($|\Delta\sigma| \le 0.0100$). (This synthetic moneyness band is distinct from the empirical SPX near-the-money evaluation in Section~\ref{sec:spx_replay}, where $S/K \in [0.95, 1.05]$ is assessed.) Figure~\ref{fig:ablation}(a) illustrates the pass distribution across the liquid moneyness regime: contracts converge in an empirical average of $\bar{P} = 2.635$ passes (Pass 1: 0.39\%, Pass 2: 49.52\%, Pass 3: 38.83\%, Pass 4: 10.08\%, Pass 5--8: 1.18\%), with \textbf{88.7\% converging within $\le 3$ passes}.
 
-\begin{figure}[t]
-\centering
-\includefigfile[width=\columnwidth]{fig2_iteration_ablation.pdf}{figures/fig2_iteration_ablation.pdf}
-\caption{Algorithmic ablation of analytical guess seeding versus fixed-pass baselines on the 10,000-contract benchmark: (a) convergence pass distribution showing 88.7\% of liquid-moneyness options converge in $\le 3$ passes ($\bar{P}=2.635$); (b) throughput-accuracy Pareto frontier highlighting the dynamic loopback operating point (151.82~MOps/s nominal service capacity at 4.80~vol-bps modeled MAE; 7.67~vol-bps in synthesized RTL) against fixed multi-pass baselines and physical capacity bounds.}
-\label{fig:ablation}
-\end{figure}
-
-\subsection{Multi-Pass Iteration Dynamics \& Resource Bounds}
-\label{sec:eval_multipass}
-As shown in Table~\ref{tab:greek_accuracy}, the four-core RTL achieves 7.67~vol-bps liquid MAE (0.91~vol-bps median) on Dataset~A. Under near-the-money sampling ($K/S \in [0.90, 1.10]$), IV MAE reaches 1.57~vol-bps, with 99.9\% of evaluated contracts converging within 1.0 percentage point error ($|\Delta\sigma| \le 0.0100$). Figure~\ref{fig:ablation}(a) illustrates the pass distribution across the liquid moneyness regime: contracts converge in an empirical average of $\bar{P} = 2.635$ passes (Pass 1: 0.39\%, Pass 2: 49.52\%, Pass 3: 38.83\%, Pass 4: 10.08\%, Pass 5--8: 1.18\%), with \textbf{88.7\% converging within $\le 3$ passes}.
-
-\textit{Spatial Unrolling vs. Loopback:} Figure~\ref{fig:ablation}(b) contrasts dynamic loopback against fully unrolled feedforward pipelines ($II=1$). Unrolling an $II=1$ feedforward pipeline across multiple passes would require 1,216 DSPs (164.3\% of Artix-7 200T) for 2 passes and 2,432 DSPs (328.6\%) for 4 passes. Priority loopback enables multi-pass convergence while strictly adhering to the 608-DSP budget of the device.
+\textit{Spatial Unrolling vs. Loopback:} Figure~\ref{fig:ablation}(b) contrasts dynamic loopback against fully unrolled feedforward pipelines ($II=1$). Unrolling an $II=1$ feedforward pipeline across multiple passes would require 1,216 DSPs (164.3\% of Artix-7 200T) for 2 passes, 2,432 DSPs (328.6\%) for 4 passes, and 4,864 DSPs (657.3\%) for an 8-pass ceiling. Priority loopback enables multi-pass convergence while strictly adhering to the 608-DSP budget of the device.
 
 \begin{figure}[t]
 \centering
@@ -371,7 +370,7 @@ As shown in Figure~\ref{fig:scheduler_stress}(b), continuous burst testing up to
 
 \subsection{Wordlength Precision Exploration}
 \label{sec:eval_precision}
-Figure~\ref{fig:precision_pareto} presents an empirical Pareto exploration across wordlength configurations: Q6.18 (24-bit), Q7.21 (28-bit), Q8.24 (32-bit), Q9.27 (36-bit), Q12.36 (48-bit), and IEEE-754 single precision (FP32). As shown in Figure~\ref{fig:precision_pareto}(a), narrower formats suffer severe numerical degradation: 24-bit Q6.18 exhibits an unacceptable MAE of 2,687~vol-bps due to dynamic range truncation when spot $S > \$64$, while Q7.21 incurs 1,067~vol-bps MAE from Horner polynomial underflow. Crucially, Figure~\ref{fig:precision_pareto}(b) evaluates physical feasibility against the 740-DSP capacity of the Artix-7 200T: wider formats overrun device capacity, with Q9.27 requiring 848 DSPs (114.6\%), Q12.36 requiring 1,152 DSPs (155.7\%), and FP32 requiring 960 DSPs (129.7\%). Q8.24 represents the optimal operating point (608 DSPs, 82.2\%) satisfying both physical device limits and market accuracy requirements.
+Figure~\ref{fig:precision_pareto} presents an empirical Pareto exploration across wordlength configurations: Q6.18 (24-bit), Q7.21 (28-bit), Q8.24 (32-bit), Q9.27 (36-bit), Q12.36 (48-bit), and IEEE-754 single precision (FP32). As shown in Figure~\ref{fig:precision_pareto}(a), narrower formats suffer severe numerical degradation: 24-bit Q6.18 exhibits an unacceptable MAE of 2,687~vol-bps due to dynamic range truncation when spot $S > \$64$, while Q7.21 incurs 1,067~vol-bps MAE from Horner polynomial underflow. Crucially, Figure~\ref{fig:precision_pareto}(b) evaluates physical feasibility against the 740-DSP capacity of the Artix-7 200T: wider formats overrun device capacity, with Q9.27 requiring 848 DSPs (114.6\%), Q12.36 requiring 1,152 DSPs (155.7\%), and FP32 requiring 960 DSPs (129.7\%). Q8.24 represents the optimal operating point (608 DSPs, 82.2\%) satisfying both physical device limits and the selected 10~vol-bps liquid-subset MAE target (with tail P95 error of 17.87~vol-bps characterizing the tail distribution).
 
 \begin{figure}[t]
 \centering
@@ -385,11 +384,11 @@ Figure~\ref{fig:boundary_stress} examines a 2,500-point boundary surface alongsi
 
 \textit{Boundary Stress Surface (Dataset C):} In Figure~\ref{fig:boundary_stress}(a), moneyness $S/K \in [0.70, 1.40]$ and maturity $T \in [0.0027, 2.0]$~yr are sampled on a dense $50 \times 50$ grid. The surface identifies two demanding regimes:
 \begin{enumerate}
-    \item \textbf{Low-Vega Boundary ($T < 14$~days):} As $T \to 0$, Vega vanishes ($\nu \to 0$), causing unconstrained Newton-Raphson updates to destabilize. Hardware step clamping ($|\Delta\sigma| \le 0.25$) successfully bounds solver steps, maintaining finite error (MAE 4,389.72 vol-bps) without pipeline divergence.
+    \item \textbf{Low-Vega Boundary ($T < 14$~days):} As $T \to 0$, Vega vanishes ($\nu \to 0$), causing unconstrained Newton-Raphson updates to destabilize. Hardware step clamping ($|\Delta\sigma| \le 0.25$) successfully bounds solver steps, maintaining finite error without pipeline divergence, though root-finding accuracy in this low-Vega boundary regime remains inherently constrained (MAE 4,389.72~vol-bps).
     \item \textbf{Pad\'{e} Transition Zone ($|S/K - 1| \approx 0.15$):} Across the sampled boundary region near $|S/K - 1| \approx 0.15$, we observe an elevated MAE of 415.24~vol-bps (averaging 4.96 passes), reflecting the compound numerical sensitivity of piecewise approximation combined with low-Vega boundary dynamics. Inside the grid interior ($0.85 \le S/K \le 1.15, T \ge 14\text{d}$), grid MAE is 104.38~vol-bps. This grid interior includes short maturities down to 14 days ($14\text{d} \le T < 36\text{d}$); when restricted to maturities matched to Dataset~A ($0.85 \le S/K \le 1.15, T \ge 0.10$~yr), grid MAE drops to 15.38~vol-bps (median 0.64~vol-bps), and reaches 1.39~vol-bps (median 0.38~vol-bps) in the near-the-money core ($0.90 \le S/K \le 1.10, T \ge 0.10$~yr).
 \end{enumerate}
 
-\textit{Empirical SPX Market-Data Replay (Dataset D):} In Figure~\ref{fig:boundary_stress}(b), replay of 1,382 recorded European SPX Weekly call quotes~\cite{cboe2026marketdata} (derived from public CBOE end-of-day market data on September 21, 2026; spot up to $\$7{,}643.99$, strike up to $\$7{,}580$, 15 expirations; with anonymized test vectors and reproduction scripts provided in the evaluation artifact in accordance with exchange distribution guidelines) serves as an out-of-sample stress test for dynamic-range normalization. Market prices were computed as midpoint quotes $C_{\text{mkt}} = (\text{bid} + \text{ask}) / 2$, time-to-maturity $T$ computed from calendar days, and risk-free benchmark $r = 5.25\%$. Scale normalization ($S^* = S/K, K^* = 1.0, C^* = C/K$) mapped four-digit spot prices into compact Q8.24 ($S^* \le 1.3711$) with zero arithmetic overflow observed across all 1,382 quotes. This replay serves as an algorithmic and scale-normalization stress test across high-notional real-world contracts rather than a claim of market-calibrated pricing accuracy. For NTM quotes, 72.1\% achieved single-pass convergence, with 437.93~vol-bps MAE (78.88~vol-bps median; moneyness-band MAE 487.62~vol-bps, 122.84~vol-bps median). The deep-wing subset ($N=15$, MAE 331.52~vol-bps) exhibited bounded solver behavior under hardware step clamping.
+\textit{Empirical SPX Market-Data Replay (Dataset D):}\label{sec:spx_replay} In Figure~\ref{fig:boundary_stress}(b), replay of 1,382 recorded European SPX Weekly call quotes~\cite{cboe2026marketdata} (derived from public CBOE end-of-day market data on September 21, 2026; spot up to $\$7{,}643.99$, strike up to $\$7{,}580$, 15 expirations; with anonymized test vectors and reproduction scripts provided in the evaluation artifact in accordance with exchange distribution guidelines) serves as an out-of-sample stress test for dynamic-range normalization. Market prices were computed as midpoint quotes $C_{\text{mkt}} = (\text{bid} + \text{ask}) / 2$, time-to-maturity $T$ computed from calendar days, and risk-free benchmark $r = 5.25\%$. Scale normalization ($S^* = S/K, K^* = 1.0, C^* = C/K$) mapped four-digit spot prices into compact Q8.24 ($S^* \le 1.3711$) with zero arithmetic overflow observed across all 1,382 quotes. This replay serves as an algorithmic and scale-normalization stress test across high-notional real-world contracts rather than a claim of market-calibrated pricing accuracy. For NTM quotes, 72.1\% achieved single-pass convergence, with 437.93~vol-bps MAE (78.88~vol-bps median; moneyness-band MAE 487.62~vol-bps, 122.84~vol-bps median). The deep-wing subset ($N=15$, MAE 331.52~vol-bps) exhibited bounded solver behavior under hardware step clamping.
 
 \begin{table}[t]
 \caption{End-to-End RTL Validation Matrix Across Diverse Datasets}
@@ -419,7 +418,7 @@ Liquid Subset Median (vol-bps)         & 0.91 & 1.17 & 246.91 & 122.84 \\
 Root-Mean-Square Error (RMSE, vol-bps) & 437.88 & 509.09 & 13,731.72 & 862.95 \\
 95th Percentile Error (P95, vol-bps)   & 867.70 & 854.63 & 35,000.00 & 2,126.69 \\
 99th Percentile Error (P99, vol-bps)   & 2,214.71 & 2,537.68 & 47,500.00 & 2,220.58 \\
-Max Absolute Error ($|\Delta\sigma|$)  & 0.5549 & 0.8784 & 4.7500\textsuperscript{*} & 0.2266 \\
+Max Absolute Error ($|\Delta\sigma|$, vol)  & 0.5549 & 0.8784 & 4.7500\textsuperscript{*} & 0.2266 \\
 \midrule
 \multicolumn{5}{l}{\textit{Concurrent Greeks Accuracy (MAE vs. Golden Software)}} \\
 Delta MAE ($|\Delta_{\text{RTL}} - \Delta_{\text{gold}}|$) & 0.0119 & 0.0112 & 0.1651 & 0.0736 \\
@@ -431,7 +430,7 @@ Gamma MAE ($|\Gamma_{\text{RTL}} - \Gamma_{\text{gold}}|$) & 0.0031 & 0.0032 & 0
 \vskip 1pt\raggedright
 \footnotesize{\textsuperscript{*}Dataset C boundary errors reflect hardware clamping ($|\Delta\sigma| \le 0.25$ per step); across 8 passes, maximum cumulative error reaches 4.75 without numerical divergence. \\
 \textsuperscript{\dag}Reported in standard monetary Vega units. For Dataset D, inputs are scale-normalized ($S^*=S/K, K^*=1.0$), yielding a dimensionless normalized Vega error of $\text{MAE}(\nu^*) = 0.0139$ (standard monetary $\text{MAE}(\nu) = 104.81$, recovered via $\nu = K\nu^*$). \\
-\textsuperscript{\ddag}Reported in standard monetary Gamma units ($\Gamma = \Gamma^* / K$). For Dataset D, the dimensionless normalized Gamma error is $\text{MAE}(\Gamma^*) = 4.5915$ (median 2.9549) on the 32-bit Q8.24 egress bus, eliminating the 26-bit truncation that clipped short-expiry quotes. While standard monetary MAE is small ($0.0006$) due to division by strike $K$, the dimensionless error $\text{MAE}(\Gamma^*)$ reflects the datapath's true numerical accuracy. Across all 113,882 evaluated transactions, $N_{\text{acc}} = N_{\text{ret}}$ with 0 lost or duplicate contracts.}
+\textsuperscript{\ddag}Reported in standard monetary Gamma units ($\Gamma = \Gamma^* / K$). For Dataset D, the dimensionless normalized Gamma error is $\text{MAE}(\Gamma^*) = 4.5915$ (median 2.9549) on the 32-bit Q8.24 egress bus, eliminating the 26-bit truncation that clipped short-expiry quotes. While standard monetary MAE is small ($0.0006$) due to division by strike $K$, the dimensionless error $\text{MAE}(\Gamma^*)$ reflects the datapath's true numerical accuracy. Across all 113,882 evaluated transactions, $N_{\text{acc}} = N_{\text{ret}}$ with 0 lost or duplicate contracts; $N_{\text{ret}}$ counts contracts retired to egress (upon residual convergence or 8-pass ceiling).}
 \end{table}
 
 \subsection{End-to-End Multi-Dataset RTL Validation}
@@ -460,8 +459,8 @@ Dataset D (SPX Quotes)     & 400.00 & 18.42 & 2.30 / 230 & 2.30 / 230 & 5.55 / 5
 50\% Backpressure           & 400.00 & 8.13 & 2.30 / 230 & 5.57 / 557 & 15.19 / 1,519 & 16 / 60 \\
 \midrule
 \multicolumn{7}{l}{\textit{Exp 1B Saturated Memory Ablation ($N=10{,}000$ contracts at 100 MHz signoff)}} \\
-Zero-BRAM Engine (Proposed) & 400.00 & 8.18 & 2.30 / 230 & 5.53 / 553 & 15.18 / 1,518 & 0 BRAM \\
-BRAM Baseline               & 400.00 & 8.14 & 2.31 / 231 & 5.56 / 556 & 15.27 / 1,527 & 28 BRAM18 \\
+Zero-BRAM Core (0 BRAM)     & 400.00 & 8.18 & 2.30 / 230 & 5.53 / 553 & 15.18 / 1,518 & 16 / 60 \\
+BRAM Baseline (28 RAMB18E1) & 400.00 & 8.14 & 2.31 / 231 & 5.56 / 556 & 15.27 / 1,527 & 16 / 60 \\
 \bottomrule
 \end{tabular}%
 }
@@ -524,7 +523,7 @@ Menachem Brenner and Marti~G. Subrahmanyam. 1988.
 \newblock \emph{Financial Analysts Journal} 44, 5 (1988), 80--83.
 
 \bibitem{corrado1996improved}
-Charles~J. Corrado and Thomas~W. Miller. 1996.
+Charles~J. Corrado and Thomas~W. Miller, Jr. 1996.
 \newblock A simple and accurate formula to compute implied standard deviations.
 \newblock \emph{Journal of Banking \& Finance} 20, 3 (1996), 595--603.
 
