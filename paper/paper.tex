@@ -137,12 +137,12 @@ Nonlinear transcendental operations are implemented with hardware-tailored polyn
 \begin{itemize}
     \item \textbf{Normal CDF $N(x)$:} Approximated via the 5th-order Abramowitz-Stegun polynomial~\cite{abramowitz1964handbook} (Eq.~26.2.17) evaluated via Horner's rule across 6 cascaded polynomial multiply-accumulate stages ($\max |\epsilon_{\text{poly}}| \le 7.5 \times 10^{-8}$). In 32-bit Q8.24 arithmetic, each product decomposes across multiple sub-word DSP slices, totaling 48 DSP48E1 slices per CDF block (96 DSPs per core across $N(d_1)$ and $N(d_2)$ chains).
     \item \textbf{Exponential $e^{-x}$:} Evaluated using a 16-stage unrolled Hyperbolic CORDIC pipeline in rotation mode (driving $z \to 0$) followed by $K_n \approx 1.2075$ scale compensation.
-    \item \textbf{Logarithm $\ln(S/K)$:} Implemented using a two-region hybrid datapath. For near-the-money contracts ($|S/K - 1| \le 0.15$), a [1/1] Pad\'{e} rational approximant evaluates:
+    \item \textbf{Logarithm $\ln(S/K)$:} Implemented using a two-region hybrid datapath. For near-the-money contracts \mbox{($|S/K - 1| \le 0.15$)}, a [1/1] Pad\'{e} rational approximant evaluates:
     \begin{equation}
         \ln\left(\frac{S}{K}\right) \approx 2 \cdot \frac{S - K}{S + K}
         \label{eq:pade_log}
     \end{equation}
-    saving 15 clock cycles. For wing contracts ($|S/K - 1| > 0.15$), a 16-stage Hyperbolic CORDIC logarithm evaluates full $\ln(S/K)$, matched to 33 clock cycles via SRL delay matching.
+    saving 15 clock cycles. For wing contracts \mbox{($|S/K - 1| > 0.15$)}, a 16-stage Hyperbolic CORDIC logarithm evaluates full $\ln(S/K)$, matched to 33 clock cycles via SRL delay matching.
 \end{itemize}
 
 % -------------------------------------------------------------------------

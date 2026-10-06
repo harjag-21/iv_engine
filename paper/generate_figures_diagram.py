@@ -63,11 +63,11 @@ ax.text(13, 16.5, '\u2022 64 Context Slots / Core (256 Total)\n\u2022 60 Active 
 s2 = patches.FancyBboxPatch((38, 40), 40, 28, boxstyle='round,pad=0.8,rounding_size=1.5',
                            edgecolor='#ff7f0e', facecolor='#fef5ec', linewidth=1.6)
 ax.add_patch(s2)
-ax.text(58, 62.8, 'Stage 2: Analytical Seeder\n(Brenner-Subrahmanyam, 64 Cyc)',
+ax.text(58, 63.2, 'Stage 2: Analytical Seeder\n(Brenner-Subrahmanyam, 64 Cyc)',
         ha='center', va='center', fontsize=9.2, fontweight='bold', color='#7a3c04')
-ax.text(58, 52.8, r'$\sigma_0 \approx \frac{2.5066 \, C_{\mathrm{mkt}}}{\sqrt{T} \, (S+K)/2}$',
+ax.text(58, 53.4, r'$\sigma_0 \approx \frac{2.5066 \, C_{\mathrm{mkt}}}{\sqrt{T} \, (S+K)/2}$',
         ha='center', va='center', fontsize=9.2)
-ax.text(58, 44.8, '\u2022 Shared Digit-Recurrence ' + r'$\sqrt{T}$' + ' (29 Cyc, II = 1)\n\u2022 Forwards ' + r'$\sqrt{T}$' + ' Directly to Stage 3\n\u2022 Non-Restoring Divider (33 Cyc, II = 1)\n\u2022 Analytical Initial Estimate (Sec 2.4):\n  ' + r'Med Abs Err: $0.1037$ vol ($1{,}037$ vol-bps) | Rel: $30.52\%$ ($11.53\%$ ATM)',
+ax.text(58, 45.4, '\u2022 Shared Digit-Recurrence ' + r'$\sqrt{T}$' + ' (29 Cyc, II = 1)\n\u2022 Forwards ' + r'$\sqrt{T}$' + ' Directly to Stage 3\n\u2022 Non-Restoring Divider (33 Cyc, II = 1)\n\u2022 Analytical Initial Estimate (Sec 2.4):\n  ' + r'Med Abs Err: $0.1037$ vol ($1{,}037$ vol-bps) | Rel: $30.52\%$ ($11.53\%$ ATM)',
         ha='center', va='center', fontsize=6.8, linespacing=1.22)
 
 # Stage 3: Core Black-Scholes Datapath (126 Cycles, II = 1)
